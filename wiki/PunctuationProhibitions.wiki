@@ -11,6 +11,6 @@ This article only covers punctuation prohibitions in Chinese.
 
 * Line start forbiddens: * Comma, period and alike, as well as all kinds of closing brackets. They cannot be placed at the start of the line.
 
-* Line end forbiddens: * All kinds of closing brackets. They cannot appear at the end of the line.
+* Line end forbiddens: * All kinds of opening brackets. They cannot appear at the end of the line.
 
 * Inter-character forbiddens: * Long-dash (pòzhéhào) and ellipsis. They consist of two CJK characters, and cannot break in between.
