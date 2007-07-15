@@ -1,0 +1,11 @@
+--- UnicodeWidth.py~	Tue Jul  4 03:13:54 2006
++++ UnicodeWidth.py	Sun Jul 15 00:11:52 2007
+@@ -293,7 +293,7 @@
+   Ambiguous (A) category as defined in Unicode Technical Report #11
+   have a column width of 2.
+   """
+-  if _bisearch(ucs, _ambiguous):
++  if _bisearch(ord(ucs), _ambiguous):
+     return 2
+   else:
+     return wcwidth(ucs)
