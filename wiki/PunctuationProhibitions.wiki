@@ -1,0 +1,10 @@
+#summary Some information on punctuation prohibitions
+
+= Introduction =
+
+(Punctuation) Prohibitions, called (Biǎodiǎn) Jìnzé in Chinese, or Kinsoku Shori in Japanese, determines whether or not a line break can be issued before or after certain punctuations or other special characters.
+
+
+= Details =
+
+* Line start forbiddens *: 
