@@ -7,3 +7,5 @@ UnicodeWidth was originally written by Markus Kuhn in C, and translated to Pytho
 = Details =
 
 You can find the patch file in svn repository.
+
+Download location: http://mothy.org/hacks/unicodewidth/UnicodeWidth.html
