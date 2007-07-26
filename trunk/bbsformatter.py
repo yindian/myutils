@@ -4,14 +4,16 @@
 # Hist:	070714: Completed the first seems-to-work version.
 #	070715: Added debug mode switch and set words of alphanum unbreakable.
 #		Several bug fixed.
+#	070726: Fixed bug of line not breaking at the end of line or file.
+#		Changed source file to unix format. Some other handy changes.
 import sys, os, string, types, fileinput
 from optparse import OptionParser
 import UnicodeWidth
 # constants
-version = '20070715'
+version = '20070726'
 charwidth_ambinarrow = UnicodeWidth.wcwidth
 charwidth_ambiwide = UnicodeWidth.wcwidth_cjk
-endansi = '[0m'
+endansi = '\033[0m'
 linestartforbid = u',.!?)]}>»％、。，．：；！？·）｝〕〉》」』】〗’”'
 lineendforbid = u'([{<«$（｛〔〈《「『【〖‘“'
 intercharforbid = u'—…‥'
@@ -37,7 +39,7 @@ BBS Text Formatter v.'+version+'\tcoded by YIN Dian.\n\
 Functionalities:\n  1. Wrap the text considering punctuation prohibitions.\n\
   2. Reformat or filter out ANSI escape sequences.'
 	parser = OptionParser(usage, version='%prog v.'+version)
-	parser.set_defaults(filteransi=False, textwidth=76, maxwidth=80,
+	parser.set_defaults(filteransi=False, textwidth=76, maxwidth=78,
 			tabsize=4, punctprohibit=True, joinline=False, 
 			ambiwide=True, encoding='gbk', outfile='',
 			expandtab=False)
@@ -79,9 +81,9 @@ Functionalities:\n  1. Wrap the text considering punctuation prohibitions.\n\
 	parser.add_option('-s', '--tabsize', metavar='SIZE', type='int',
 			dest='tabsize', help='Set tab size to SIZE, default' +
 			' is %default')
-	parser.add_option('-e', '--encoding', dest='encoding', metavar='ENC',
-			help='Set input/output encoding to ENC (default ' +
-			'is %default)')
+	parser.add_option('-e', '--encoding', '--enc', dest='encoding',
+			metavar='ENC', help='Set input/output encoding to ' +
+			'ENC (default is %default)')
 	parser.add_option('-o', '--output', dest='outfile', metavar='FILE',
 			help='Output to file FILE (default to stdout)')
 	parser.add_option('-D', '--debug', dest='debug', metavar='MODE',
@@ -162,8 +164,36 @@ def bbsformat(text, options, ansistatus='', currentpos=0, outfile=sys.stdout,
 				currentpos == 0: # BOL
 				DBG('(m)')
 				outfile.write(ansistatus)
-			outfile.write(buftext.encode(enc, 'replace').rstrip())
 			currentpos += bufwidth
+			if currentpos > maxwidth:
+				while buftext and buftext[0].isspace():
+					bufwidth -= charwidth(buftext[0])
+					buftext = buftext[1:]
+				if ansistatus:
+					outfile.write(endansi +
+					'\n' + ansistatus)
+					outfile.write(
+					buftext.encode(enc, 
+					'replace'))
+				else:
+					outfile.write('\n' +
+					buftext.encode(enc,
+					'replace'))
+				currentpos = bufwidth
+			else:
+				if currentpos >= textwidth:
+					outfile.write(buftext.encode(enc,
+						'replace').rstrip())
+					if ansistatus:
+						outfile.write(
+						endansi + '\n'
+						+ ansistatus)
+					else:
+						outfile.write('\n')
+					currentpos = 0
+				else:
+					outfile.write(buftext.encode(enc,
+						'replace'))
 			if currentpos: # not BOL
 				if ansistatus:
 					outfile.write(endansi)
@@ -195,10 +225,39 @@ def bbsformat(text, options, ansistatus='', currentpos=0, outfile=sys.stdout,
 						oktext = buftext + char
 					buftext = u''
 					bufwidth = 0
-				elif char == u'': # ANSI escape char
+				elif char == u'\033': # ANSI escape char
 					# flush first
-					outfile.write(buftext.encode(enc, 'replace'))
+					DBG2('('+buftext.encode(enc, 'replace')+')')
 					currentpos += bufwidth
+					if currentpos > maxwidth:
+						while buftext and buftext[0].isspace():
+							bufwidth -= charwidth(buftext[0])
+							buftext = buftext[1:]
+						if ansistatus:
+							outfile.write(endansi +
+							'\n' + ansistatus)
+							outfile.write(
+							buftext.encode(enc, 
+							'replace'))
+						else:
+							outfile.write('\n' +
+							buftext.encode(enc,
+							'replace'))
+						currentpos = bufwidth
+					else:
+						if currentpos >= textwidth:
+							outfile.write(buftext.encode(enc,
+								'replace').rstrip())
+							if ansistatus:
+								outfile.write(
+								endansi + '\n'
+								+ ansistatus)
+							else:
+								outfile.write('\n')
+							currentpos = 0
+						else:
+							outfile.write(buftext.encode(enc,
+								'replace'))
 					buftext = u''
 					bufwidth = 0
 					escapemode = True
@@ -219,9 +278,9 @@ def bbsformat(text, options, ansistatus='', currentpos=0, outfile=sys.stdout,
 							okwidth -= charwidth(oktext[0])
 							oktext = oktext[1:]
 						if ansistatus:
-							outfile.write(endansi)
-							outfile.write('\n' +
-							ansistatus +
+							outfile.write(endansi +
+							'\n' + ansistatus)
+							outfile.write(
 							oktext.encode(enc, 
 							'replace'))
 						else:
@@ -257,10 +316,23 @@ def bbsformat(text, options, ansistatus='', currentpos=0, outfile=sys.stdout,
 			if not joinline:
 				DBG2('('+buftext.encode(enc, 'replace')+')',)
 				DBG2('<'+ansistatus+'>',)
-				outfile.write(buftext.encode(enc,
-					'replace').rstrip())
-				if ansistatus:
-					outfile.write(endansi)
+				if currentpos + bufwidth > maxwidth:
+					buftext = buftext.strip()
+					if ansistatus:
+						outfile.write(endansi +
+						'\n' + ansistatus)
+						outfile.write(
+						buftext.encode(enc, 
+						'replace') + endansi)
+					else:
+						outfile.write('\n' +
+						buftext.encode(enc,
+						'replace'))
+				else:
+					outfile.write(buftext.encode(enc,
+						'replace').rstrip())
+					if ansistatus:
+						outfile.write(endansi)
 				outfile.write('\n')
 				buftext = u''
 				currentpos = bufwidth = 0
@@ -279,13 +351,28 @@ if __name__ == '__main__':
 		outp = open(options.outfile, 'w')
 	ansistatus = buftext = u''
 	currentpos = bufwidth = 0
+	maxwidth = options.maxwidth
+	enc = options.encoding
 	for line in fileinput.input(args):
 		if fileinput.isfirstline():
 			if buftext:
-				outp.write(buftext.encode(options.encoding,
-					'replace'))
-				if ansistatus:
-					outfile.write(endansi)
+				if currentpos + bufwidth > maxwidth:
+					buftext = buftext.strip()
+					if ansistatus:
+						outp.write(endansi +
+						'\n' + ansistatus)
+						outp.write(
+						buftext.encode(enc, 
+						'replace') + endansi)
+					else:
+						outp.write('\n' +
+						buftext.encode(enc,
+						'replace'))
+				else:
+					outp.write(buftext.encode(enc,
+						'replace').rstrip())
+					if ansistatus:
+						outp.write(endansi)
 				outp.write('\n')
 			ansistatus = ''
 			currentpos = 0
@@ -300,4 +387,20 @@ if __name__ == '__main__':
 				buftext.encode(options.encoding) + 
 				'\'   bufwidth = ' + `bufwidth` +'\n')
 	if buftext:
-		outp.write(buftext.encode(options.encoding).rstrip())
+		if currentpos + bufwidth > maxwidth:
+			buftext = buftext.strip()
+			if ansistatus:
+				outp.write(endansi +
+				'\n' + ansistatus)
+				outp.write( buftext.encode(enc, 
+				'replace') + endansi)
+			else:
+				outp.write('\n' +
+				buftext.encode(enc,
+				'replace'))
+		else:
+			outp.write(buftext.encode(enc,
+				'replace').rstrip())
+			if ansistatus:
+				outp.write(endansi)
+		outp.write('\n')
