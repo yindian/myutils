@@ -1,0 +1,2 @@
+#!/bin/sh
+xwd -screen -root -out /home/yd/linshi/screenshot/`date +%Y%m%d%H%M%S`.xwd

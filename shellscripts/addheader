@@ -1,0 +1,26 @@
+#!/bin/sh
+if test $# -eq 0; then
+	echo Usage: $0 files
+	echo Prepend content read from stdin to files specified by arguments
+	echo  without changing the modification time
+	exit
+fi
+TMPHEADER=$(mktemp)
+TMPXCHG=$(mktemp)
+add_header() {
+	local STAMP
+	STAMP=$(stat -c "%y" "$1" | sed -e 's/[-: ]//g' -e 's/\..*//' -e 's/\(.\{12\}\)/\1./')
+	echo "Processing $1,	whose mtime is $STAMP ..."
+	cat $TMPHEADER "$1" > $TMPXCHG
+	cat $TMPXCHG > "$1"
+	touch -t $STAMP -m "$1"
+
+}
+cat - > $TMPHEADER
+while test $# -gt 0; do
+	add_header $*
+	shift
+done
+echo Done!
+rm -f $TMPHEADER
+rm -f $TMPXCHG
