@@ -1,0 +1,10 @@
+#!/bin/sh
+mirrors="nchc jaist easynews"
+baseurl=`sed "s/\?.*//" <<< $1`
+url=
+for name in $mirrors; do
+	echo $name
+	url="$url `sed \"s/\(prd\|d\)ownloads.sourceforge.net/$name.dl.sourceforge.net\/sourceforge/\" <<< $baseurl`"
+done
+#echo axel -n6 $url
+exec axel -n6 $url

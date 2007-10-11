@@ -1,0 +1,2 @@
+#!/bin/bash
+gvim -geom 80x25+30+30 -c ':set gfn=Monospace\ 14' -c ':colorscheme vo_dark' -c ':hi Normal guifg=Gray guibg=Black' -c ':hi Visual guifg=Black' -c ':set bg=dark' $*
