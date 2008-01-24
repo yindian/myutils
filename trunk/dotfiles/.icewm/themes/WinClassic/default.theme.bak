@@ -1,0 +1,60 @@
+# Clone of the Microsoft Windows Classic Standard Color Theme, based
+# on a couple of screenshots, made with Windows XP.
+
+ThemeDescription="Windows Klassisch (Standard)"
+ThemeAuthor="Thomas Holder <thomasxholder(a)compuserve.de>"
+
+Look=pixmap
+
+TitleBarHeight=19
+BorderSizeX=4
+BorderSizeY=4
+CornerSizeX=23
+CornerSizeY=23
+
+# Key Stuff
+Win95Keys=1
+ModSuperIsCtrlAlt=1
+
+# Titlebar
+Gradients	="titleAB.xpm titleIB.xpm titleAT.xpm titleIT.xpm"
+TitleBarJoinRight	=1
+TitleButtonsLeft	="s"
+TitleButtonsRight	="xmi"
+TitleButtonsSupported	="shxmi"
+TitleFontNameXft	= "tahoma:size=11:bold:antialias=false,simsun:size=11:bold:antialias=false"
+TitleFontName		= "-*-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*"
+ColorNormalTitleBarText	="#EEEEEE"
+ColorActiveTitleBarText	="#FFFFFF"
+
+# Taskbar
+NormalTaskBarFontNameXft	= "tahoma:size=11::antialias=false,simsun:size=11:antialias=false"
+NormalTaskBarFontName		= "-*-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*"
+ActiveTaskBarFontNameXft	= "tahoma:size=11:bold:antialias=false,simsun:size=11:bold:antialias=false"
+ActiveTaskBarFontName		= "-*-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*"
+ColorDefaultTaskBar	="#D4D0C8"
+ColorNormalTaskBarApp	="#D4D0C8"
+ColorActiveTaskBarApp	="#EEEEEE"
+ColorNormalButton	="#D4D0C8"
+
+# Menu
+MenuFontNameXft 	= "sans-serif:size=10::antialias=false,simsun:size=10:antialias=false"
+MenuFontName		= "-*-helvetica-medium-r-*-*-10-*-*-*-*-*-*-*"
+ColorActiveMenuItem	="#0A246A"
+ColorActiveMenuItemText	="#FFFFFF"
+ColorNormalMenu	="#D4D0C8"
+
+# Tooltips
+ColorToolTip	="#FFFFE1"
+ToolTipFontNameXft	="verdana:size=11:antialias=false,simsun:size=11:antialias=false"
+ToolTipFontName		="-*-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*"
+
+# Clock
+TimeFormat	="%R"
+ColorClock	=""
+ColorClockText	="#000000"
+ClockFontNameXft	="verdana:size=11:antialias=false,simsun:size=11:antialias=false"
+ClockFontName		="-*-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*"
+
+# Background
+DesktopBackgroundColor="#3a6ea5"

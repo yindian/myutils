@@ -1,0 +1,10 @@
+/* XPM */
+static char *taskbuttonactive[] = {
+/* columns rows colors chars-per-pixel */
+"2 2 2 1",
+"  c #D4D0C8",
+". c gray100",
+/* pixels */
+" .",
+". "
+};
