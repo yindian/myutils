@@ -1,0 +1,156 @@
+\documentclass{article}
+\input{ phscexpsetting.tex }
+\usepackage{textcomp}
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2005.11.7}
+\CJKindent
+\CJKcaption{GB}
+
+\exptitle{偏振光的研究}
+
+\section{实验目的}
+了解光偏振的原理，测量半导体激光器的偏振度，验证马吕斯定律，通过测量布儒斯特角求玻璃的折射率。
+
+\section{实验原理}
+\subsection{光线的五种偏振态}
+按电磁波理论，光是横波，其振动方向与传播方向垂直，因此可以分成五种偏振态：自然光（非偏振光）、线偏振光、部分偏振光、
+圆偏振光和椭圆偏振光。自然光是各方向的振幅相同的光，它的振动方向在垂直于光的传播方向的平面内可取所有可能的方向，没有一个方
+向占有优势。线偏振光是在垂直于传
+播方向的平面内，光矢量只沿一个固定方向振动。部分偏光可以看成自然光与线偏光混合而成，即它有某个方向的振幅占优势。圆偏光和椭
+圆偏振光的光矢量末端在垂直于传播方向的平面上的轨迹呈圆或椭圆。半导体激光器产生的是部分偏振光。
+
+对于部分偏振光，定义其偏振度~$p = \dfrac{I_\text{max} - I_\text{min}}{I_\text{max}+I_\text{min}}$，其中~$I_\text{max}$ 为光
+线通过偏振片后的光强的最大值，$I_\text{min}$ 为通过后光强的最小值。
+\subsection{偏振片的原理}
+偏振片是用聚乙烯醇塑胶膜制成的晶片。它具有梳状长链形结构分子，这些分子平行排列在同一方向上，此时胶膜只允许垂直于排列方向的
+光振动通过，因而产生线偏振光。本实验中采用偏振片作为起偏器和检偏器。起偏器是将自然光变成线偏振光的元件，检偏器是用于鉴别光
+的偏振态的元件。当自然光通过偏振片时，在垂直光线传播方向的平面内旋转偏振片时，通过偏振片的光强不变；当部分偏振光通过时，光
+强变化，但无全暗位置；当线偏振光通过时，光强变化，可以找到全暗位置。这一现象是由马吕斯定律保证的。
+
+马吕斯在~1809 年发现，完全线偏振光通过检偏器后的光强可表示为：
+\[
+I = I_0 \cos^2 \theta 
+\]
+其中~$I_0$ 为线偏振光通过之间的光强，$I$ 为线偏振光通过检偏器之后的光强，$\theta$ 为检偏器的偏振方向与起偏器的偏振方向的夹
+角。
+\subsection{布儒斯特定律}
+\begin{minipage}{0.75\textwidth}
+	\CJKindent
+	当光从一种介质射到另一种介质中时，反射光中的垂直于入射面的光振动（称~s 分量）多于平行于入射面的光振动（称~p 分量）
+	；而透射光则正好相反。在改变入射角的时候，出现了一个特殊的现象，即入射角为一特定值时，反射光成为完全线偏振光（s 分
+	量）。折射光为部分偏振光，而且此时的反射光线和折射光线垂直，这种现象称为布儒斯特定律（如右图所示）。
+
+	设此时入射角为~$i_0$，折射角为~$\gamma$，则有：$i_0 + \gamma = \frac{\pi}{2}$。又~$\because\, n_1 \sin i_0 = n_2
+	\sin \gamma$，$\therefore\, \tan i_0 = \dfrac{\sin i_0}{\sin \gamma} = \dfrac{n_2}{n_1}$。当~$n_1=1$，即介质~1 为空
+	气时，$n_2 = \tan i_0$。用此法可测量介质的折射率。
+\end{minipage}
+\begin{minipage}[]{0.25\textwidth}
+	\epsfig{file= pianzhenguang.eps,width=0.9\textwidth}
+\end{minipage}
+
+\section{实验内容}
+\begin{enumerate}
+	\item 熟悉仪器的使用。本实验采用半导体激光器产生部分偏振光，用硅光电池与数字检流计检测光强（电流与光强成正比，也记
+		为~$I$），使用偏振片起偏与检偏。
+	\item 测量半导体激光器的偏振度。在仪器 的激光发射端套上起偏器~$\mathrm{P}_1$，将检流计量程调到最大。旋转
+		~$\mathrm{P}_1$ 找到光强最强及最弱的位置的~$I_\text{max}$ 与~$I_\text{min}$，求出激光的偏振度~$p$。
+	\item 验证马吕斯定律。加上检偏器~$\mathrm{P}_2$，通过测量一组~$\mathrm{P}_1$ 和~$\mathrm{P}_2$ 偏振方向的夹角
+		~$\theta$ 及其对应的光强的值，作出~$I/I_0$--$\cos^2 \theta$ 曲线，验证马吕斯定律。
+	\item 根据布儒斯特定律测定介质的折射率。
+		取下检偏器~$\mathrm{P}_2$ 将样品平面放在载物台的中心，旋转载物台使反射光反射回激光器入射方向，记下游标的刻
+		度，再旋转游标盘使入射角为~57\textdegree，用一张白纸接受从样品平面反射的光点，调节~$\mathrm{P}_1$ 的角度使光
+		强为最弱，此时从~$\mathrm{P}_1$ 的出射的光矢量的振动方向为平行于入射面的~p 矢量。旋转游标盘使入射角在
+		~57\textdegree\ 附近转动找出完全消光的位置，计下此时游标的刻度，这个角度就是布儒斯特角，由布儒斯特定律求出样品
+		的折射率~$n$。%50\textcelsius
+\end{enumerate}
+
+\vfill
+\section{实验数据}
+\subsection{测量半导体激光器的偏振度}
+\begin{center}
+	\begin{tabular}{|c|*{4}{c|}}
+		\hline
+		$I_\text{max}$ 或~$I_\text{min}\dw{10^{-7}A}$ & 690 & 188 & 683 & 189\\\hline
+		$\mathrm{P}_1$ 读数 &146.2\textdegree & 235.8\textdegree & 326.1\textdegree
+		&54.1\textdegree\\\hline
+	\end{tabular}
+\end{center}
+\subsection{验证马吕斯定律}
+%测得~$I_0 = 255\dw{10^{-7}A}$。
+\begin{center}
+\begin{longtable}{|c|*{8}{c|}}
+	\hline
+	$\mathrm{P}_2$ 读数~$\varphi$ & 245.5\textdegree & 235.5\textdegree & 225.5\textdegree & 215.5\textdegree &
+	205.5\textdegree & 195.5\textdegree & 185.5\textdegree & 175.5\textdegree\\\hline
+	电流~$I\dw{10^{-7}A}$ & 255 & 246 & 223 & 190 & 149 & 104 & 63 & 29 \\\hline
+	$\mathrm{P}_2$ 读数~$\varphi$ & 165.5\textdegree & 155.5\textdegree  & 145.5\textdegree & 135.5\textdegree &
+	125.5\textdegree &115.5\textdegree &105.5\textdegree & 95.5\textdegree\\\hline
+	电流~$I\dw{10^{-7}A}$ & 7 & 0 & 7 & 29 & 61 & 100 & 141 & 180\\\hline
+	$\mathrm{P}_2$ 读数~$\varphi$ & 85.5\textdegree & 75.5\textdegree & 65.5\textdegree & & & & &\\\hline
+	电流~$I\dw{10^{-7}A}$ & 209 & 229 & 235 & & & & &\\\hline
+\end{longtable}
+\end{center}
+\subsection{测量玻璃的折射率}
+光线反射回入射方向游标盘的读数：0\textdegree。
+
+布儒斯特角~$i_0$：57\textdegree\/15'，57\textdegree\/50'
+
+\clearpage
+\section{数据处理}
+\subsection{测量半导体激光器的偏振度}
+\begin{align*}
+	I_\text{max} &= \frac{1}{2}(690 + 683) = 686.5 \dw{10^{-7}A}\\
+	I_\text{min} &= \frac{1}{2}(188 + 189) = 188.5 \dw{10^{-7}A}\\
+	\therefore\, p &= \frac{I_\text{max}-I_\text{min}}{I_\text{max}+I_\text{min}} = \frac{686.5 - 188.5}{686.5 + 188.5}\\
+	&\approx 0.57
+\end{align*}
+\subsection{验证马吕斯定律}
+由实验数据可得下表：
+\begin{center}
+\begin{longtable}{|c|*{8}{c|}}
+	\hline
+	偏振方向夹角~$\theta$ & 0\textdegree & 10\textdegree & 20\textdegree & 30\textdegree &
+	40\textdegree & 50\textdegree & 60\textdegree & 70\textdegree\\\hline
+	电流~$I\dw{10^{-7}A}$ & 255 & 246 & 223 & 190 & 149 & 104 & 63 & 29 \\\hline
+	偏振方向夹角~$\theta$ & 80\textdegree & 90\textdegree  & 100\textdegree & 110\textdegree &
+	120\textdegree &130\textdegree &140\textdegree & 150\textdegree\\\hline
+	电流~$I\dw{10^{-7}A}$ & 7 & 0 & 7 & 29 & 61 & 100 & 141 & 180\\\hline
+	偏振方向夹角~$\theta$ & 160\textdegree & 170\textdegree & 180\textdegree & & & & &\\\hline
+	电流~$I\dw{10^{-7}A}$ & 209 & 229 & 235 & & & & &\\\hline
+\end{longtable}
+\end{center}
+
+故可列出~$I/I_0$--$\cos^2 \theta$ 关系表如下（$I_0$ 分别取~0\textdegree 和~180\textdegree 时的~$I$ 值）：
+\begin{center}
+\begin{longtable}{|c|*{10}{c|}}
+	\hline
+	$I/I_0$ & 1 & 0.965 & 0.874 & 0.745 & 0.584 & 0.408 & 0.247 & 0.114 & 0.028 & 0 \\\hline
+	$\cos^2 \theta$ &1 & 0.970 & 0.883 & 0.750 & 0.587 & 0.413 & 0.250 & 0.117 & 0.030 &0 \\\hline
+	\hline
+	$I/I_0$ & 0 & 0.030 & 0.123 & 0.260 & 0.426 & 0.600 & 0.766 & 0.889 & 0.974 & 1\\\hline
+	$\cos^2 \theta$ &0 & 0.030 & 0.117 & 0.250 & 0.413 & 0.587 & 0.750 & 0.883 & 0.970 & 1\\\hline
+
+\end{longtable}
+\end{center}
+
+分别作出其~$I/I_0$--$\cos^2 \theta$ 图象如图~\ref{fig:aitheta} 所示。
+\begin{figure}[!htbp]
+	\begin{center}
+		\subfigure[$0\le\theta\le\dfrac{\pi}{2}$]{\epsfig{file= pianzhenguang1.eps,width=0.4\textwidth}}
+		\subfigure[$\dfrac{\pi}{2}\le\theta\le\pi$]{\epsfig{file= pianzhenguang2.eps,width=0.4\textwidth}}
+	\end{center}
+	\caption{$I/I_0$--$\cos^2\theta$ 图象}
+	\label{fig:aitheta}
+\end{figure}
+其中~(a) 子图中的拟合直线为：$y=0.9975x-0.0023$，(b) 子图中的拟合直线为：$y=1.0029x + 0.0054$。
+
+由此可见，$I/I_0 \approx \cos^2 \theta$。故马吕斯定律得以验证。
+\subsection{测量玻璃的折射率}
+由测量数据，布儒斯特角~$i_0 = \dfrac{57 \frac{15}{60} + 57 \frac{50}{60}}{2} = 57.54\dw{\mbox{\textdegree}}$。
+
+故玻璃的折射率~$n = \tan i_0 = \tan 57.54\mbox{\textdegree} \approx 1.57$。
+
+\clearpage
+\end{CJK*}
+\end{document}

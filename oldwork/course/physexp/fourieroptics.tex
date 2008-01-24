@@ -1,0 +1,141 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{calrsfs}
+\usepackage{cancel}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\newcommand{\im}{\mathrm{i}}
+\renewcommand{\dee}{\,\mathrm{d}}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.3.28.}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{-1em}
+\setlength{\belowdisplayshortskip}{0pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+\CJKtilde
+
+\exptitle{傅里叶光学的空间频谱与空间滤波实验}
+
+\section{实验目的}
+通过观察一维光栅和二维光栅的夫琅禾费衍射，观察傅里叶频谱面上不同方向滤波的图样特征，以及进行光字屏滤波，验证阿贝成像理论，
+理解透镜成像的物理过程，进而掌握光学信息处理的实质。
+
+\section{实验原理}
+\subsection{傅里叶光学变换}
+设有一个空间二维函数~$g(x,y)$，其二维傅里叶变换为
+\begin{equation}
+G(f_x, f_y) = \mathcal{F}[g(x,y)] = \iint_{-\infty}^\infty g(x,y)\exp[-\im 2\pi(f_xx+f_yy)]\dee x\dee y
+\end{equation}
+式中~$f_x$、$f_y$~分别为~$x$、$y$~方向的空间频率，$g(x,y)$~是~$G(f_x,f_y)$~的兼管傅里叶变换，即
+\begin{equation}
+g(x,y) = \mathcal{F}^{-1}[G(f_x,f_y)] = \iint_{-\infty}^\infty G(f_x,f_y)\exp[\im 2\pi(f_xx+f_yy)]\dee f_x\dee f_y
+\label{eqn:nifly}
+\end{equation}
+式~\eqref{eqn:nifly}~表示：任意一个空间函数~$g(x,y)$~可表示为无穷多个基元函数~$\exp[\im 2\pi(f_xx+f_yy)]$~的线性叠加。
+$G(f_x,f_y)\dee f_x\dee f_y$~是相应于空间频率为~$f_x$、$f_y$~的基元函数的权重，$G(f_x,f_y)$~称为~$g(x,y)$~的空间频谱。
+
+理论上可以证明，若在焦距为~$f$~的会聚透镜的前焦面上放一振幅透过率为~$g(x,y)$~的图像作为物，并用波长为~$\lambda$~的单色平面
+波垂直照明图像，则在透镜后焦面~$(x',y')$~上的复振幅分布就是~$g(x,y)$~的傅里叶变换~$G(f_x,f_y)$，其中空间频率~$f_x$、$f_y$~
+与坐标~$x'$、$y'$~的关系为：
+\begin{equation}
+	\left\{
+	\begin{aligned}
+		f_x &=\frac{x'}{\lambda f}\\
+		f_y &=\frac{y'}{\lambda f}
+	\end{aligned}
+	\right.
+\end{equation}
+故~$(x',y')$~面称为频谱面（或傅氏面）。由此可见，复杂的二维傅里叶变换可以用一透镜来实现，称为光学傅里叶变换，频谱面上的光强
+分布，也就是物的夫琅禾费衍射图。
+\subsection{阿贝成像原理}
+阿贝于~1873~年提出，在相干光照明下，显微镜的成像可分为两步：1、通过物的衍射光在物镜的后焦面上形成一个衍射图；2、物镜后焦面
+上的衍射图复合为像，这个像可以通过目镜观察到。
+
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file=fourieroptics.eps,width=0.5\textwidth}
+	\end{center}
+	\caption{阿贝成像理论示意图}
+	\label{fig:abbe}
+\end{figure}
+成像的这两个步骤本质上就是两次傅里叶变换。第一步把物面光场的空间分布~$g(x,y)$~变为频谱面上空间频率分布~$G(f_x,f_y)$；第二步
+则是再作一次变换，又将~$G(f_x,f_y)$~还原到空间分布~$g(x,y)$。
+\subsection{空间滤波}
+由上可知，透镜成像过程可看作是两次傅里叶变换。如果我们在频谱面上放一些不同结构的光阑，以提取（或摒弃）某些频段的物信息，则
+必然使像面上的图像发生相应变化。这样的图像处理称为空间滤波，频谱面上这种光阑称为滤波器。
+
+
+\newpage
+\section{实验数据与数据处理}
+\subsection{小透镜的焦距~$f_1$}
+实验测得：
+\begin{longtable}{|c|*{3}{r|}}
+	\hline
+	$s_1+f_1\dw{cm}$ & \hspace*{2em}77.79 & \hspace*{2em}70.15 & \hspace*{2em}73.08 \\\hline
+	$s_1\dw{cm}$ & 61.21 & 53.92 & 56.59\\\hline
+	$f_1\dw{cm}$ & 16.58 & 16.23 & 16.49\\\hline
+\end{longtable}
+
+故可得~$\overline{f_1} =16.43\dw{cm}$，$\Delta_\mathrm{A}(f_1) = t_P \dfrac{\sigma}{\sqrt{3}} =
+1.32\times0.148/\sqrt{3} \approx 0.148\dw{cm}$，$\Delta(f_1) = \sqrt{\Delta_\mathrm{A}^2(f_1)+\Delta_\mathrm{B}^2(f_1)} =
+\sqrt{0.148^2 + 0.05^2} \approx 0.157\dw{cm}$。
+\subsection{夫琅禾费衍射}
+\subsubsection{测一维光栅常数}
+已知傅里叶透镜的焦距~$f = 45\dw{cm}$，激光波长~$\lambda=6328\text{\AA}$。观察于光斑排成一条水平直线，其亮度从中间向两边递减
+。
+
+光栅方程为：$d\sin\theta = k\lambda$，其中~$d$~为光栅常数。
+
+\begin{longtable}{|c|*{5}{>{\hfill}m{2.7em}|}}
+	\hline
+	级数~$k$ & 0 & 1 & $-1$ & 2 & $-2$ \\\hline
+	位置~$x\dw{cm}$ & 0 & 7.3 & $-$7.2 & 14.5 & $-$14.2 \\\hline
+	$\tan \theta$ & 0 & \multicolumn{2}{c|}{0.161} & \multicolumn{2}{c|}{0.319} \\\hline
+	$\sin \theta$ & 0 & \multicolumn{2}{c|}{0.159} & \multicolumn{2}{c|}{0.304} \\\hline
+	光栅常数~$d\dw{m}$ & \multicolumn{1}{c|}{\cancel{\mathstrut\hspace*{3em}}} & \multicolumn{2}{c|}{$3.980\times 10^{-6}$} & \multicolumn{2}{c|}{$4.163\times
+	10^{-6}$}\\\hline
+\end{longtable}
+
+故光栅常数~$\overline{d} = 4.02\times10^{-6}\dw{m}$。
+\subsubsection{二维光栅的衍射图样}
+实验观察得知，二维光栅的衍射图样光斑呈矩阵状，过中心的水平线和竖直线以及与其相邻的各二条线上的光斑最为明亮，显出十字型。
+
+\subsection{傅里叶频谱面上不同滤波的图样特征}
+透镜焦距~$f_1 = 16.43\dw{cm}$。
+\newpage
+\subsubsection{一维光栅}
+\begin{longtable}{l@{\extracolsep{3em}}l}
+	仅~0~级通过 & 无衍射图样\\
+	0，$\pm1$~级通过 & 光斑上有较密的竖直亮暗条纹\\
+	0，$\pm1$，$\pm2$~级通过 &光斑上有较上面稀疏的竖直条纹
+\end{longtable}
+\subsubsection{二维光栅}
+\begin{longtable}{l@{\extracolsep{2em}}l}
+	含~0~级的水平方向通过 & 光斑上有竖直亮暗条纹\\
+	含~0~级的竖直方向通过 & 光斑上有水平亮暗条纹\\
+	含~0~级的与水平方向成~45\degrees~角通过 & 光斑上有与 水平成~135\degrees~的亮暗条纹\\
+	含~0~级的与水平方向成~135\degrees~角通过 & 光斑上有与 水平成~45\degrees~的亮暗条纹\\
+\end{longtable}
+
+\section{思考题}
+\begin{enumerate}[\noindent 1.]
+	\item 如何测透镜的焦距？
+
+		答：根据透镜的性质，由望远镜作用射出的平行光经过透镜会聚于一点，用光屏去接，使所成的像最小最亮，透镜与屏的
+		距离即是焦距。
+	\item 如书上~P.46~图所示，鸡关在笼中，用怎样的滤波器能去掉栅笼，把鸡“释放出来”？
+
+		答：将一个可变圆孔光阑放在频谱面上，逐步缩小光阑，直到像上不再有栅栏即可。
+\end{enumerate}
+
+\clearpage
+\end{CJK*}
+\end{document}
+

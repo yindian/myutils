@@ -1,0 +1,133 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{picinpar}
+\usepackage{textcomp}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\makeatletter
+\long\def\@makewincaption#1#2{%
+   \setbox\@tempboxa\hbox{\small{#1:\enspace}{#2}}%
+   \ifdim\wd\@tempboxa>\picwd
+      {\small{#1:\enspace}{#2\par}}
+   \else
+      \hbox to\picwd{\hfil\box\@tempboxa\hfil}
+   \fi}
+\makeatother
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.3.21.}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+
+\exptitle{液晶光阀特性研究}
+
+\section{实验目的}
+通过测量液晶光阀在不同写入光强下的驱动电压与输出光强的关系，以及观察不同驱动电压下的成像情况，研究液晶光阀的特性。
+
+\section{实验原理}
+\subsection{偏振分光棱镜的的工作原理}
+\begin{figwindow}[0,r,\epsfig{file= yejingguangfapic1.eps,width=0.3\textwidth},偏振分光镜示意图\label{fig:fenguangjing}]
+如图~\ref{fig:fenguangjing} 所示，偏振分光棱镜是在光学玻璃棱镜的体对角面上镀制多层介质膜，再将两块棱镜的分光面胶合起来，并在通光面上镀制增透膜，以
+降低光通过棱镜时的反射损耗。                              
+
+对于折射率不同的两种材料的交界面，可以找到一个入射角，使之满足布儒斯特角条件，在这样一个条件下，激光由棱镜左侧入射后，在右
+侧透射的光为\ p 分量光（经过镀膜后使投射光中没有\ s 分量），在侧面反射的光为\ s 分量光。偏光分束镜的膜系设计要求， 必须选择
+折射率满足一定的关系的膜料和基底材料，使\ p 光全透过，而\ s 光全部反射。在实验中偏光分束棱镜既起到起偏器作用又起到检偏器的
+作用。
+\end{figwindow}
+
+\subsection{液晶光阀}
+液晶光阀分为投射式的液晶光阀和反射式的液晶光阀。本实验中使用的是反射式的液晶光阀，
+
+液晶光阀中的关键部分就是液晶，其物理特性介于固体和液体之间;其结构介于固体和液体之间，称为中间态或中间相. 呈现出既有液体的流
+动性，又有晶体的光学各向异性，因而称为液晶。它既不同于不能流动的晶体，也有别于光学各向同性的液体，它的特性既有晶体的取向特
+性，又有液体的流动性.当液晶分子在取向膜层的影响下有序排列表现出的各向异性，又导致电、磁、光、力的各向异性.由于液晶分子之间
+的相互作用远低于固体分子之间的相互作用力，所以液晶的各向异性在外场作用下会发生显著变化.
+
+本实验中的液晶主要是向列型液晶，其分子长轴近似平行，且平行于玻璃平面液晶分子取向决定于取向膜层的方向.光通过液晶层时发生双折
+射效应，即入射的偏振光进入液晶层后，这时的液晶层相当于一个位相片，其位相的大小取决于写入光的强弱.反射回来的各种不同的椭圆偏
+振光，它的长、短轴的方向和比例经检偏器后的光强是不同的。液晶层两侧加一定电压，液晶分子在电场的作用下会沿电场方向排列，即液晶
+的方向矢向电场方向偏转，从而改变双折射效应。当液晶光阀工作时，图~\ref{fig:fig5} 中光导层~9 在外加写入光时电阻率急剧下降，隔
+光层8分离写入光与读出光.在无写入光时，光导层电阻率高，电压几乎加在光导层上，液晶层上电压降很小，这时液晶对光的调制作用维持
+原来的状态；当有写入光时（如一光点照在液晶光阀的某一表面位置），光导电阻急剧下降，于是液晶层上电压迅速增大，使液晶光轴方向
+发生偏转，从而改
+变双折射效应。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= yejinggf5.eps,width=0.5\textwidth}
+	\end{center}
+	\caption{液晶光阀结构图}
+	\label{fig:fig5}
+\end{figure}
+
+实际工作的光路如图~\ref{fig:fig6}。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= yejinggf6.eps,width=0.8\textwidth}
+	\end{center}
+	\caption{液晶光阀工作光路图}
+	\label{fig:fig6}
+\end{figure}
+
+\newpage
+\section{实验数据与数据处理}
+\subsection{驱动电压为零，写入光为零时取向角\ $\varphi$ 与输出光强\ $I$ 的关系}
+实验测得，当驱动电压为零，写入光为零时，$\varphi$--$I$ 关系如下表：
+\begin{longtable}{|c|*{11}{c|}}
+	\hline
+	$\varphi$ 	& 0\degrees&5\degrees&10\degrees&15\degrees&20\degrees&25\degrees&30\degrees&35\degrees&40\degrees&
+				45\degrees&50\degrees
+	\\\hline
+	$I\dw{10^{-3}}$	& 1.3 & 1.6 & 3.9 & 6.4 & 10.9 & 14.3 &19.1& 22.1 & 23.8 & 24.9 & 25.8
+	\\\hline
+\end{longtable}
+
+故可绘得\ $\varphi$--$I$ 曲线如图~\ref{fig:phiI} 所示。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= yejinggf1.eps,width=0.5\textwidth}
+	\end{center}
+	\caption{$\varphi$--$I$ 曲线}
+	\label{fig:phiI}
+\end{figure}
+\subsection{不同写入光下驱动电压与输出光强的关系}
+当驱动电压的交变频率\ $f = 1\dw{kHz}$，取向角\ $\varphi=40\degrees$ 时，对于写入光全零、全明、为中间值这三种情况，分别测得
+驱动电压\ $V$ 与输出光强的关系，绘成曲线如图~\ref{fig:VI} 所示。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= yejinggf2.eps,width=0.8\textwidth}
+	\end{center}
+	\caption{$V$--$I$ 关系图}
+	\label{fig:VI}
+\end{figure}
+\subsection{不同驱动电压下的成像情况}
+当驱动电压的交变频率\ $f = 1\dw{kHz}$，取向角\ $\varphi=40\degrees$ 时，观察到：\nopagebreak
+\begin{longtable}{|c|c|l|}
+	\hline
+	成像情况 & 出现次数 & \hfil对应电压范围\hfil
+	\\\hline\hline
+	正像	& 2 次	& 0.91 V--1.05V \quad 3.75 V--5.34 V
+	\\\hline
+	反转像	& 1 次	& 7.42 V--8.14 V
+	\\\hline
+	边缘增强像&1 次	&1.68 V--1.78 V
+	\\\hline
+\end{longtable}
+
+%\section{思考题}
+%\begin{enumerate}
+%	\item 液晶光阀的驱动电压用的是交流电，能用直流电吗？说出原因。
+%
+%		答：不能。G
+%\end{enumerate}<++>
+
+\clearpage
+\end{CJK*}
+\end{document}

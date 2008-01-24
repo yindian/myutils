@@ -1,0 +1,180 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex }
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2005.10.24.}
+\CJKindent
+\CJKcaption{GB}
+\exptitle{通过霍尔效应测量磁场}
+
+\section{实验目的}
+通过用霍尔元件测量磁场，判断霍尔元件载流子的类型，计算载流子的浓度和迁移速率，以及了解霍尔效应测试中的各种副效应及消除的方
+法。
+
+\section{实验原理}
+将一半导体薄片放入垂直于它的磁场中（$\bm{B}$ 的方向沿~$z$ 轴方向），当在沿~$y$ 轴方向上施加电流~$I_S$ 时，薄片内定向移动的载
+流子（设平均速率为~$u$）受到沿~$x$ 方向的洛伦兹力~$F_B = quB$。在此力作用下，载流子发生偏移，产生电荷积累，从而在霍尔元件上
+、下两端产生一个电位差~$V_{H}$，使载流子又受到一个与~$F_B$ 方向相反的电场力~$F_E = qE = q V_{H} / b$，其中~$b$ 为霍尔元件片
+的宽度。达到稳恒状态时，$F_E = F_B$，即~$quB = q V_H /b$。另外，设载流子浓度为~$n$，薄片厚度为~$d$，则~$I_S$ 与~$u$ 的关系
+为：$I_S = bdnqu$。故有：
+\[
+V_H = \frac{I_S B}{nqd} = K_H I_S B
+\]
+
+在实验中，电磁铁的磁场~$B$ 与励磁电流~$I_M$ 的比值~$K = B/I_M$ 已知，故只需测得特定的~$I_S$、$I_M$ 对应的~$V_H$，即可求得
+~$K_H$ ：
+\[
+K_H = \frac{V_H}{I_S I_M K} = \frac{R_H}{d}
+\]
+同时，由~$V_H$ 的正负以及载流子所受的洛伦兹力的方向，就可以判断载流子类型是电子型还是空穴型。
+
+在实验中，霍尔效应常伴有副效应。例如产生横向温差温差电动势的爱延豪森效应 以及不等位电动势引起的误差。
+我们可以通过改变~$I_S$ 和磁场~$B$ 的方向消除大多数副效应。
+
+实验还可测量霍尔元件的电导率~$\sigma$ 以及载流子迁移速率~$u$。其计算公式如下：
+\[
+\sigma = \frac{I_S l}{V_\sigma b d} \qquad u = \frac{\sigma}{nq}
+\]
+其中~$l$ 为霍尔元件~$y$ 方向上测量~$V_\sigma$ 的两个触点间的距离，$V_\sigma$ 为霍尔元件~$y$ 方向上某一段两端的电位差。测量
+需要外加磁场为零。
+
+\section{实验内容}
+将测试仪上~$I_M$  输出，$I_S$ 输出和~$V_H$ 输入三对接线柱分别与实验台上对应接线柱连接。打开测试仪电源开关，预热数分钟后开始
+实验。
+\begin{compactenum}
+	\item	保持~$I_M$ 不变，取~$I_M=0.45\dws{A}$，$I_S$ 取\ $1.00,1.50,\dots,4.50\dw{mA}$，测绘~$V_H$--$I_S$ 曲线，计
+		算~$R_H$。
+	\item	保持~$I_S$ 不变，取~$I_S=4.50\dws{mA}$，$I_M$ 取\ $0.10,0.15,\dots,0.45\dw{A}$，测绘~$V_H$--$I_M$ 曲线。
+	\item	在零磁场下，取~$I_S=0.1\dws{mA}$，测~$V_\sigma$。
+	\item	确定样品导电类型，并求~$n$、$u$、$\sigma$。
+\end{compactenum}
+
+\section{实验数据}
+霍尔元件厚度~$d = 0.20 \dws{mm}$，宽度~$b = 40 \dws{mm}$，二触点间距~$l = 3.0 \dws{mm}$。
+
+电磁铁磁流比~$K = B/I_M = 5000 \dws{Gs/A} = 0.5 \dws{T/A}$。
+
+\begin{longtable}{|c|*{8}{@{\extracolsep{1.3em}}r|}}
+	\multicolumn{9}{c}{固定~$I_M = 0.45 \dws{A}$ 时~$V_H$--$I_S$ 数据}
+	\endfirsthead
+	\hline
+	$V_H \dw{mV}$ & $-$0.36 & 0.37 & $-$0.38 & 0.38 & $-$0.55 & 0.55 & $-$0.57 & 0.58 \\\hline
+	$I_S \dw{mA}$ & 1.00 & 1.00 & 1.00 & 1.00 & 1.50 & 1.50 & 1.50 & 1.50 \\\hline
+	$V_H \dw{mV}$ & $-$0.73 & 0.74 & $-$0.77 & 0.77 & $-$0.92 & 0.92 & $-$0.96 & 0.96 \\\hline
+	$I_S \dw{mA}$ & 2.00 & 2.00 & 2.00 & 2.00 & 2.50 & 2.50 & 2.50 & 2.50 \\\hline
+	$V_H \dw{mV}$ & $-$1.10 & 1.10 & $-$1.15 & 1.15 & $-$1.28 & 1.29 & $-$1.34 & 1.35 \\\hline
+	$I_S \dw{mA}$ & 3.00 & 3.00 & 3.00 & 3.00 & 3.50 & 3.50 & 3.50 & 3.50 \\\hline
+	$V_H \dw{mV}$ & $-$1.47 & 1.47 & $-$1.54 & 1.54 & $-$1.65 & 1.65 & $-$1.73 & 1.74 \\\hline
+	$I_S \dw{mA}$ & 4.00 & 4.00 & 4.00 & 4.00 & 4.50 & 4.50 & 4.50 & 4.50 \\\hline
+\end{longtable}
+
+\begin{longtable}{|c|*{8}{@{\extracolsep{1.3em}}r|}}
+	\multicolumn{9}{c}{固定~$I_S = 4.50 \dws{mA}$ 时~$V_H$--$I_M$ 数据}
+	\endfirsthead
+	\hline
+	$V_H \dw{mV}$ & $-$0.31 & 0.32 & $-$0.39 & 0.39 & $-$0.48 & 0.49 & $-$0.57 & 0.57 \\\hline
+	$I_M \dw{A}$ & 0.10 & 0.10 & 0.10 & 0.10 & 0.15 & 0.15 & 0.15 & 0.15 \\\hline
+	$V_H \dw{mV}$ & $-$0.67 & 0.68 & $-$0.76 & 0.76 & $-$0.86 & 0.86 & $-$0.94 & 0.95 \\\hline
+	$I_M \dw{A}$ & 0.20 & 0.20 & 0.20 & 0.20 & 0.25 & 0.25 & 0.25 & 0.25 \\\hline
+	$V_H \dw{mV}$ & $-$1.05 & 1.05 & $-$1.14 & 1.14 & $-$1.25 & 1.25 & $-$1.33 & 1.34 \\\hline
+	$I_M \dw{A}$ & 0.30 & 0.30 & 0.30 & 0.30 & 0.35 & 0.35 & 0.35 & 0.35 \\\hline
+	$V_H \dw{mV}$ & $-$1.44 & 1.45 & $-$1.53 & 1.54 & $-$1.65 & 1.65 & $-$1.74 & 1.74 \\\hline
+	$I_M \dw{A}$ & 0.40 & 0.40 & 0.40 & 0.40 & 0.45 & 0.45 & 0.45 & 0.45 \\\hline
+\end{longtable}
+
+当~$I_M = 0 \dws{A}$，$I_S = 0.1 \dws{mA}$ 时，$V_\sigma \dw{mV}$：$-8.00$\qquad 8.00
+
+\begin{figure}[!htpb]
+	\begin{center}
+		\epsfig{file= huoerxiaoying.pic.1.eps,width=0.3\textwidth}
+	\end{center}
+	\caption{测定霍尔元件的导电类型结果图}
+	\label{fig:leixing}
+\end{figure}
+
+\section{数据处理}
+\subsection{$I_M = 0.45 \dws{A}$ 时，$V_H$--$I_S$ 数据的处理}
+先对实验测得的数据取平均值以消除误差，得到~$V_H$--$I_S$ 数据如下：
+\begin{longtable}{|c|*{8}{r|}}
+	\hline
+	$V_H\dw{mV}$	& 0.372 & 0.562 & 0.752 & 0.94 & 1.125 & 1.315 & 1.505 & 1.692 \\\hline
+	$I_S\dw{mA}$	& 1.00 & 1.50 & 2.00 & 2.50 & 3.00 & 3.50 & 4.00 & 4.50\\\hline
+\end{longtable}
+
+作出~$V_H$--$I_S$ 曲线如图~\ref{fig:VhIs} 所示。图中拟合直线为~$y= 0.3769x - 0.0035$。
+\begin{figure}[!htpb]
+	\begin{center}
+		\epsfig{file= huoerxiaoying.pic.vhis.eps,width=0.6\textwidth}
+	\end{center}
+	\caption{$V_H$--$I_S$ 描点及拟合直线图}
+	\label{fig:VhIs}
+\end{figure}
+
+故
+\begin{align*}
+	K_H &= \frac{V_H}{I_S I_M K}  = \frac{V_H}{I_S} \frac{1}{I_M K}\\
+	&\approx \frac{0.3769}{0.45\times 0.5}\\
+	&\approx 1.68 \dw{\Omega /m}
+\end{align*}
+\[
+\therefore\, R_H = K_H \cdot d = 1.68 \times 0.2 \times 10^{-3} = 3.36 \times 10^{-4} \dw{\Omega}
+\]
+
+\subsection{$I_S = 4.50 \dws{mA}$ 时，$V_H$--$I_M$ 数据的处理}
+对实验测量数据取平均值，得~$V_H$--$I_M$ 数据如下表所示：
+\begin{longtable}{|c|*{8}{r|}}
+	\hline
+	$V_H\dw{mV}$ & 0.352 & 0.528 & 0.718 & 0.902 & 1.095 & 1.292 & 1.490 & 1.695 \\\hline
+	$I_M\dw{A}$ & 0.10 & 0.15 & 0.20 & 0.25 & 0.30 & 0.35 &  0.40 & 0.45\\\hline
+\end{longtable}
+
+作出~$V_H$--$I_M$ 曲线如图~\ref{fig:VhIm} 所示。图中拟合直线为~$y= 3.8395x - 0.0469$。
+\begin{figure}[!htpb]
+	\centering
+		\epsfig{file= huoerxiaoying.pic.vhim.eps,width=0.6\textwidth}
+	\caption{$V_H$--$I_M$ 描点及拟合直线图}
+	\label{fig:VhIm}
+\end{figure}
+
+故\vspace*{-2.5em}
+\begin{align*}
+	K_H &= \frac{V_H}{I_S I_M K}  = \frac{V_H}{I_M} \frac{1}{I_S K}\\
+	&\approx \frac{3.8395\times 10^{-3}}{4.50 \times 10^{-3} \times 0.5} \\
+	&\approx 1.71 \dw{\Omega /m}
+\end{align*}
+\[
+\therefore\, R_H = K_H \cdot d = 1.71 \times 0.2 \times 10^{-3} = 3.42 \times 10^{-4} \dw{\Omega}
+\]
+
+\subsection{霍尔元件导电类型的判定}
+由图~\ref{fig:leixing} 可知，当电流方向向左，磁场方向垂直于纸面向里时，霍尔元件上侧带负电，下侧带正电。又由于载流子所受的洛
+伦兹力的方向向上，故可判断载流子带负电。故本霍尔元件的导电类型为电子型。
+
+\subsection{霍尔元件电导率及迁移率的计算}
+由于测得当磁场为零，$I_S = 0.1\dws{mA}$ 时，$V_\sigma= 8.00 \dws{mV}$，故
+\begin{align*}
+	\sigma &= \frac{I_S l }{V_\sigma b d }\\
+	&= \frac{0.1\times 10^{-3} \times 3.0 \times 10^{-3}}{8 \times 10^{-3} \times 40 \times 10^{-3} \times 0.2 \times
+	10^{-3}}\\
+	&\approx 4.69 \dw{\Omega ^{-1}}\\
+	\therefore\, u &= \frac{\sigma}{n q} = \sigma R_H \\
+	&= 4.69 \times 3.4 \times 10^{-4}\\
+	&\approx 1.6 \times 10^{-3} 
+\end{align*}
+
+\section{思考题}
+\begin{compactenum}
+\item {若磁场不恰好与霍尔元件片的法线一致，对测量结果会有何影响？如何用实验的方法判断~$\bm{B}$ 与元件法线是否一致？}
+
+答：如果磁场不与霍尔元件的法线一致，则只有磁场在法线方向上的分量对载流子产生有效的洛伦兹力，即只有~$B'=B\cos \theta$ 是有效的磁
+场大小。这样，由于~$K_H = \frac{V_H}{IB}$，故测得的~$K_H$ 会偏大。判断~$\bm{B}$ 的方向是否与法线方向一致的方法就是，将根据
+测量计算得出的~$K_H$ 值与霍尔元件已知的~$K_H$ 值进行比较，如果计算值比理论值有比较明显的偏大即可认为霍尔元件法线与磁场方向
+不一致。
+
+\item 能否用霍尔元件片测量交变磁场？
+
+答：不能。因为交变磁场会在霍尔元件中产生感应电流，会影响实验的结果。
+\end{compactenum}
+\clearpage
+\end{CJK*}
+\end{document}

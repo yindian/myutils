@@ -1,0 +1,292 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex }
+\begin{document}
+\renewcommand{\thedate}{2005.10.10.}
+\begin{CJK*}{GBK}{song}
+\CJKindent
+\CJKcaption{GB}
+\exptitle{用三线摆测量刚体的转动惯量}
+
+\section{实验目的}
+掌握用三线摆测定物体转动惯量的方法，并验证转动惯量的平行轴定理。
+\section{实验仪器}
+三线摆，电子秒表，游标卡尺，米尺，待测金属圆环，两个相同的金属圆柱。
+\section{实验原理}
+三线摆是由在上圆盘的圆周上、沿等边三角形的顶点对称地连接在下面一个较大的均匀圆盘边缘的正三角形顶点上的三根线以及上、下圆盘
+和铁架台组成的。当上、下圆盘水平时，将圆盘绕竖直的中心轴转动一个小角度，可使下圆盘绕中心轴线做简谐转动。可推导出其转动的周
+期满足关系式：
+$$\frac{4\pi^2}{T^2} = \frac{m g R r}{I H}$$
+于是，
+$$I = \frac{m g R r}{4 \pi^2 H}T^2$$
+其中\ $I$ 为圆盘及其上的重物相对于中心轴的转动惯量，$m$ 为圆盘及其上和重物的总重量，$R$ 为下圆盘的半径，$r$ 为上圆盘的半径，
+$H$ 为下圆盘到上圆盘之间的铅直距离，$T$ 为圆盘转动的周期。
+
+如果要测量一个质量为~$m$ 的物体的转动惯量，可以先测定无负载时下圆盘的转动惯量~$I_0$，然后将待测物体放到下圆盘上，测定此时整
+个系统的转动周期~$T_1$，则系统的转动惯量~$I_1$ 可由下式计算：
+$$I_1 = \frac{(m_0 + m)g R r}{4 \pi^2 H}T_1^2$$
+则待测物体绕三线摆中心轴线的转动惯量
+$$I = I_1 - I_0 = \frac{g R r}{4 \pi^2 H}\left[ (m_0 + m)T_1^2 - m_0 T_0^2 \right]$$
+
+平行轴定理为：$I = I_c + md^2$，其中~$I$ 为物体绕任意轴的转动惯量，$I_c$ 为物体绕其质心的转动惯量，$d$ 为两个平行轴之间的距
+离。因此可以通过先将物体的质心放在下圆盘中间测出~$I_c$，再按给定的~$d$ 测出~$I$ 的值，与~$I_c+md^2$ 比较即可以验
+证平行轴定理。
+\section{实验内容}
+本次实验主要有三个步骤。
+\begin{enumerate}
+	\item 测定仪器常数~$R$、$r$、$H$ 和~$m_0$，并算出下圆盘的转动惯量~$I_0$。
+	\item 将圆环放到下圆盘的正中间，测量系统的转动惯量~$I_1$，并由此求出圆环绕中心的转动惯量~$I$。并与圆环绕中心轴的转
+		动惯量理论值~$I = \frac{1}{8} m (D_\zhscript{内}^2 + D_\zhscript{外}^2)$ 比较。
+	\item 将质量和形状尺寸相同的两金属圆柱之间的距离~$d$ 分别设为~0 cm、2 cm、4 cm、6 cm，对称地置于三线摆的轴线两侧，
+		测量两 个圆柱的系统的转动惯量与~$d$ 之间的关系， 并由此验证平行轴定理。
+\end{enumerate}
+\section{实验数据}
+\subsection{仪器参数的测量}
+下圆盘质量已知：$m_0 = 358.5 \,\text{g}$。
+
+下圆盘等边三角形边长已知：$a = 173.50 \,\text{mm}$。
+
+重力加速度已知：$g = 9.7947 \,\text{m/s${}^2$}$。
+
+上圆盘直径~$d$ 的三次测量值（mm）：100.00，100.06，100.02。
+
+上、下圆盘垂直距离~$H$ 的三次测量值（cm）：44.52，44.55，44.57。
+
+下圆盘空载~50 周期时间测量值（s）：70.06，70.51，70.12。
+
+\subsection{圆环转动惯量的测量}
+圆环质量~$m$ 已知：$m = 398.0\,\text{g}$。
+
+圆环外径~$D_\zhscript{外}$ 的三次测量值（mm）：189.84，189.74，189.80。
+
+圆环内、外径差~$D_\zhscript{外} - D_\zhscript{内}$ 的三次测量值（mm）：10.36，10.78，10.42。
+
+50 周期时间测量值（s）：79.28，79.02，79.52。
+
+\subsection{验证平行轴定理}
+圆柱的质量已知：$m_1 = m_2 = m = 200\,\text{g}$。
+
+50 周期时间测量值（s）：
+
+{
+\centering
+	$d= 0\,\text{mm}$ 时，\ \quad 49.06 \qquad 49.26 \qquad 49.36\\
+	$d=20\,\text{mm}$ 时，\quad 51.64 \qquad 51.45 \qquad 51.51\\
+	$d=40\,\text{mm}$ 时，\quad 56.85 \qquad 56.90 \qquad 56.93\\
+	$d=60\,\text{mm}$ 时，\quad 64.54 \qquad 64.78 \qquad 64.47\\
+}
+
+\section{数据处理和误差分析}
+\subsection{仪器参数的测量}
+\[ R = \frac{a}{2} \div \cos \frac{\pi}{6} = \frac{a}{2} \cdot \frac{2}{\sqrt{3}} = \frac{\sqrt{3}\,a}{3}\]
+\[ T_0 = T / n, \qquad n = 50\]
+
+上圆盘直径~$d$ 的三次测量值（mm）为：100.00，100.06，100.02，故有
+\[\bar{d} = 100.03 \dw{mm}, \qquad \sigma_d = 0.025 \dw{mm} \]
+\[\Delta_A(d) = t_P \cdot \frac{\sigma_d}{\sqrt{n}} = 4.30 \times \frac{0.025}{\sqrt{3}} \approx 0.062\dw{mm}\]
+\[\Delta_B(d) = \Delta_\zhscript{仪} = 0.01\dw{mm}\]
+\[\therefore \Delta(d) = \sqrt{\Delta_A^2(d) + \Delta_B^2(d)} = \sqrt{0.062^2 + 0.01^2} \approx 0.063\dw{mm}\]
+
+上、下圆盘竖直距离~$H$ 的三次测量值（cm）为：44.52，44.55，44.57，故有
+\[\overline{H} = 44.55 \dw{cm}, \qquad \sigma_H = 0.020 \dw{cm} \]
+\[\Delta_A(H) = t_P \cdot \frac{\sigma_H}{\sqrt{n}} = 4.30 \times \frac{0.020}{\sqrt{3}} \approx 0.050\dw{cm}\]
+\[\Delta_B(H) = \Delta_\zhscript{仪} = 0.05\dw{cm}\]
+\[\therefore \Delta(H) = \sqrt{\Delta_A^2(H) + \Delta_B^2(H)} = \sqrt{0.050^2 + 0.05^2} \approx 0.071\dw{cm}\]
+
+空载~50 周期时间~$T$ 的三次测量值（s）为：70.06，70.51，70.12，故有
+\[\overline{T} = 70.23 \dw{s}, \qquad \sigma_T = 0.20 \dw{s} \]
+\[\Delta_A(T) = t_P \cdot \frac{\sigma_T}{\sqrt{n}} = 4.30 \times \frac{0.20}{\sqrt{3}} \approx 0.50\dw{s}\]
+\[\Delta_B(T) = \Delta_\zhscript{估} = 0.2\dw{s}\]
+\[\therefore \Delta(T) = \sqrt{\Delta_A^2(T) + \Delta_B^2(T)} = \sqrt{0.50^2 + 0.2^2} \approx 0.54\dw{s}\]
+
+
+故
+\[
+\begin{aligned}
+	I_0 &= \frac{m_0 g R r }{4 \pi^2 H}T_0^2 = \frac{m_0 g}{4 \pi^2 H} \frac{\sqrt{3}\,a}{3} \frac{d}{2} \left(
+	\frac{T}{n} \right)^2 = \frac{\sqrt{3}\, m_0 g a d}{24 \pi^2 H n^2}T^2\\
+	&= \frac{\sqrt{3} \times 0.3585 \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 \times 50^2}
+	\times 70.23^2\\
+	&\approx 1.97 \times 10^{-3} \dw{kg\cdot m^2}
+\end{aligned}
+\]
+\[
+\begin{aligned}
+	\frac{\Delta(I_0)}{I_0} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T)}{T}\\
+	&= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.54}{ 70.23}\\
+	&\approx 1.0\%
+\end{aligned}
+\]
+
+故下圆盘的转动惯量的测量值为：$I_0 = 1.97 \times 10^{-3} (1 \pm 1.0\%) \dw{kg\cdot m^2}$。
+
+\subsection{圆环转动惯量的测量}
+%\[ T_1 = T / n, \qquad n = 50\]
+
+圆环外径~$D_\zhscript{外}$ 的三次测量值（mm）为：189.84，189.74，189.80，故有
+\[\overline{D_\zhscript{外}} = 189.79 \dw{mm}, \qquad \sigma(D_\zhscript{外})= 0.041 \dw{mm} \]
+\[\Delta_A(D_\zhscript{外}) = t_P \cdot \frac{\sigma(D_\zhscript{外})}{\sqrt{n}} 
+	= 4.30 \times \frac{0.041}{\sqrt{3}} \approx 0.10\dw{mm}\]
+\[\Delta_B(D_\zhscript{外}) = \Delta_\zhscript{仪} = 0.01\dw{mm}\]
+\[\therefore \Delta(D_\zhscript{外}) = \sqrt{\Delta_A^2(D_\zhscript{外}) + \Delta_B^2(D_\zhscript{外})} = 
+	\sqrt{0.041^2 + 0.01^2} \approx 0.042\dw{mm}\]
+
+圆环内、外径差~$h$ 的三次测量值（mm）为：10.36，10.78，10.42，故有
+\[\bar{h} = 10.52 \dw{cm}, \qquad \sigma_h = 0.18 \dw{mm} \]
+\[\Delta_A(h) = t_P \cdot \frac{\sigma_h}{\sqrt{n}} = 4.30 \times \frac{0.18}{\sqrt{3}} \approx 0.45\dw{mm}\]
+\[\Delta_B(h) = \Delta_\zhscript{仪} = 0.01\dw{mm}\]
+\[\therefore \Delta(h) = \sqrt{\Delta_A^2(h) + \Delta_B^2(h)} = \sqrt{0.45^2 + 0.01^2} \approx 0.45\dw{mm}\]
+
+故对圆环内径~$D_\zhscript{内}$ 有：
+\[\overline{D_\zhscript{内}} = \overline{D_\zhscript{外}} - \bar{h} = 179.27 \dw{mm},\quad 
+	\Delta(D_\zhscript{内}) = \Delta(D_\zhscript{外}) + \Delta(h) \approx 0.49\dw{mm}\]
+
+50 周期时间~$T$ 的三次测量值（s）为：79.28，79.02，79.52，故有
+\[\overline{T} = 79.27 \dw{s}, \qquad \sigma_T = 0.20 \dw{s} \]
+\[\Delta_A(T) = t_P \cdot \frac{\sigma_T}{\sqrt{n}} = 4.30 \times \frac{0.20}{\sqrt{3}} \approx 0.50\dw{s}\]
+\[\Delta_B(T) = \Delta_\zhscript{估} = 0.2\dw{s}\]
+\[\therefore \Delta(T) = \sqrt{\Delta_A^2(T) + \Delta_B^2(T)} = \sqrt{0.50^2 + 0.2^2} \approx 0.54\dw{s}\]
+
+故
+\[
+\begin{aligned}
+	I_1 &= \frac{(m_0+m) g R r }{4 \pi^2 H}T_1^2 =  \frac{\sqrt{3}\, (m_0+m) g a d}{24 \pi^2 H n^2}T^2\\
+	&= \frac{\sqrt{3} \times (0.3585+0.3980) \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 
+	\times 50^2} \times 79.27^2\\
+	&\approx 5.30 \times 10^{-3} \dw{kg\cdot m^2}
+\end{aligned}
+\]
+\[
+\begin{aligned}
+	\frac{\Delta(I_1)}{I_1} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T)}{T}\\
+	&= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.54}{79.27}\\
+	&\approx 0.90\%
+\end{aligned}
+\]
+
+\[
+\begin{aligned}
+	\therefore \,&I = I_1 - I_0 = 5.30 \times 10^{-3} - 1.97 \times 10^{-3} = 3.33 \times 10^{-3} \dw{kg\cdot m^2}\\
+	&\Delta(I) = \Delta(I_1) + \Delta(I_0) \\
+	&\,\qquad= 0.90\%\cdot 5.30\times 10^{-3} + 1.0\%\times 1.97\times 10^{-3}\\
+	&\,\qquad\approx 6.74 \times 10^{-5} \dw{kg\cdot m^2}
+\end{aligned}
+\]
+
+故圆环的转动惯量的测量值为：$I= 3.33 \times 10^{-3} \pm 6.74 \times 10^{-5} \dw{kg\cdot m^2}$。
+
+采用测量内、外径的方法，得：
+\[ 
+\begin{aligned}
+I' &= \frac{1}{8 } m (D_\zhscript{外}^2 + D_\zhscript{内}^2)\\
+&= \frac{1}{8 } \cdot 0.3980 \cdot (0.18979^2 + 0.17927^2) \\
+&\approx 3.39 \times 10^{-3} \dw{kg\cdot m^2}\\
+\Delta(I') &= \Delta(D_\zhscript{外}^2) + \Delta(D_\zhscript{内}^2)\\
+&= D_\zhscript{外}^2 \times 2\frac{\Delta(D_\zhscript{外})}{D_\zhscript{外}} + 
+	D_\zhscript{内}^2 \times 2\frac{\Delta(D_\zhscript{内})}{D_\zhscript{内}}\\
+&= 2 \times 4.2 \times 10^{-5} \times 0.18979^2 + 2 \times 4.9 \times 10^{-4} \times 0.17927^2\\
+&\approx 3.45 \times 10^{-5} \dw{kg\cdot m^2}
+\end{aligned}
+\]
+
+故测量得~$I' = 3.39 \times 10^{-3} \pm 3.45 \times 10^{-5} \dw{kg\cdot m^2}$。
+
+由此可见，采用三线摆测出的圆环的转动惯量与理论值在误差允许范围内一致。
+
+\subsection{验证平行轴定理}
+由原始数据处理得，
+在\ $d = 0\dw{mm}$ 时，$\overline{T_1} = 49.22 \dw{s}$，$\Delta(T_1) = \sqrt{0.29^2+0.2^2} \approx 0.35\dw{s}$；
+当\ $d = 20\dw{mm}$ 时，$\overline{T_2} = 51.53 \dw{s}$，$\Delta(T_2) = \sqrt{0.20^2+0.2^2} \approx 0.28\dw{s}$；
+当\ $d = 40\dw{mm}$ 时，$\overline{T_3} = 56.89 \dw{s}$，$\Delta(T_3) = \sqrt{0.082^2+0.2^2} \approx 0.22\dw{s}$；
+当\ $d = 60\dw{mm}$ 时，$\overline{T_4} = 64.60 \dw{s}$，$\Delta(T_4) = \sqrt{0.33^2+0.2^2} \approx 0.38\dw{s}$。
+
+故有
+\begin{align*}
+	I_1 &= \frac{(m_0+2m) g R r }{4 \pi^2 H}T_{01}^2 =  \frac{\sqrt{3}\, (m_0+2m) g a d}{24 \pi^2 H n^2}T_1^2\\
+	&= \frac{\sqrt{3} \times (0.3585+2\cdot 0.3980) \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 
+	\times 50^2} \times 49.22^2\\
+	&\approx 2.05 \times 10^{-3} \dw{kg\cdot m^2}\\
+	%
+	\frac{\Delta(I_1)}{I_1} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T_1)}{T_1}
+	= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.35}{49.22}\\
+	&\approx 0.93\%\\
+	%
+	I_{m1} &= I_1 - I_0 = 2.05 \times 10^{-3} - 1.97 \times 10^{-3} = 8 \times 10^{-5} \dw{kg\cdot m^2}\\
+	\Delta(I_{m1}) &= \Delta(I_1) + \Delta(I_0)\\
+	&= 0.98\%\cdot 2.05\times 10^{-3} + 1.0\%\cdot 1.97\times 10^{-3}\\
+	&= 3.98\times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	\therefore I_{m1} &= (8 \pm 3.98) \times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	%
+	I_2 &= \frac{(m_0+2m) g R r }{4 \pi^2 H}T_{02}^2 =  \frac{\sqrt{3}\, (m_0+2m) g a d}{24 \pi^2 H n^2}T_2^2\\
+	&= \frac{\sqrt{3} \times (0.3585+2\cdot 0.3980) \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 
+	\times 50^2} \times 51.53^2\\
+	&\approx 2.25 \times 10^{-3} \dw{kg\cdot m^2}\\
+	%
+	\frac{\Delta(I_2)}{I_2} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T_2)}{T_2}
+	= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.28}{51.53}\\
+	&\approx 0.76\%\\
+	%
+	I_{m2} &= I_2 - I_0 = 2.25 \times 10^{-3} - 1.97 \times 10^{-3} = 2.8 \times 10^{-4} \dw{kg\cdot m^2}\\
+	\Delta(I_{m2}) &= \Delta(I_2) + \Delta(I_0)\\
+	&= 0.76\%\cdot 2.25\times 10^{-3} + 1.0\%\cdot 1.97\times 10^{-3}\\
+	&= 3.68\times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	\therefore I_{m2} &= (2.8 \pm 0.368) \times 10^{-4} \dw{kg\cdot m^2}\\
+	%
+	%
+	I_3 &= \frac{(m_0+2m) g R r }{4 \pi^2 H}T_{03}^2 =  \frac{\sqrt{3}\, (m_0+2m) g a d}{24 \pi^2 H n^2}T_3^2\\
+	&= \frac{\sqrt{3} \times (0.3585+2\cdot 0.3980) \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 
+	\times 50^2} \times 56.89^2\\
+	&\approx 2.74 \times 10^{-3} \dw{kg\cdot m^2}\\
+	%
+	\frac{\Delta(I_3)}{I_3} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T_3)}{T_3}
+	= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.22}{56.89}\\
+	&\approx 0.61\%\\
+	%
+	I_{m3} &= I_3 - I_0 = 2.74 \times 10^{-3} - 1.97 \times 10^{-3} = 7.7 \times 10^{-4} \dw{kg\cdot m^2}\\
+	\Delta(I_{m3}) &= \Delta(I_3) + \Delta(I_0)\\
+	&= 0.61\%\cdot 2.74\times 10^{-3} + 1.0\%\cdot 1.97\times 10^{-3}\\
+	&= 3.64\times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	\therefore I_{m3} &= (7.7 \pm 0.364) \times 10^{-4} \dw{kg\cdot m^2}\\
+	%
+	%
+	I_4 &= \frac{(m_0+2m) g R r }{4 \pi^2 H}T_{04}^2 =  \frac{\sqrt{3}\, (m_0+2m) g a d}{24 \pi^2 H n^2}T_4^2\\
+	&= \frac{\sqrt{3} \times (0.3585+2\cdot 0.3980) \times 9.7947 \times 0.17350 \times 0.10003}{24 \pi^2 \times 0.4455 
+	\times 50^2} \times 64.60^2\\
+	&\approx 3.53 \times 10^{-3} \dw{kg\cdot m^2}\\
+	%
+	\frac{\Delta(I_4)}{I_4} &= \frac{\Delta(d)}{d} + \frac{\Delta(H)}{H} + 2 \frac{\Delta(T_4)}{T_4}
+	= \frac{0.063}{100.03} + \frac{0.071}{44.55} + \frac{0.38}{64.60}\\
+	&\approx 0.81\%\\
+	%
+	I_{m4} &= I_4 - I_0 = 3.53 \times 10^{-3} - 1.97 \times 10^{-3} = 1.56 \times 10^{-3} \dw{kg\cdot m^2}\\
+	\Delta(I_{m4}) &= \Delta(I_4) + \Delta(I_0)\\
+	&= 0.81\%\cdot 3.53\times 10^{-3} + 1.0\%\cdot 1.97\times 10^{-3}\\
+	&= 4.83\times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	\therefore I_{m4} &= 1.56 \times 10^{-3} \pm 4.83\times 10^{-5} \dw{kg\cdot m^2}\\
+	%
+	%
+\end{align*}
+
+作出~$I_m$--$d$ 图象如图~\ref{fig:Im-d} 所示。图中曲线为二次拟合曲线。
+\begin{figure}[!htpb]
+	\begin{center}
+		\epsfig{file= sanxianbai.eps, width=0.6\textwidth}
+	\end{center}
+	\caption{$I_m$--$d$ 图象}
+	\label{fig:Im-d}
+\end{figure}
+
+由图~\ref{fig:Im-d} 可见，$I_m$ 与~$d$ 的关系十分接近于二次函数关系，且对称轴就在~$y$ 轴，与平行轴定理的结论相符合。
+这就验证了平行轴定理的正确性。
+
+\section{实验结论}
+本次实验比较成功地测定了圆环绕其中心的转动惯量，并验证了平行轴定理。通过这个实验，使我掌握了使用三线摆测量刚体的转动惯量的
+方法，并进一步练习了误差分析。影响实验结果精确性的因素，除了测量上的误差及系统误差外，还有就是下圆盘是否水平的问题，以及操
+作过程中下圆盘不完全是做简谐转动的问题。虽然实验过程中遇到了一些不清楚的地方，向老师请教，但是最终的实验结果还是令人满意的。
+\clearpage
+\end{CJK*}
+\end{document}

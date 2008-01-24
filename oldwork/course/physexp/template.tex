@@ -1,0 +1,50 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{calrsfs}
+\usepackage{cancel}
+\usepackage{picinpar}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\newcommand{\im}{\mathrm{i}}
+\renewcommand{\dee}{\,\mathrm{d}}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\makeatletter
+\long\def\@makewincaption#1#2{%
+   \setbox\@tempboxa\hbox{\normalsize{#1:\enspace}{#2}}%
+   \ifdim\wd\@tempboxa>\picwd
+      {\normalsize{#1:\enspace}{#2\par}}
+   \else
+      \hbox to\picwd{\hfil\box\@tempboxa\hfil}
+   \fi}
+\makeatother
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.<++>}
+\setlength{\abovedisplayskip}{1pt}
+\setlength{\belowdisplayskip}{1pt}
+\setlength{\abovedisplayshortskip}{-2pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+
+\exptitle{<++>}
+
+\section{实验目的}
+<++>
+
+\section{实验原理}
+<++>
+
+\section{思考题}
+\begin{enumerate}
+	\item <++>
+	\item[答:] <++>
+\end{enumerate}
+
+\clearpage
+\end{CJK*}
+\end{document}
+

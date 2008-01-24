@@ -1,0 +1,160 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex }
+\begin{document}
+\renewcommand{\thedate}{2005.10.31}
+\begin{CJK*}{GBK}{song}
+\CJKindent
+\CJKcaption{GB}
+
+\exptitle{检流计的特性}
+\section{实验目的}
+了解磁电式检流计的结构、原理和运动规律，了解磁电式检流计的运动状态的特点并测定检流计临界电阻，掌握测定检流计电流常数的方法。
+
+\section{实验原理}
+\subsection{检流计工作原理简述}
+光点式检流计是通过测量金属悬丝的扭转角来得出电流在磁场中所到的安培力矩大小，进而测得电流大小的精密物理实验仪器。
+它通常被用来测量小于~$1\dws{\mu A}$ 的电流；读数结果为反射到标尺上的光标。
+通过理论计算可知，通过检流计的电流满足~$I_\mathrm{G} = n\cdot C_I$，其中~$n$ 为标尺的读数（mm），$C_I$ 为检流计的电流常数（A/mm）。
+检流计的电压常数定义为~$C_\mathrm{V} = V_\mathrm{G} / n$，其中~$n$ 为标尺的读数。
+\subsection{检流计的运动状态}
+通过理论计算可知，在只考虑电磁阻力及空气阻力的情况下，检流计的运动状态方程为：\\
+\centerline{$ \alpha = \alpha_m e^{-\beta t} \sin(\omega_0 t + \delta) + \alpha_F$}
+\\
+其中~$\alpha$ 为检流计光标的偏转角，$\beta$ 为衰减系数，$\omega_0$ 为固有角频率。 由此可见， 运动状态的解有两个部分：一个是
+稳定项~$\alpha_F$，$\alpha$ 最终将趋向~$\alpha_F$ 或在其上下振动；二是瞬时项\ $\alpha_m e^{-\beta t} \sin(\omega_0 t +
+\delta)$，它随衰减系数~$\beta=\beta(R)$ 的不同而变化。当~$R = R_\mathrm{C}$ 时为临界阻尼状态，动圈无振动地很快到达平衡状态；当~$R >
+R_\mathrm{C}$ 时为过阻尼状态，动圈会缓慢地趋向平衡位置；当~$R < R_\mathrm{C}$ 时为欠阻尼状态，动圈会在平衡位置处作衰减振动。
+
+\subsection{测量电路}
+\begin{minipage}[]{0.7\textwidth}
+	测量电路如右图所示。
+
+	经过理论计算可得：
+
+	电流常数
+\[
+C_I = \frac{I_\mathrm{G}}{n} = \frac{V_0 R_1}{R_0(R_\mathrm{G}+R_\mathrm{KP}+R_1)}
+\]
+
+电压常数
+\[
+C_V = \frac{V_\mathrm{G}}{n} = \frac{V_0 R_1}{n(R_0+R_1)}
+\]
+\end{minipage}
+\begin{minipage}[]{0.3\textwidth}
+	\epsfig{file= jianliuji.fig.dianlutu.eps,width=0.9\textwidth}
+\end{minipage}
+
+\section{实验内容}
+\begin{compactenum}
+	\item 选取不同的~$R_\mathrm{KP}$，观察检流计运动状态并测量临界电阻。
+	\item 在临界状态下通过测量一组~$n$ 与~$V_0$，测量检流计的电流常数~$C_I$ 和电压常数~$C_V$。
+	\item 测量阻尼时间~$T_\mathrm{C}$，即在临界状态下，检流计从偏转最大位置（60~mm）到达平衡点所需的时间。
+	\item 根据步骤~2 的数据，求最大偏转（60~mm）时的~$\dfrac{\Delta C_I}{C_I}$ 与~$\dfrac{\Delta C_V}{C_V}$。
+	\item 测量~$R_\mathrm{KP}= 0.5 R_\mathrm{C}\mbox{ 和\ }2R_\mathrm{C}$ 及满偏~60~mm 时的~$C_I$ 和~$C_V$。
+\end{compactenum}
+
+\section{实验数据及处理}
+\subsection{观察检流计的运动状态}
+已知~$R_\mathrm{G} = 80 \dws{\Omega}$，$R_1 = 1\dws{\Omega}$，$R_0 = 10^{5}\dws{\Omega}$。
+测得~$R_\mathrm{C} = 810\dws{\Omega}$。
+
+\begin{compactitem}[\indent$\cdot$]
+	\item 当~$R_\mathrm{KP} = R_\mathrm{C} / 3$ 时，检流计处于过阻尼状态，到达平衡位置所用时间的两次测量值为：11.81~s，
+		11.17~s。
+	\item 当~$R_\mathrm{KP} = R_\mathrm{C} / 2$ 时，检流计处于过阻尼状态，到达平衡位置所用时间的两次测量值为：6.70~s，
+		6.55~s。
+	\item 当~$R_\mathrm{KP} = R_\mathrm{C} $ 时，检流计处于临界阻尼状态，到达平衡位置所用时间的两次测量值为：3.23~s，
+		3.07~s。
+	\item 当~$R_\mathrm{KP} = 2 R_\mathrm{C} $ 时，检流计处于欠阻尼状态，首次到达平衡位置所用时间：0.84~s，
+		0.85~s，最终到达平衡位置所用时间：6.52~s，6.03~s。
+	\item 当~$R_\mathrm{KP} = 3 R_\mathrm{C} $ 时，检流计处于欠阻尼状态，首次到达平衡位置所用时间：0.81~s，
+		0.80~s，最终到达平衡位置所用时间：8.36~s，8.21~s。
+\end{compactitem}
+\subsection{测量电流常数与电压常数}
+实验测得的一组~$n$，$n'$，$V_0$ 值以及计算得到的~$\bar{n}$ 值如下表所示：
+\begin{longtable}{|c|*{7}{@{\extracolsep{1em}}r|}}
+	\hline
+	物理量 & \multicolumn{7}{c|}{测量值/计算值}\\\hline
+	$n\dw{mm}$ & 60.0 & 55.0 & 50.1 & 45.0 & 40.0 & 35.2 & 30.0\\\hline
+	$n'\dw{mm}$ & 58.8 & 54.2 & 49.6 & 44.7 & 39.9 & 35.0 & 30.0\\\hline
+	$\bar{n}\dw{mm}$ & 59.4 & 54.6 & 49.8 & 44.8 & 40.0 & 35.1 & 30.0\\\hline
+	$V_0 \dw{V}$ & 0.86 & 0.80 & 0.75 & 0.66 & 0.58 & 0.50 & 0.45\\\hline
+\end{longtable}
+
+由~$\bar{n}$ 与~$V_0$ 的值作出~$n$--$V_0$ 曲线如图~\ref{fig:nVline} 所示。
+\begin{figure}[!htbp]
+	\begin{center}
+		\epsfig{file= jianliuji.eps,width=0.6\textwidth}
+	\end{center}
+	\caption{$n$--$V_0$ 描点及拟合直线图}
+	\label{fig:nVline}
+\end{figure}
+图中的直线为~$V_0 = 0.0146 n + 0.0029$。故知~$V_0 / n \approx 0.0146\dw{V/mm}$。
+
+将~$V_0 / n$ 代入公式可得：
+\begin{align*}
+C_I &= \frac{V_0 R_1}{n R_0 (R_\mathrm{G} + R_\mathrm{KP} + R_1)} \\
+&= 0.0146 \times \frac{1}{10^{5} \times(80 + 810 + 1)}\\
+&\approx 1.64 \times 10^{-10} \dw{A/mm}\\[1ex]
+C_V &= \frac{V_0 R_1}{n (R_0 + R_1)}\\
+&= 0.0146 \times \frac{1}{10^{5} + 1}\\
+&\approx 1.46 \times 10^{-7} \dw{V/mm}
+\end{align*}
+
+\subsection{测量阻尼时间}
+取~$R_\mathrm{KP} = R_\mathrm{C}$，测量得到的三组~$T_\mathrm{C}$ 的值为：2.53~s，2.83~s，3.06~s。
+\subsection{计算临界状态、最大偏差时的~$\Delta C_I/C_I$、$\Delta C_V/C_V$}
+由前面的数据可知，当~$R_\mathrm{KP} = R_\mathrm{C}$，$n=60\dws{mm}$ 时，有：
+\begin{align*}
+	C_I &= \frac{V_0 R_1}{n R_0 (R_\mathrm{G} + R_\mathrm{KP} + R_1)}\\
+	&= \frac{0.86\times 1}{59.4 \times 10^{5} \times(80 + 810 + 1)}\\
+	&\approx 1.62 \times 10^{-10} \dw{A/mm}\\[1ex]
+	C_V &= \frac{V_0 R_1}{n (R_0 + R_1)} \\
+	&= \frac{0.86 \times 1}{59.4 \times (10^{5} + 1)}\\
+	&\approx 1.45 \times 10^{-7} \dw{V/mm}\\[1ex]
+	\therefore\, 
+	\frac{\Delta C_I}{C_I} &= \left\lvert\frac{C_I - \overline{C_I}}{C_I}\right\rvert\\
+	&= \left\lvert\frac{(1.62 - 1.64)\times10^{-10}}{1.62\times10^{-10}}\right\rvert\\
+	&\approx 0.93\%\\[1ex]
+	\frac{\Delta C_V}{C_V} &= \left\lvert\frac{C_V - \overline{C_V}}{C_V}\right\rvert\\
+	&= \left\lvert\frac{(1.45 - 1.46)\times10^{-7}}{1.45\times10^{-7}}\right\rvert\\
+	&\approx 0.90\%
+\end{align*}
+
+\subsection{测量~$R_\mathrm{KP} = 0.5 R_\mathrm{C}$ 和~$2R_\mathrm{C}$ 及满偏时的~$C_I$、$C_V$}
+实验测得，当~$R_\mathrm{KP} = 0.5 R_\mathrm{C}$，$n = 60\dws{mm}$ 时，$V_0 = 0.46 \dws{V}$。此时
+\begin{align*}
+	C_I &= \frac{V_0 R_1}{n R_0 (R_\mathrm{G} + R_\mathrm{KP} + R_1)}\\
+	&= \frac{0.46 \times 1}{60 \times 10^{5} \times (80 + 405 + 1)}\\
+	&\approx 1.58 \times 10^{-10} \dw{A/mm}\\[1ex]
+	C_V &= \frac{V_0 R_1}{n (R_0 + R_1)}\\
+	&= \frac{0.46 \times 1}{60 \times(10^{5} + 1)}\\
+	&\approx 7.67\times 10^{-8} \dw{V/mm}\\
+\end{align*}
+
+当~$R_\mathrm{KP} = 2 R_\mathrm{C}$，$n = 60\dws{mm}$ 时，$V_0 = 1.72 \dws{V}$。此时
+\begin{align*}
+	C_I &= \frac{V_0 R_1}{n R_0 (R_\mathrm{G} + R_\mathrm{KP} + R_1)}\\
+	&= \frac{1.72 \times 1}{60 \times 10^{5} \times (80 + 1620 + 1)}\\
+	&\approx 1.68 \times 10^{-10} \dw{A/mm}\\[1ex]
+	C_V &= \frac{V_0 R_1}{n (R_0 + R_1)}\\
+	&= \frac{1.72 \times 1}{60 \times(10^{5} + 1)}\\
+	&\approx 2.87\times 10^{-7} \dw{V/mm}\\
+\end{align*}
+
+\section{思考题}
+\noindent 若在实验内容中得到的临界电阻不准确，对测得的电流常数~$C_I$ 和电压常数~$C_V$ 是否有影响？为什么？
+
+这对~$C_I$ 和~$C_V$ 的测量是有影响的。临界电阻的测量直接影响到~$R_\mathrm{KP}$ 的选择。从上面最后的一个实验内容中可以看出，
+当~$R_\mathrm{KP} > R_\mathrm{C}$ 时，测量得到的~$C_I$ 比真实值大，$C_V$ 也比真实值大；
+当~$R_\mathrm{KP} < R_\mathrm{C}$ 时，测量得到的~$C_I$ 比真实值小，$C_V$ 也比真实值小。
+这是因为，当~$R_\mathrm{KP} > R_\mathrm{C}$ 时，对于~$C_I=\frac{V_0 R_1}{n R_0 (R_\mathrm{G} + R_\mathrm{KP} + R_1)}$ 来说
+，虽然分母中的~$R_\mathrm{KP}$ 增大了，但是~$V_0$ 的增加更为明显，作用在整个分式上表现为~$C_I$ 比正常值偏大，
+而对~$C_V = \frac{V_0 R_1}{n(R_0 + R_1)}$ 来说，$V_0$ 的增加导致了它的增加，因此当临界电阻测量偏大时，得到的电流常数与电压
+常数比真实值偏大；当~$R_\mathrm{KP} < R_\mathrm{C}$ 时同理可知，得到的~$C_I$ 与~$C_V$ 比真实值偏
+小。
+
+\clearpage
+\end{CJK*}
+\end{document}

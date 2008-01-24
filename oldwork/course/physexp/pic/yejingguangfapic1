@@ -1,0 +1,132 @@
+%Created by jPicEdt 1.x
+%Standard LaTeX format (emulated lines)
+%Tue Mar 28 10:26:25 CST 2006
+\unitlength 1mm
+\begin{picture}(90.00,70.00)(0,0)
+
+\linethickness{0.30mm}
+%Polygon 0 0(20.00,60.00)(20.00,20.00) 
+\put(20.00,20.00){\line(0,1){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(20.00,20.00)(60.00,20.00) dash=1.00
+\multiput(20.00,20.00)(1.95,0){21}{\line(1,0){0.98}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(60.00,20.00)(60.00,60.00) dash=1.00
+\multiput(60.00,20.00)(0,1.95){21}{\line(0,1){0.98}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(60.00,60.00)(20.00,60.00) 
+\put(20.00,60.00){\line(1,0){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(35.00,45.00)(35.00,5.00) 
+\put(35.00,5.00){\line(0,1){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(35.00,5.00)(75.00,5.00) 
+\put(35.00,5.00){\line(1,0){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(75.00,5.00)(75.00,45.00) 
+\put(75.00,5.00){\line(0,1){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(75.00,45.00)(35.00,45.00) 
+\put(35.00,45.00){\line(1,0){40.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(20.00,60.00)(35.00,45.00) 
+\multiput(20.00,60.00)(0.12,-0.12){125}{\line(1,0){0.12}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(60.00,60.00)(75.00,45.00) 
+\multiput(60.00,60.00)(0.12,-0.12){125}{\line(1,0){0.12}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(20.00,20.00)(35.00,5.00) 
+\multiput(20.00,20.00)(0.12,-0.12){125}{\line(1,0){0.12}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(60.00,20.00)(75.00,5.00) dash=1.00
+\multiput(60.00,20.00)(1.43,-1.43){11}{\multiput(0,0)(0.12,-0.12){6}{\line(1,0){0.12}}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(60.00,60.00)(20.00,20.00) dash=1.00
+\multiput(20.00,20.00)(1.40,1.40){29}{\multiput(0,0)(0.12,0.12){6}{\line(1,0){0.12}}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(75.00,45.00)(35.00,5.00) dash=1.00
+\multiput(35.00,5.00)(1.40,1.40){29}{\multiput(0,0)(0.12,0.12){6}{\line(1,0){0.12}}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(30.00,35.00)(5.00,35.00) 
+\put(5.00,35.00){\line(1,0){25.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(30.00,35.00)(75.00,35.00) dash=1.00
+\multiput(30.00,35.00)(2.00,0){23}{\line(1,0){1.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(75.00,35.00)(90.00,35.00) 
+\put(75.00,35.00){\line(1,0){15.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(50.00,35.00)(50.00,55.00) dash=1.00
+\multiput(50.00,35.00)(0,1.90){11}{\line(0,1){0.95}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(50.00,55.00)(50.00,70.00) 
+\put(50.00,55.00){\line(0,1){15.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(10.00,40.00)(10.00,30.00) 
+\put(10.00,30.00){\line(0,1){10.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Polygon 0 0(85.00,40.00)(85.00,30.00) 
+\put(85.00,30.00){\line(0,1){10.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Ellipse 0 0(50.00,67.00)(1.50)(1.50) blacken arcStart=0.0 arcExtent=0.0
+\put(50.00,67.00){\circle*{1.50}}
+%End Ellipse
+
+\linethickness{0.30mm}
+%Ellipse 0 0(15.00,35.00)(1.50)(1.50) blacken arcStart=0.0 arcExtent=0.0
+\put(15.00,35.00){\circle*{1.50}}
+%End Ellipse
+
+\linethickness{0.30mm}
+%Polygon 0 0(80.00,40.00)(80.00,30.00) 
+\put(80.00,30.00){\line(0,1){10.00}}
+%End Polygon
+
+\linethickness{0.30mm}
+%Ellipse 0 0(50.00,64.00)(1.50)(1.50) blacken arcStart=0.0 arcExtent=0.0
+\put(50.00,64.00){\circle*{1.50}}
+%End Ellipse
+
+\end{picture}

@@ -1,0 +1,237 @@
+寄信人: yindian (Yin Dian)
+标  题: 微机原理实验二
+发信站: 瀚海星云 (2007年04月27日20:50:53 星期五)
+来  源: 202.38.79.74 
+
+实验题目：运算类编程实验
+
+实验目的：掌握使用运算类指令编程及调试方法；掌握运算类指令对各状态樗位的影响
+及其测试方法；学习使用软件监视变量的方法。
+
+实验环境：TD-PITE实验装置，Wmd86 4.1教学实验系统。
+
+实验内容：
+二进制双精度加法运算
+十进制的BCD码减法运算
+乘法运算
+
+实验记录：
+1.A3-1.ASM：
+SSTACK SEGMENT STACK
+    DW 64 DUP(?)
+SSTACK ENDS
+
+PUBLIC XH, XL, YH, YL, ZH, ZL
+
+DATA SEGMENT
+    XL DW ?
+    XH DW ?
+    YL DW ?
+    YH DW ?
+    ZL DW ?
+    ZH DW ?
+DATA ENDS
+
+CODE SEGMENT
+    ASSUME CS:CODE, DS:DATA, SS:SSTACK
+START:
+    MOV AX, DATA
+    MOV DS, AX
+    MOV AX, XL
+    ADD AX, YL
+    MOV ZL, AX
+    MOV AX, XH
+    ADC AX, YH
+    MOV ZH, AX
+    JMP START
+CODE ENDS
+    END START
+
+2.A3-2.asm
+SSTACK SEGMENT STACK
+    DW 64 DUP(?)
+SSTACK ENDS
+
+PUBLIC X, Y, Z
+
+DATA SEGMENT
+    X DW ?
+    Y DW ?
+    Z DW ?
+DATA ENDS
+
+CODE SEGMENT
+    ASSUME CS:CODE, DS:DATA, SS:SSTACK
+START:
+    MOV AX, DATA
+    MOV DS, AX
+    MOV AH, 00H
+    SAHF
+    MOV CX, 0002H
+    MOV SI, OFFSET X
+    MOV DI, OFFSET Z
+A1: MOV AL, [SI]
+    SBB AL, [SI + 02H]
+    DAS
+    PUSHF
+    AND AL, 0FH
+    POPF
+    MOV [DI], AL
+    INC DI
+    INC SI
+    LOOP A1
+    JMP START
+CODE ENDS
+    END START
+
+3.A3-3.asm
+SSTACK SEGMENT STACK
+    DW 64 DUP(?)
+SSTACK ENDS
+
+DATA SEGMENT
+    DATA1 DB 5 DUP(?)
+    DATA2 DB ?
+    RESULT DB 6 DUP(?)
+END DATA
+
+CODE SEGMENT
+    ASSUME CS:CODE, DS:DATA, SS:SSTACK
+START:
+    MOV AX, DATA
+    MOV DS, AX
+    CALL INIT
+    MOV SI, OFFSET DATA2
+    MOV BL, [SI]
+    AND BL, 0FH
+    CMP BL, 09H
+    JNC ERROR
+    MOV SI, OFFSET DATA1
+    MOV DI, OFFSET RESULT
+    MOV CX, 0005H
+A1:
+    MOV AL, [SI + 04H]
+    AND AL, 0FH
+    CMP AL, 09H
+    JNC ERROR
+    DEC SI
+    MUL BL
+    AAM
+    ADD AL, [DI + 05H]
+    AAA
+    MOV [DI + 05H], AL
+    DEC DI
+    MOV [DI + 05H], AH
+    LOOP A1
+A2: JMP A2
+
+INIT:
+    MOV SI, OFFSET RESULT
+    MOV CX, 0003H
+    MOV AX, 0000H
+A3: MOV [SI], AX
+    INC SI
+    INC SI
+    LOOP A3
+    RET
+    
+ERROR:
+    MOV SI, OFFSET RESULT
+    MOV CX, 0003H
+    MOV AX, 0EEEEH
+A4: MOV [SI], AX
+    INC SI
+    INC SI
+    LOOP A4
+    JMP A2
+CODE ENDS
+    END START
+
+实验题目：排序程序设计实验
+
+实验目的：掌握分支、循环、子程序调用等基本的程序结构；学习综合程序的设计、编
+制与调试。
+
+实验内容：
+气泡排序法
+学生成绩名次表
+
+实验记录：
+1.A6-1.asm
+SSTACK SEGMENT STACK
+    DW 64 DUP(?)
+SSTACK ENDS
+
+CODE SEGMENT
+    ASSUME CS:CODE
+START:
+    MOV CX, 000AH   ; 循环 10 次
+    MOV SI, 300AH   ; 数据尾地址（不含）
+    MOV BL, 0FFH
+A1: CMP BL, 0FFH
+    JNZ A4          ; 若后面都有序，则结束
+    MOV BL, 00H     ; BL = 00H 表示有序
+    DEC CX
+    JZ A4
+    PUSH SI
+    PUSH CX         ; 内层循环
+A2: DEC SI
+    MOV AL, [SI]
+    DEC SI
+    CMP AL, [SI]
+    JA A3           ; 后一个数大于前一个数，则不交换
+    XCHG AL, [SI]
+    MOV [SI + 01H], AL
+    MOV BL, 0FFH    ; 不都有序
+A3: INC SI
+    LOOP A2
+    POP CX
+    POP SI
+    JMP A1
+A4: JMP A4
+CODE ENDS
+    END START
+
+2.A6-2.asm
+SSTACK SEGMENT STACK
+    DW 64 DUP(?)
+SSTACK ENDS
+
+CODE SEGMENT
+    ASSUME CS:CODE
+START:
+    MOV AX, 0000H
+    MOV DS, AX
+    MOV ES, AX
+    MOV SI, 3000H   ; 存放学生成绩
+    MOV CX, 001EH   ; 共 30 个成绩
+    MOV DI, 3100H   ; 名次表首地址
+A1: CALL BRANCH     ; 返回 DX 为最高成绩学生序号
+    MOV AL, 1EH
+    SUB AL, CL
+    INC AL          ; AL = 循环次数+1即名次
+    MOV BX, DX
+    MOV [BX + DI], AL
+    LOOP A1
+A4: JMP A4
+
+BRANCH:
+    PUSH CX
+    MOV CX, 001EH
+    MOV AL, 00H
+    MOV BX, 3000H
+    MOV SI, BX
+A2: CMP AL, [SI]
+    JAE A3          ; 若 AL = [BX + DX] 比 [SI] 大，则不更新最大值
+    MOV AL, [SI]
+    MOV DX, SI
+    SUB DX, BX
+A3: INC SI
+    LOOP A2
+    ADD BX, DX
+    MOV AL, 00H
+    MOV [BX], AL    ; 将找到的最大成绩清零
+    POP CX
+    RET
+CODE ENDS
+    END START
