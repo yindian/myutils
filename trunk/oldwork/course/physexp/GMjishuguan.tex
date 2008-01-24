@@ -1,0 +1,67 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.3.7.}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+\CJKindent
+\CJKcaption{GB}
+
+\section{实验数据处理}
+\subsection{测量\ G--M 计数管的坪曲线}
+由实验数据可得\ G--M 计数管的\ $N$--$V$ 关系如下表：
+\begin{longtable}{|c|*{7}{r|}}
+	\hline
+	计数\ $N$ &		335 & 345 & 355 & 365 & 375 & 385 & 395 
+	\\\hline
+	电压\ $V\dw{V}$ &	0 & 1284 & 1339 & 1362 & 1406 & 1420 & 1448
+	\\\hline\hline
+	计数\ $N$ &		405 & 415 & 425 & 435 & 445 & 455 &
+	\\\hline
+	电压\ $V\dw{V}$ &	1451 & 1475 & 1486 & 1522 & 1548 & 1688 &
+	\\\hline
+\end{longtable}
+
+由上表可绘出\ G--M 计数管的坪曲线如图~\ref{fig:ping} 所示。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= gmjishuguan.eps,width=0.6\textwidth}
+	\end{center}
+	\caption{G--M 计数管的坪曲线}
+	\label{fig:ping}
+\end{figure}
+
+由图~\ref{fig:ping} 可知，该计数管的起始电压\ $V_0 = 335\dw{V}$，坪区边界\ $V_1 = 345\dw{V}$，$V_2=445\dw{V}$，
+$N_1 = 1284$，$N_2 = 1548$。故有：
+\begin{align*}
+	\text{坪长\ } \Delta N &=N_2 - N_1 = 1548 - 1284 = 264\\
+	\text{坪斜\ } T &= \frac{N_2 - N_1}{N_1(V_2 - V_1)}\times 100\% \\
+	& = \frac{264}{1284\times(445 - 345)} \approx 0.206\% \dw{V^{-1}}
+\end{align*}
+并可得该计数管的工作电压\ $V = (V_1 + V_2)/2 = 395\dw{V}$。
+\subsection{验证放射性计数服从统计规律}
+由实验数据可得各计数及其重复次数如下表：
+\begin{longtable}{|c|*{11}{>{\hfill}p{3.5ex}|}}
+	\hline
+	计数 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\\hline
+	重复次数 & 15 & 36 & 73 & 100 & 65 & 48 & 37 & 14 & 12 & 9 & 9 \\\hline
+\end{longtable}
+
+由此可得计数的平均值\ $\overline{n}=3.75$。计数的统计直方图如图~\ref{fig:bar} 所示。
+\begin{figure}[!htb]
+	\begin{center}
+		\epsfig{file= gmjishuguan2.eps,width=0.6\textwidth}
+	\end{center}
+	\caption{计数的统计直方图}
+	\label{fig:bar}
+\end{figure}
+图中的曲线为按照泊松分布公式计算出来的分布曲线。由图~\ref{fig:bar} 可知，当\ $\overline{n}$ 较小时，计数大致符合泊松分布。
+
+
+\clearpage
+\end{CJK*}
+\end{document}

@@ -1,0 +1,93 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{calrsfs}
+\usepackage{cancel}
+\usepackage{picinpar}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\newcommand{\im}{\mathrm{i}}
+\renewcommand{\dee}{\,\mathrm{d}}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\makeatletter
+\long\def\@makewincaption#1#2{%
+   \setbox\@tempboxa\hbox{\normalsize{#1:\enspace}{#2}}%
+   \ifdim\wd\@tempboxa>\picwd
+      {\normalsize{#1:\enspace}{#2\par}}
+   \else
+      \hbox to\picwd{\hfil\box\@tempboxa\hfil}
+   \fi}
+\makeatother
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.4.25.}
+\setlength{\abovedisplayskip}{1pt}
+\setlength{\belowdisplayskip}{1pt}
+\setlength{\abovedisplayshortskip}{-2pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+\def\upH{\mathrm{H}}
+\long\def\centerpar#1{\begin{sloppypar}\centering #1\end{sloppypar}}
+
+\exptitle{多功能光栅光谱仪}
+
+\section{实验目的}
+熟悉对多功能光栅光谱仪的功能与操作方法，利用\ Hg 谱线校准仪器，并测出\ H 谱线的各峰值处波长。
+
+\section{实验原理}
+多功能光栅光谱仪是连接到电脑上使用的。它生成谱线的途径是通过扫描，利用光栅转角的改变经过换算实现的。通过配套的软件，可以方
+便地实现光源谱线数据的获取及相应的数据处理，如自动寻峰等。
+
+在使用 多功能光栅光谱仪 之前需要进行校准，需要用汞灯测量\ Hg 谱线的各峰值波长与标准值相差\ $0.4 \dws{nm}$ 以下。
+具体的操作方法可参见光谱仪说明书，
+
+\section{实验内容}
+\begin{enumerate}
+	\item 阅读光栅光谱仪使用说明书。
+	\item 将\ CCD--光电子倍增管开关打向光电倍增器。
+	\item 测\ Hg 谱线并与\ Hg 标准谱比较，仔细调整食品参数，使其与标准谱对应谱线误差${}<0.4\dws{nm}$。
+	\item 测\ H 的巴尔末线系可见光区各峰值波长，由公式
+	\begin{equation}
+		\frac{1}{\lambda} = R_\upH \left( \frac{1}{2^2} - \frac{1}{n^2} \right)
+		\label{eqn:climax}
+	\end{equation}
+	计算里德伯常数\ $R_\upH$。
+\end{enumerate}
+\clearpage
+
+\section{实验数据}
+已知标准\ Hg 各峰值谱线波长$\dw{nm}$为：
+\centerpar{
+	365.02, 365.48, 366.3, 404.66, 407.78, 435.84, 546.07, 576.96, 579.07。
+	}
+
+测得\ Hg 谱线峰值$\dw{nm}$为：
+\centerpar{
+	365.10, 365.70, 366.70, 404.70, 408.00, 435.90, 546.00, 576.90, 578.90。
+	}
+可见各峰值波长测量值
+与标准值相差小于\ $0.4\dws{nm}$，仪器已校准。
+
+测得\ H 峰值谱线波长$\dw{nm}$为：\centerpar{410.20, 434.20, 486.20, 656.70。}
+
+\section{实验数据处理}
+由公式\eqref{eqn:climax}可得：
+\[
+	R_\upH  = \frac{1}{\lambda} \bigg/ \left( \frac{1}{2^2} - \frac{1}{n^2} \right)
+\]
+
+取\ $n = 3$，4，5，6，并将实验数据代入，对应\ $n=3$ 时，$\lambda=656.70\dws{nm}$，以此类推，即可得\ $R_\upH$ 的四次测量值为：
+\centerpar{$1.0970\times 10^7$ \quad $1.0967\times 10^7$ \quad $1.0969\times 10^7$ \quad $1.0964\times 10^7$。}
+故测量结果平均值
+\[
+\overline{R_\upH} = 1.0968 \times 10^7
+\]
+
+
+\clearpage
+\end{CJK*}
+\end{document}
+

@@ -1,0 +1,180 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{calrsfs}
+\usepackage{cancel}
+\usepackage{picinpar}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\newcommand{\im}{\mathrm{i}}
+\newcommand{\elec}{\mathrm{e}}
+\renewcommand{\dee}{\,\mathrm{d}}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\makeatletter
+\long\def\@makewincaption#1#2{%
+   \setbox\@tempboxa\hbox{\normalsize{#1:\enspace}{#2}}%
+   \ifdim\wd\@tempboxa>\picwd
+      {\normalsize{#1:\enspace}{#2\par}}
+   \else
+      \hbox to\picwd{\hfil\box\@tempboxa\hfil}
+   \fi}
+\makeatother
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.4.18.}
+\setlength{\abovedisplayskip}{1pt}
+\setlength{\belowdisplayskip}{1pt}
+\setlength{\abovedisplayshortskip}{-2pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+
+\exptitle{氘原子光谱}
+
+\section{实验目的}
+以氘原子光谱为研究对象，研究获得同位素光谱的实验方法、分析方法及其在微观测量中的应用。
+
+\section{实验原理}
+\subsection{理论基础}
+根据玻尔理论，原子的能量是量子化的，即具有分立的能级。当电子从高能级跃迁到低能级时，原子释放出能量，并以电磁波形式辐射。氢
+和类氢原子的巴耳末线系对应光谱线波数为
+\begin{equation}
+\sigma = \dfrac{2 \pi^2 m_\elec e^4 Z^2}{(4\pi\varepsilon_0)^2 h^3 c \left( 1 + \dfrac{m_\elec}{m_Z} \right)} \left(
+	\dfrac{1}{2^2} - \dfrac{1}{n^2} \right)
+\end{equation}
+其中\ $m_Z$ 为原子核质量，$m_\elec$ 为电子质量，$e$ 为电子电荷，$h$ 为普朗克常数，$\varepsilon_0$ 为真空介电常数，$c$ 为光
+速，$Z$ 为原子序数。因此类氢原子的里德伯常数可写成：
+\begin{equation}
+R_Z = \dfrac{2\pi^2 m_\elec e^4 Z^2}{(4\pi\varepsilon_0)^2 h^3 c}\cdot \dfrac{1}{1+\dfrac{m_\elec}{m_Z}}
+\end{equation}
+若\ $m_Z \to \infty$，即假定原子核不动，则有：
+\begin{equation}
+R_\infty = \dfrac{2\pi^2 m_\elec e^4 Z^2}{(4\pi\varepsilon_0)^2 h^3 c}
+	\label{eqn:Rinfty}
+\end{equation}
+因此
+\begin{equation}
+R_Z = \dfrac{R_\infty}{1+\dfrac{m_\elec}{m_Z}}
+\label{eqn:RzR8}
+\end{equation}
+由此可见，$R_Z$ 随原子核质量\ $m_Z$ 变化，对于不同的元素或同一元素的不同同位素\ $R_Z$ 值不同。$m_Z$ 对\ $R_Z$ 影像很小，因
+此氢和它的同位素的相应波数很接近，在光谱上形成很难分辨的双线或多线。
+
+\def\upH{\mathrm{H}}
+\def\upD{\mathrm{D}}
+设氢和氘的里德伯常数分别为\ $R_\upH$ 和\ $R_\upD$，氢、氘光谱线的波数\ $\sigma_\upH$、$\sigma_\upD$ 分别为
+\begin{equation}
+\sigma_\upH = \sigma_\upH \left( \dfrac{1}{2^2} - \dfrac{1}{n^2} \right) \qquad n=3,4,5,\ldots
+\end{equation}
+\begin{equation}
+\sigma_\upD = \sigma_\upD \left( \dfrac{1}{2^2} - \dfrac{1}{n^2} \right) \qquad n=3,4,5,\ldots
+\end{equation}
+氢和氘光谱相应的波长差为：
+\begin{equation}
+\Delta\lambda = \lambda_\upH - \lambda_\upD = \lambda_\upH \left( 1-\dfrac{\lambda_\upD}{\lambda_\upH} \right) = 
+\lambda_\upH \left( 1-\dfrac{\sigma_\upH}{\sigma_\upD} \right) = \lambda_\upH\left( 1- \dfrac{R_\upH}{R_\upD} \right)
+	\label{eqn:deltalam}
+\end{equation}
+因此，通过实验测得氢和氘的巴耳末线系的前几条谱线的谱长及其波长差，可求得氢与氘的里德伯常数\ $R_\upH$、$R_\upD$。
+
+根据式\eqref{eqn:RzR8}有：
+\begin{equation}
+	R_\upH = R_\infty \bigg/ \left( 1 + \dfrac{m_\elec}{m_\upH} \right)
+	\label{eqn:RHR8}
+\end{equation}
+\begin{equation}
+	R_\upD = R_\infty \bigg/ \left( 1 + \dfrac{m_\elec}{m_\upD} \right)
+	\label{eqn:RDR8}
+\end{equation}
+其中\ $m_H$ 和\ $m_D$ 分别为氢和氘原子核的质量。式\eqref{eqn:RDR8}除以式\eqref{eqn:RHR8}，得：
+\begin{equation}
+	\dfrac{R_\upD}{R_\upH} = \dfrac{1 + m_\elec / m_\upH}{1 + m_\elec / m_\upD}
+	\label{eqn:RDRH}
+\end{equation}
+由式\eqref{eqn:RDRH}可以求得：
+\begin{equation}
+	\dfrac{m_\upD}{m_\upH} = \dfrac{\dfrac{R_\upD}{R_\upH}}{1 - \dfrac{m_\upH}{m_\elec} \left( \dfrac{R_\upD}{R_\upH} -
+	1\right)}
+	\label{eqn:mDmH}
+\end{equation}
+式中\ $\dfrac{m_\upH}{m_\elec}$ 为氢原子核质量与电子质量比，公认值为\ $1836.1515$。因此将通过实验测得的\
+$\dfrac{R_\upD}{R_\upH}$ 代入式\eqref{eqn:mDmH}，可求得氘与氢原子核的质量比\ $\dfrac{m_\upD}{m_\upH}$。
+\subsection{实验方法}
+本实验采用已拍摄好的氢氘光谱图来进行测量。光谱图是用哈德曼光阑将\ Fe 与\ H、D 并列拍摄的。实验中使用映谱仪和阿贝比长仪，将
+氢氘谱线图与标准铁谱进行比较，并采用线性插入法来测量氢、氘的谱线波长。由此计算各谱线的里德伯常数，求出\ $R_\upH$、$R_\upD$
+的平均值，并求出氢氘原子核质量比。
+
+\clearpage
+\section{实验数据处理}
+实验测得数据如下表：
+\begin{center}
+	\begin{tabular}{|r||r|r|r|r|}
+		\hline
+		物理量 & \multicolumn{4}{c|}{测量数据}\\\hline
+		\hline
+		$\lambda_1\dw{nm}$ & 4859.746 & 4337.049 & 4098.187 & 6546.193\\\hline
+		$\lambda_2\dw{nm}$ & 4871.325 & 4352.737 & 4104.128 & 6569.158\\\hline
+		$s_1\dw{mm}$       & 25.7895 & 141.6047 & 184.9602 & 32.1036\\\hline
+		$s_2\dw{mm}$       & 25.0785 & 138.0768 & 184.5383 & 26.6660\\\hline
+		$s_\upH\dw{mm}$    & 25.3240 & 140.8198 & 184.5872 & 28.2334\\\hline
+		$s_\upD\dw{mm}$    & 25.6273 & 141.0899 & 184.8548 & 28.6477\\\hline
+	\end{tabular}
+\end{center}
+其中\ $\lambda_1$、$\lambda_2$ 为铁谱两边谱线的波长，$s_1$、$s_2$ 为铁谱两边谱线所对应的阿贝比长仪上的位置，$s_\upH$、
+$s_\upD$ 分别表示相应的氢、氘谱线在阿贝比长仪上的位置。
+
+由线性插入法可得\ $\lambda_\upH$ 与\ $\lambda_\upD$ 的计算公式：
+\begin{equation}
+	\lambda_\upH = \lambda_1 + \dfrac{\lambda_2 - \lambda_1}{s_2 - s_1} \cdot (s_\upH - s_1)
+	\label{eqn:lambdaH}
+\end{equation}
+\begin{equation}
+	\lambda_\upD = \lambda_1 + \dfrac{\lambda_2 - \lambda_1}{s_2 - s_1} \cdot (s_\upD - s_1)
+	\label{eqn:lambdaD}
+\end{equation}
+
+将实验数据代入式\eqref{eqn:lambdaH}、式\eqref{eqn:lambdaD}、式\eqref{eqn:deltalam}、式\eqref{eqn:mDmH}，可得以上几次实验数据所对应的\ $\lambda_\upH$、$\lambda_\upD$：
+\begin{center}
+	\begin{tabular}{|c||r|r|r|r|}
+		\hline
+		$\lambda_\upH\dw{nm}$ & 4867.3269 & 4340.5393 & 4103.4394 & 6562.5383\\\hline
+		$\lambda_\upD\dw{nm}$ & 4862.3875 & 4339.3382 & 4099.6712 & 6560.7885\\\hline
+		$\Delta\lambda\dw{nm}$& 4.9394 & 1.2011 & 3.7682 & 1.7497\\\hline
+		$R_\upH/R_\upD$       & 0.99899 & 0.99972 & 0.99908 & 0.99973\\\hline
+		$m_\upD/m_\upH$       & 1.1569 & 2.0340 & 1.4555 & 1.9601\\\hline
+	\end{tabular}
+\end{center}
+
+由式\eqref{eqn:Rinfty}可知，
+\begin{align*}
+	R_\infty &= \dfrac{2\pi^2 m_\elec e^4 Z^2}{(4\pi\varepsilon_0)^2 h^3 c} \\
+	& = \dfrac{2 \pi^2 \times 9.1\times 10^{-31} \times (1.6\times 10^{-19})^4}{(4\pi8.85\times 10^{-12})^2 (6.63\times
+	10^{-34})^3 \times 3\times 10^{8}}  \\
+	& \approx 1.0886 \times 10^7
+\end{align*}
+故由式\eqref{eqn:RHR8}、式\eqref{eqn:RDR8}得：
+\begin{align*}
+	R_\upH & = R_\infty \bigg/ \left( 1 + \dfrac{m_\elec}{m_\upH} \right)\\
+	& = \dfrac{1.0886 \times 10^7}{1 + 1 / 1836.1515} \\ 
+	& \approx 1.0880 \times 10^7
+\end{align*}
+\begin{align*}
+	R_\upD & = R_\infty \bigg/ \left( 1 + \dfrac{m_\elec}{m_\upD} \right)\\
+	& = \frac{R_\infty }{1 + \dfrac{m_\elec}{m_\upH} \cdot \dfrac{m_\upH}{m_\upD} }\\
+\end{align*}
+由此可得与实验数据对应的\ $R_\upH$、$R_\upD$ 数据如下表：
+\begin{center}
+	\begin{tabular}{|c||r|r|r|r|}
+		\hline
+		$R_\upH\dw{10^7}$ & \multicolumn{4}{c|}{1.0880}\\\hline
+		$R_\upD\dw{10^7}$ & 1.0891 & 1.0883 & 1.0890 & 1.0883\\\hline
+	\end{tabular}
+\end{center}
+故可得\ $\overline{R_\upD} = 1.0887 \times 10^7$。
+
+\clearpage
+\end{CJK*}
+\end{document}
+

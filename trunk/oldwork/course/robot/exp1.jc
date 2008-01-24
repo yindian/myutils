@@ -1,0 +1,146 @@
+int gi_1, run;
+
+int mutex = 0;
+int cdir = -1;	/* current direction 0: forward 1: backward 2: left 3: right */
+
+void dodrive(int a, int b)
+{
+	while (mutex)
+		;
+	mutex = 1;
+	drive(a, b);
+	mutex = 0;
+}
+
+void dostop()
+{
+	while (mutex)
+		;
+	mutex = 1;
+	stop();
+	mutex = 0;
+}
+
+void dowait(float c)
+{
+	while (mutex)
+		;
+	mutex = 1;
+	wait(c);
+	mutex = 0;
+}
+
+void bizhang()
+{
+	int ir, bmp;
+	while (1)
+	{
+		ir = ir_detector();
+		bmp = bumper();
+		printf("ir = %d  bmp = %d\n", ir, bmp);
+		while (mutex)
+			;
+		mutex = 1;
+		if (ir == 4 && cdir == 0)	/* obstacle ahead and now heading forward */
+		{
+			stop();
+			cdir = -1;
+		}
+		if (ir == 1 && cdir == 0)	/* obstacle at left and now heading forward */
+		{
+			drive(25, 20);
+			wait(0.2);
+			drive(25, 0);
+		}
+		if (ir == 2 && cdir == 0)	/* obstacle at right and now heading forward */
+		{
+			drive(25, -20);
+			wait(0.2);
+			drive(25, 0);
+		}
+		if ((bmp & 8) && cdir == 1)	/* obstacle behind at right and now heading backward */
+		{
+			stop();
+			wait(0.2);
+			drive(30, 20);
+			wait(0.2);
+			stop();
+			cdir = -1;
+		}
+		if ((bmp & 4) && cdir == 1)	/* obstacle behind at left and now heading backward */
+		{
+			stop();
+			wait(0.2);
+			drive(30, -20);
+			wait(0.2);
+			stop();
+			cdir = -1;
+		}
+		mutex = 0;
+	}
+}
+
+void main()
+{
+	int pid;
+	hold_serial();
+
+	pid = start_process(bizhang());
+	while(1)
+	{
+		gi_1=serial_getchar();
+
+		if(gi_1 == 97)/*a forward*/
+		{
+
+			run=97;
+			serial_putchar(run);
+			dodrive( 25 ,0);
+			cdir = 0;
+
+
+		}
+		if(gi_1 == 98)/*b backward*/
+		{
+
+			run=98;
+			serial_putchar(run);
+			dodrive( -25 ,0);
+			cdir = 1;
+
+		}
+		if(gi_1 == 99)/*c turn left*/
+		{
+
+			run=99;
+			serial_putchar(run);
+			dodrive( 0 ,-15);
+			cdir = 2;
+
+		}
+		if(gi_1 == 100)/*d turn right*/
+		{
+
+			run=100;
+			serial_putchar(run);
+			dodrive( 0 ,15);
+			cdir = 3;
+
+		}
+		if(gi_1 == 101)/*e stop*/
+		{
+			dostop();
+			cdir = -1;
+		}
+
+		if(gi_1 == 102)/*f beep*/
+		{
+			beep();
+		}
+
+	}
+	share_serial();
+	kill_process(pid);
+	return;    
+}
+

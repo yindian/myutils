@@ -1,0 +1,7 @@
+scale=10;
+sum=0;
+n=6;
+for (i=1; i<=n; i=i+1)
+	sum = sum + read();
+sum/n
+quit

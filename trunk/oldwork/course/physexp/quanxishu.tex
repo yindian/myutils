@@ -1,0 +1,183 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{calrsfs}
+\usepackage{cancel}
+\usepackage{picinpar}
+\newcommand{\degrees}{\ensuremath{\hbox{\textdegree}}}
+\newcommand{\im}{\mathrm{i}}
+\renewcommand{\dee}{\,\mathrm{d}}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\makeatletter
+\long\def\@makewincaption#1#2{%
+   \setbox\@tempboxa\hbox{\normalsize{#1:\enspace}{#2}}%
+   \ifdim\wd\@tempboxa>\picwd
+      {\normalsize{#1:\enspace}{#2\par}}
+   \else
+      \hbox to\picwd{\hfil\box\@tempboxa\hfil}
+   \fi}
+\makeatother
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.4.11.}
+\setlength{\abovedisplayskip}{1pt}
+\setlength{\belowdisplayskip}{1pt}
+\setlength{\abovedisplayshortskip}{-2pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+
+\exptitle{全息术}
+
+\section{实验目的}
+初步了解全息术的基本原理，并拍摄物体的三维全息图和制作全息光栅。
+
+\section{实验原理}
+全息图种类很多，有菲涅耳全息图、夫琅禾费全息图、傅立叶变换全息图、彩虹全息图、像全息图、体积全息图等。不管哪种全息图都要分
+成两步来完成：第一步，干涉法记录全息图，即波前记录；第二步，用全息图使原光波波前再现，即波前再现。
+\subsection{波前记录}
+由于所有的记录介质只能对光强有响应，因此普通照相机利用直接成像的方法，只能记录下光波的振幅信息，为了记录物体发射光波的相位
+信息，人们自然想到利用光的干涉效应。因此在拍摄全息图时除了物光波外还必须有一束参考光波，这两束光波应当具有良好的相干性，以
+便记录下清晰的干涉条纹。图~\ref{fig:guanglu} 是一般拍摄离轴全息图（也叫作菲涅耳全息图）的光路图。
+\begin{figure}[!htb]
+	\centering
+	\begin{minipage}[b]{0.4\textwidth}
+		\centering
+		\epsfig{file= quanxishu1.eps, width=1\textwidth}
+		\caption{三维全息图记录光路}
+		\label{fig:guanglu}
+	\end{minipage}
+	\begin{minipage}[b]{0.4\textwidth}
+		\centering
+		\epsfig{file= quanxishu2.eps, width=0.8\textwidth}
+		\caption{全息图的形成}
+		\label{fig:xingcheng}
+	\end{minipage}
+\end{figure}
+为了说明全息图的形成过程，
+我们只取物体上的某一个发光点\ $O$，并取全息干板平面为\ $Oxy$ 坐标平面，如图~\ref{fig:xingcheng} 所示，设物点\ $O$ 的坐标和
+参考光点\ $R$ 的坐标分别为\ $(x_0, y_0, z_0)$ 和\ $(x_R, y_R, z_R)$，则\ $Oxy$ 平面上物光的复振幅分布为
+\[ O(x,y) = O_0(x,y) \exp[j \Phi_0(x,y)] \]
+在\ $Oxy$ 平面上参考光的复振幅分布为
+\[ R(x,y) = R_0(x,y) \exp[j \Phi_R(x,y)] \]
+参考光波和物光波在\ $Oxy$ 平面上干涉叠加后的光强为
+\[ I= (O+R)(O+R)^* = OO^* + RR^* + OR^* + RO^* = O_0^2 + R_0^2 + 2O_0 R_0 \cos(\Phi_0 - \Phi_R) \]
+
+可用作全息记录的感光材料很多，一般最常用的是卤化银乳胶涂布的超微粒干板，称为全息干板，按图~\ref{fig:guanglu} 拍摄的全息图也
+叫做平面全息图，我们用振幅透射率来表示其特性，一般它是一个复函数，具有下面的形式：
+\[ \tau_H(x,y) = \tau_0(x,y) \exp[j \Phi(x,y)]\]
+在上式中如果\ $\Phi$ 与\ $(x,y)$ 无关，则称为振幅型全息图。如果\ $\tau_0$ 与\ $(x,y)$ 无关，则称为混合性全息图。
+
+\begin{figwindow}[0,r,\epsfig{file= quanxishu3.eps,width=0.3\textwidth},$\tau$--$H$ 曲线\label{fig:tauH}]
+	全息照相干板的特性可以用图~\ref{fig:tauH} 所示的\ $\tau$--$H$ 曲线来表示。其中\ $\tau$ 为振幅透射系数，$H$ 为曝光量。
+	$\tau$--$H$ 曲线在中间一段近似为直线。在线性记录的条件下，
+	\par \hfill{$ \tau_H = \beta_0 + \beta H = \beta_0 + \beta t I $}\hfill\par
+	其中\ $t$ 为曝光时间，$I$ 为总光强，$\beta_0$ 和\ $\beta$ 为常数。$\beta$ 等于图~\ref{fig:tauH} 中线性区的斜率。将
+	前面的光强表达式代入即得拍好的全息图的复振幅透射率
+	\par\hfill {$ \tau_H = \beta_0 + \beta t [O_0^2 + R_0^2 + 2 O_0 R_0 \cos(\Phi_0 - \Phi_R)] $}\hfill\par
+\end{figwindow}
+
+\subsection{波前再现}
+设再现用的照相光波在\ $Oxy$ 平面上的分布为
+\[ C(x,y) = C_0(x,y) \exp[j \Phi_C (x,y)] \]
+此再现光波经过全息图后衍射波的复振幅分布为
+\[ \tau = C \tau_H = C \beta_0 + C \beta t [O_0^2 + R_0^2 + 2 O_0 R_0 \cos(\Phi_0 - \Phi_R)] \]
+考察上式的第二项（由于第一项较小，大多数情况下可以忽略），可以认为：
+\[ \tau \propto CI = C (O_0^2 + R_0^2) + COR^* + CRO^* \]
+上式为全息照相的基本公式，式中第一项代表直射光，第二项代表原始像，第三项代表共轭像。对有许多物点组成的物体，上式中\ 
+$O = O_1 + O_2 + O_3 + \dotsb$，所以容易知道
+\[ O_0^2 = O_1 O_1^* + O_2 O_2^* + \dots + O_1 O_2^* + O_2 O_1^* + O_1 O_3^* + O_2 O_3^* + \dotsb \]
+这叫做晕轮光，当物体较小时它的空间频率不高，在拍摄全息图时，取稍大一些的参考光与物光的夹角就可以避开它的影响，观察到清晰的
+原始图。
+
+\section{实验内容}
+\subsection{三维全息术}
+如图~\ref{fig:guanglu} 所示，在防震平台上布置光路。分束板采用反射率为\ 5\% 的平晶（两面互相倾斜而且较厚），扩束镜采用\
+$40\times$显微物镜。选择漫反射性能较好的物体作为拍摄三维全息照相的物体。调好光路，使参考光与物光束的光强比为\ $2:1$ 到\
+$10:1$，放上全息干板曝光，曝光后经适当冲洗，就完成了波前记录的任务。待全息干板完全干燥后，就可以放入原光路中进行再现。再现
+的方法是将干板放在原光路中，在拍摄三维全息时把\ 5\% 分束镜换成全反射镜，拿走物体，向着干板后原物体所在的方向看去就可以看到
+与原物体相似的明亮的像。
+\subsection{全息光栅}
+\begin{figwindow}[0,r,\epsfig{file= quanxishu4.eps,width=0.4\textwidth},拍摄全息光栅的光路\label{fig:guanglu2}]
+	如图~\ref{fig:guanglu2} 所示来布置光路。分束板采用\ 50\% 反射率的平晶。使两个扩束镜（$40\times$显微物镜）的位置相对
+	于全息干板面是对称的，这样就可以拍摄出理想的全息光栅。如果加上空间滤波器，就可以保证所制作的光栅
+	有很好的均匀性。可用下面所说的方法检查所拍摄的光栅的质量：（1）将拍好并干燥的全息干板放在白炽灯前观察，应能观察到白
+	炽灯明亮的彩色衍射像。（2）用经扩束、准直的激光照射全息干板，在一傅立叶透镜的后焦平面上观察，应可以看到\ $\pm 1$ 级
+	较亮的光斑。
+\end{figwindow}
+\subsection{注意事项}
+布置光路时调节光学元件的高低和位置，使激光束的高低与台面平行，并使参、物光的光程基本相等。在做全息光栅实验时按公式
+\[ \xi = \frac{1}{\lambda_O} \left[ x\left( \frac{1}{l_O} - \frac{1}{l_R} \right) - \left( \frac{x_O}{l_O} -
+\frac{x_R}{l_R} \right) \right] \]
+计算物点和参考点（即两个扩束镜的焦点）与全息干板的相对位置。公式中\ $l_O$ 为物点到坐标原点的距离，$l_R$ 为参考点到坐标原点
+的距离，坐标原点在干板的中心。注意扩束镜\ 5、6 相对于全息干板的对称性，并应与全息干板距离较远。
+
+在干板架上先放一块白板，用轮流遮光的办法比较两束光（物光和参考光）光强的强弱，并用改变扩束镜距离白板远近的方法来调节光强比
+使之满足前面所说的要求（对于全息光栅，当两扩束镜距离不等时，不能保证形成的条纹的平直性）。
+
+打开快门定时，将白板取下，换上全息干板（注意遮光），然后开始曝光。曝光时间一般取\ $6\sim15\dws s$ 左右，曝光时注意不要碰台
+面以免产生震动。
+
+\section{公式推导}
+\subsection{光栅常数\ $d$ 与\ $\varphi$ 角的关系}
+\def\centerln#1{\hfill #1\hfill\par}
+\begin{window}[0,r,\epsfig{file= quanxishu5.eps},{}]
+	{\qquad 干板上光强\ $I = (R+C)(R+C)^*$}\par
+	\centerln{$R = A(x, y) \exp [j \Phi_R(x,y)] $}
+	\centerln{$C = A(x, y) \exp [j \Phi_C(x,y)] $}
+	\begin{align*}
+		I &= (R+C)(R+C)^* \\
+		&= RR^* + OO^* + OR^* + RO^*\\
+		&= R_0^2 + C_0^2 + 2R_0 C_0 \cos(\Phi_0 - \Phi_R)\\
+		&= 2A^2 + 2A^2 \cos(\Phi_C - \Phi_R)
+	\end{align*}
+	\centerln{$\Delta\Phi = \Phi_R - \Phi_C = \dfrac{2\pi}{\lambda} \Delta s$}
+\end{window}
+\let\centerln\centerline
+	{\qquad 由于\ $\angle ORP$ 角很小，可以认为\ $\varphi = \varphi'$ }
+	\begin{align*}
+		\Delta s_1 &= \overline{RO} - \overline{CO} = 0\\
+		\Delta s_2 &= \overline{RP} - \overline{CP} = (\overline{RP}-\overline{RO}) + (\overline{CO}-\overline{CP})
+		= x\sin\alpha + x\sin\alpha' \\
+		\mbox{其中}\quad\alpha &= \frac{\varphi}{2},\qquad \alpha' = \frac{\varphi'}{2} \approx \frac{\varphi}{2}
+	\end{align*}
+	\par
+	\qquad $\therefore\quad \Delta s_2 = 2x\sin\dfrac{\varphi}{2}$.\par
+	\qquad 当两相干光波叠加为增强时，$\Phi_R - \Phi_C = \pm 2\pi$，$\Delta s = \pm \lambda$，$x=d$\par
+	\qquad 故\ $2d\sin\dfrac{\varphi}{2} = \lambda$。
+\subsection{波前再现公式}
+\def\abs#1{\left| #1 \right|}
+\begin{window}[0,r,\epsfig{file= quanxishu6.eps},{}]
+	\qquad $\Delta s =\abs{\overline{OP}} - \abs{\overline{PP}} = m\lambda ,\quad (m \in \mathbf{N})$\par
+	\qquad $\abs{\overline{PP'}} \approx \abs{\overline{QP'}}$\par
+	\qquad $\Delta s = \abs{\overline{OP}} \sin \angle OPQ = d\sin \dfrac{\theta}{2} = m\lambda$\par
+	\qquad $\therefore\quad d\sin\dfrac{\theta}{2} = m\lambda \quad (m\in \mathbf{N})$
+\end{window}
+
+\section{思考题}
+\begin{enumerate}
+	\item 根据实验测得的\ $L$，$x$ 和已知的\ $\lambda$，求出理论\ $\varphi$ 值，并与测量值比较。\par
+	\item[答:]测得\ $L=10.58\dws{cm}$，$x/2 = 5.27\dws{cm}$，$\varphi_0 = 27\degrees$，已知\ $\lambda= 6328
+		\dws{\mbox{\AA}}$。\par
+		由前面公式可得，
+		\[ \frac{\sin\dfrac{\varphi}{2}}{\sin\dfrac{\theta}{2}} = \frac{1}{2} \,\Longrightarrow\,
+		\sin\dfrac{\varphi}{2} = \sin\dfrac{\theta}{2} = \dfrac{5.27}{2 \sqrt{5.27^2 + 10.58^2}} \approx 0.2229\]
+		\[ \therefore\, \varphi = 2 \arcsin 0.2229 = 25.76\degrees \]\par
+		\[\therefore\, \dfrac{\Delta\varphi}{\abs{\varphi_0}} = \dfrac{\left| 27\degrees - 25.76\degrees\right|}{27\degrees}
+		\times 100\% = 4.6\% \]
+	\item 分析两次拍摄的结果。\par
+	\item[答:]第一次拍摄的是全息光栅。对于拍摄得到的光栅，理论上用经扩束、准直的激光照射全息干板，在一傅立叶透镜的后
+		焦平面上观察，应可以看到\ $\pm1$ 级较亮的光斑。这是由于全息光栅与三维全息有相似的地方，只不过物光波不是从物
+		体上发出来的，而是由凸透镜形成的类点光源上面发出的。而参考光波可以视为从左边的凸透镜上发出，也可对称地视为
+		从右边的凸透镜上发出。故再现出来的应是两个左右对称的光点。实验中，我们只观察到一个右边的光点，这有可能是因
+		为光路调得不太精确造成的。\\
+		第二次拍摄的是三维全息。拍摄后把\ 5\% 分束镜换成全反射镜，拿走物体，向着干板后原物体所在的方向看去就可以看
+		到与原物体相似的明亮的像。它的原理在前面“实验原理”部分有讲到。
+\end{enumerate}
+
+\clearpage
+\end{CJK*}
+\end{document}

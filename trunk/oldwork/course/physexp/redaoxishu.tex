@@ -1,0 +1,197 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex }
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2005.10.17.}
+\CJKindent
+\CJKcaption{GB}
+\exptitle{热导系数的测量}
+
+\section{实验目的}
+了解热传导现象的物理过程，学习用稳态平板法测量不良导体的热异系数并用作图法求冷却速率。
+\section{实验原理}
+按照傅里叶的热传导理论，在~$\dee t$ 时间内通过~$\Delta S$ 面积的热量~$\dee Q$，正比于物体内的温度梯度，其比例~$\lambda$ 即
+为导热系数， 即：
+\[
+\frac{\dee Q}{\dee t} = -\lambda \frac{\dee T}{\dee x} \cdot \Delta S
+\]
+
+对于一橡胶盘~$B$，维持稳定的上、下表面温度~$T_1$、$T_2$ 时，上式可化为：
+\[
+\frac{\dee Q}{\dee t} = -\lambda \frac{T_2 - T_1}{h_B} \cdot S_B = \lambda \frac{T_1 - T_2}{h_B} \cdot \pi R_B^2
+\]
+其中~$\frac{\dee Q}{\dee t}$ 为橡胶盘的传热速率。
+
+实验中，当~$h_B$ 足够小时，即可忽略侧面散热的影响，认为传入橡胶盘上表面的热量都被传入下表面。由于橡胶盘的上、下表面与传热圆
+筒及散热铜盘~$A$ 紧密接触，因此可取~$T_1$、$T_2$ 分别为圆筒底部以及铜盘 的温度。
+
+当橡胶盘上、下表面的温度维持恒定时，可以认为铜盘的散热速率与橡胶盘的传热速率相等，又由于铜盘的传热速率与它的散热面积成正比，
+故只要得知铜盘单独放置时的散热速率~$\dee Q_\zhscript{散} / \dee t$，即可求出橡胶盘的传热速率~$\dee Q / \dee t$ ：
+\[
+\frac{\dee Q}{\dee t} = \frac{S_\zhscript{部分}}{S_\zhscript{全}}\cdot \frac{\dee Q_\zhscript{散}}{\dee t} 
+= \frac{\pi R_A^2 + 2\pi R_A h_A}{2\cdot \pi R_A^2 + 2\pi R_A h_A} \cdot \frac{\dee Q_\zhscript{散}}{\dee t} 
+= \frac{R_A + 2h_A}{2R_A + 2h_A}\cdot  \frac{\dee Q_\zhscript{散}}{\dee t} 
+\]
+又由于~$\dee Q_\zhscript{散}/\dee t = m_\zhscript{铜} c_\zhscript{铜} \dee T/\dee t$，故只需要测出铜盘单独放置时的冷却速率~$\dee T/\dee t$，即可求
+得橡胶盘的传热速率~$\dee Q/\dee t$。
+
+综合以上各式即得橡胶盘导热系数~$\lambda$ 的计算公式：
+\[
+\lambda = \frac{m_\zhscript{铜} c_\zhscript{铜} h_B (R_A + 2h_A)}{2\pi R_B^2 (T_1-T_2)(R_A+h_A)} \cdot \frac{\dee T}{\dee t}
+\]
+
+实验中使用热电隅来将被测温度~$T$ 转换成电压~$U$ 测出，由于~$U$ 与~$T$ 成线性关系，因此
+~$\frac{1}{T_1-T_2}\cdot\frac{\dee T}{\dee t} = \frac{1}{U_1-U_2}\cdot\frac{\dee U}{\dee t}$，即可用~$U$ 来代替~$T$ 的值。
+故量得~$h_A$、$R_A$、$h_B$、$R_B$，测得~$m_\zhscript{铜}$ 及~$U_1$、$U_2$，用逐差法求得~$\dee U/\dee t$ 即可。
+
+\section{实验内容}
+本次实验主要有四个步骤：
+\begin{enumerate}
+	\item 测量橡胶盘~$B$ 与铜盘~$A$ 的厚度与直径，铜盘的质量，稳态时橡胶盘上、下表面的温度电压~$U_1$、$U_2$，以及让铜盘
+		自然冷却时温度在~$U_2$ 前后的各六组~$U$、$t$ 值。
+	\item 用逐差法求出铜盘的冷却速率~$\dee U/\dee t$，并由此求出橡胶盘的导热系数~$\lambda$。
+	\item 画出~$U$--$\,t$ 关系图，用作图法求出冷却速率~$\dee U/\dee t$。
+	\item 用线性回归法求出冷却速率~$\dee U/\dee t$ 及其误差，并由此求出橡胶盘的导热系数~$\lambda$ 及其误差。
+\end{enumerate}
+
+\section{实验数据}
+\begin{table}[!htpb]
+	\centering
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{c|r|r|r|r|r}
+		\hline
+		数据量 & \multicolumn{5}{c}{测量值}\\\hline
+		铜盘直径~$D_A \dw{mm}$	& 128.84 &128.84 & 128.86 & 128.84 & 128.82 \\\hline
+		橡胶盘直径~$D_B \dw{mm}$ & 132.16& 132.14 & 132.14 & 132.16 & 132.12\\\hline
+		铜盘厚度~$h_A \dw{mm}$ & 10.12 & 10.16 & 10.16 & 10.18 & 10.12\\\hline
+		橡胶盘厚度~$h_B \dw{mm}$ & 7.90 & 7.96 & 8.00 & 7.88 & 7.80\\\hline
+		铜盘质量~$m_\zhscript{铜}$ & \multicolumn{5}{c}{883.5 g}\\\hline
+		稳态时上表面温度~$U_1$ & \multicolumn{5}{c}{2.94 mV}\\\hline
+		稳态时下表面温度~$U_2$ & \multicolumn{5}{c}{2.41 mV}\\\hline
+	\end{tabular}
+	\renewcommand{\arraystretch}{1}
+	\label{tab:expdata}
+\end{table}
+
+\vspace*{1em}
+间隔~30 s 测出的铜盘自然冷却温度(mV)：
+
+\begin{center}
+	2.61 \qquad 2.57 \qquad 2.53 \qquad 2.49 \qquad 2.45 \qquad 2.42 \\
+	2.38 \qquad 2.34 \qquad 2.30 \qquad 2.27 \qquad 2.24 \qquad 2.21
+\end{center}
+
+\newpage
+\section{数据处理}
+\subsection{仪器数据的处理}
+\subsubsection{铜盘直径~$D_A$}
+\[
+\overline{D_A} = 128.84 \dw{mm} \qquad \sigma(D_A) = 0.013 \dw{mm}
+\]
+\[
+\Delta_A(D_A) = t_P \cdot \frac{\sigma(D_A)}{\sqrt{n}} = 2.78 \times \frac{0.013}{\sqrt{5}} \approx 0.016 \dw{mm}
+\]
+\[
+\Delta_B(D_A) = \Delta_\zhscript{仪} = 0.01 \dw{mm}
+\]
+\[
+\therefore\, \Delta(D_A) = \sqrt{\Delta_A^2(D_A) + \Delta_B^2(D_A)} = \sqrt{0.016^2 + 0.01^2} \approx 0.019 \dw{mm}
+\]
+\subsubsection{橡胶盘直径~$D_B$}
+\[
+\overline{D_B} = 132.14 \dw{mm} \qquad \sigma(D_B) = 0.015 \dw{mm}
+\]
+\[
+\Delta_A(D_B) = t_P \cdot \frac{\sigma(D_A)}{\sqrt{n}} = 2.78 \times \frac{0.015}{\sqrt{5}} \approx 0.019 \dw{mm}
+\]
+\[
+\Delta_B(D_B) = \Delta_\zhscript{仪} = 0.01 \dw{mm}
+\]
+\[
+\therefore\, \Delta(D_B) = \sqrt{\Delta_A^2(D_B) + \Delta_B^2(D_B)} = \sqrt{0.019^2 + 0.01^2} \approx 0.021 \dw{mm}
+\]
+\subsubsection{铜盘厚度~$h_A$}
+\[
+\overline{h_A} = 10.15 \dw{mm} \qquad \sigma(h_A) = 0.024 \dw{mm}
+\]
+\[
+\Delta_A(h_A) = t_P \cdot \frac{\sigma(h_A)}{\sqrt{n}} = 2.78 \times \frac{0.024}{\sqrt{5}} \approx 0.030 \dw{mm}
+\]
+\[
+\Delta_B(h_A) = \Delta_\zhscript{仪} = 0.01 \dw{mm}
+\]
+\[
+\therefore\, \Delta(h_A) = \sqrt{\Delta_A^2(h_A) + \Delta_B^2(h_A)} = \sqrt{0.030^2 + 0.01^2} \approx 0.032 \dw{mm}
+\]
+\subsubsection{橡胶盘厚度~$h_B$}
+\[
+\overline{h_B} = 7.91 \dw{mm} \qquad \sigma(h_B) = 0.069 \dw{mm}
+\]
+\[
+\Delta_A(h_B) = t_P \cdot \frac{\sigma(h_A)}{\sqrt{n}} = 2.78 \times \frac{0.069}{\sqrt{5}} \approx 0.086 \dw{mm}
+\]
+\[
+\Delta_B(h_B) = \Delta_\zhscript{仪} = 0.01 \dw{mm}
+\]
+\[
+\therefore\, \Delta(h_B) = \sqrt{\Delta_A^2(h_B) + \Delta_B^2(h_B)} = \sqrt{0.086^2 + 0.01^2} \approx 0.086 \dw{mm}
+\]
+
+\subsection{用逐差法求冷却速率}
+隔三项对铜盘自然冷却温度~$U$ 进行逐差，得到数据如下(mV)：
+\[
+\Delta U : \quad 0.12 \quad 0.12 \quad 0.11 \quad 0.11 \quad 0.11 \quad 0.12 \quad 0.11 \quad 0.10 0.09
+\]
+\[
+\therefore\, \Delta U/\Delta t \dw{10^{-4}mV}: \quad 13 \quad 13 \quad 12 \quad 12 \quad 12 \quad 13 \quad 12 \quad 11 \quad 10
+\]
+
+求得 $\overline{\Delta U / \Delta t} = 0.0012 \dw{mV}$。 
+故可近似认为~$\dee U/\dee t = \overline{\Delta U/\Delta t} = 0.0012 \dw{mV}$
+
+\begin{align*}
+\therefore\,
+\lambda &= \frac{m_\zhscript{铜} c_\zhscript{铜} h_B (R_A + 2h_A)}{2\pi R_B^2 (U_1-U_2)(R_A+h_A)} \cdot \frac{\dee U}{\dee t}
+\\
+&= \frac{0.8835 \times 0.3709 \times 7.91\times 10^{-3} \times (0.12884/2 + 2\times 1.015\times 10^{-2})}{
+	2\pi (0.13214/2)^2 (2.94-2.41) (0.12884/2 + 0.01015)}\cdot 0.0012\\
+	&\approx 2.43\times 10^{-4}\dw{W\cdot m^{-1} \cdot K^{-1}}
+\end{align*}
+
+\subsection{用作图法求冷却速率}
+用描点法作得~$U$--$\,t$ 图如图\ref{fig:zuotu}所示。图中直线为线性拟合直线。该直线为：
+$$ U = -0.0012 t + 2.6029 $$
+故可见~$\dee U/\dee t = 0.0012$。
+
+\begin{figure}[!htpb]
+	\begin{center}
+		\epsfig{file= redaoxishu.eps,width=0.6\textwidth}
+	\end{center}
+	\caption{$U$--$\,t$ 关系图}
+	\label{fig:zuotu}
+\end{figure}
+
+将~$\dee U/\dee t$ 代入公式，求得结果与逐差法的相同，即~$\lambda \approx 2.43\times 10^{-4}\dw{W\cdot m^{-1} \cdot
+K^{-1}}$。
+
+\subsection{用线性回归法求冷却速率}
+用计算机求得线性回归方程为： $ U = -0.0012 t + 2.6029 $，相关系数~$r \approx 0.98$。故
+\begin{align*}
+\frac{s_m}{m} &= \sqrt{\left( \frac{1}{r^2} - 1 \right)\div (n-2)}\\
+&= \sqrt{(1/0.98^2 -1) / 10}\\
+&\approx 6.4\%
+\end{align*}
+
+因此，导热系数值仍然与前面所算相同，$\lambda \approx 2.43\times 10^{-4}\dw{W\cdot m^{-1} \cdot K^{-1}}$，其误差
+\begin{align*}
+	\frac{\Delta(\lambda)}{\lambda} &= \frac{\Delta(h_B)}{h_B} + \frac{\Delta(R_A+2h_A)}{R_A+2h_A} + 
+	2\frac{\Delta(R_B)}{R_B} + \frac{\Delta(R_A + h_A)}{R_A + h_A} + \frac{s_m}{m}\\
+	&= \frac{0.086}{7.91}j + \frac{0.0095+2\times 0.032}{128.84/2+2\times 10.15} + \frac{0.0095+0.032}{128.84/2+10.15}
+	+2\times \frac{0.021}{132.14} + 6.4\%\\
+	&\approx 7.6\%
+\end{align*}
+
+故实验测量值为：$\lambda = 2.43\times 10^{-4} \times(1\pm 7.6\%) \dw{W\cdot m^{-1} \cdot K^{-1}}$。
+\clearpage
+\end{CJK*}
+\end{document}

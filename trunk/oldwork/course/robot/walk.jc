@@ -1,0 +1,97 @@
+int lastact = -1;
+void act(int nowact)
+/*
+	0:	forward
+	1:	backward
+	2:	turn right
+	3:	turn left
+*/
+{
+	if (nowact != lastact)
+	{
+		lastact = nowact;
+		wait(0.5);
+	}
+	if (nowact == 0)
+	{
+		drive(50, 0);
+		wait(0.5);
+		stop();
+	}
+	else if (nowact == 1)
+	{
+			drive(-30, 0);
+		    tone(391.9,0.2);
+/*			wait(0.2);*/
+			stop();
+	}
+	else if (nowact == 2)
+	{
+			drive(0, 30);
+		    tone(391.0,0.1);
+/*			wait(0.1);*/
+			stop();
+	}
+	else if (nowact == 3)
+	{
+			drive(0, -30);
+		    tone(390.0,0.1);
+/*			wait(0.1);*/
+			stop();
+	}
+}
+void behaveir(int ir)
+{
+	if (ir == 0)
+		return;
+	if (ir & 4)
+		act(1);
+	if (ir & 1)
+		act(2);
+	if (ir & 2)	/* on the right*/
+		act(3);
+}
+void behavebmp(int bmp)
+{
+	if (bmp == 0)
+		return;
+	if (bmp & 1)	/* on the left front*/
+		act(2);
+	if (bmp & 2)	/* on the right front*/
+		act(3);
+}
+void main()
+{
+	int ir = 0;
+	int bmp = 0;
+	int cnt = 0;
+	int cnt2 = 0;
+	wait(0.5);
+	while (1) 
+	{
+		ir = ir_detector();
+		bmp = bumper();
+		printf("ir=%d bmp=%d\n", ir, bmp);
+		if (!ir && !bmp)
+		{
+			act(0);
+			cnt = 0;
+			if (cnt2 > 0)
+				--cnt2;
+		}
+		else ++cnt;
+		if (cnt == 3)
+		{
+			cnt = 0;
+			act(1);
+			++cnt2;
+		}
+		if (cnt2 == 3)
+		{
+			cnt2 = 0;
+			act(2);act(2);act(2);act(2);act(2);
+		}
+		behaveir(ir);
+		behavebmp(bmp);
+	}
+}

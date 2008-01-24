@@ -1,0 +1,112 @@
+%       pstfig.tex      pstricks figure drawing enhancement     coded by Dian Yin
+%       History:        2006.4.xx.      \input, setLDNode, nLput, \SpecialCoor and \psset executed before
+%                       2006.4.19.      psPerpen, markang, markangrt coded.
+%                                       Fixed bug: in setLDNode, length => Length, to avoid postscript err
+\input pstricks.tex
+\input pst-node.tex
+\input pstricks-add.tex
+\nopagenumbers
+\catcode`\@=11
+\def\psPerpen(#1)(#2)(#3)#4{%	#4 <- point(#1) perpendicular foot to line(#2, #3)
+%	      o   (a, b)  #2
+%	      |
+%	   k  |(x,y)
+%	o-----+-----o
+%	(x1,y1)    (x2,y2)
+%	k = ( (a-x1)(x2-x1) + (b-y1)(y2-y1)) / ( (x2-x1)^2 + (y2-y1)^2 )
+%	x = k(x2 - x1) + x1, y = k(y2 - y1) + y1
+  \pst@getcoor{#1}\pst@tempa%
+  \pst@getcoor{#2}\pst@tempb%
+  \pst@getcoor{#3}\pst@tempc%
+  \pnode(!%
+    \pst@tempa /YA exch \pst@number\psyunit div def
+    /XA exch \pst@number\psxunit div def
+    \pst@tempb /YB exch \pst@number\psyunit div def
+    /XB exch \pst@number\psxunit div def
+    \pst@tempc /YC exch \pst@number\psyunit div def
+    /XC exch \pst@number\psxunit div def
+    /getk
+    XA XB sub XC XB sub mul
+    YA YB sub YC YB sub mul
+    add
+    XC XB sub dup mul YC YB sub dup mul add
+    div def
+    XC XB sub getk mul XB add
+    YC YB sub getk mul YB add){#4}
+}%psPerpen
+\def\markang{\pst@object{markang}}% \markang{arrow}(A)(O)(B){radius}
+%          / B
+%        /
+%      /  )
+%   O ----+---- A
+\def\markang@i#1(#2)(#3)(#4)#5{%
+  \begin@SpecialObj
+  \setLCNode(#2){1}(#3){-1}{@temp@OA}
+  \setLCNode(#4){1}(#3){-1}{@temp@OB}
+  \def\@temp@arrow{#1}
+  \ifx\@temp@arrow\@empty
+    \def\@temp@arrow{-}
+  \fi
+  \psarc{\@temp@arrow}(#3){#5}{(@temp@OA)}{(@temp@OB)}
+  \end@SpecialObj
+} %
+\def\markangrt{\pst@object{markangrt}}% \markangrt(A)(O)(B){radius}
+%     | B
+%     |   c
+%    b|--+
+%     |  |a
+%   O +--+----- A
+\def\markangrt@i(#1)(#2)(#3)#4{%
+  \begin@SpecialObj
+  \setLDNode(#2)(#1){#4}{@temp@a}
+  \setLDNode(#2)(#3){#4}{@temp@b}
+  \setLCNode(@temp@a){1}(#2){-1}{@temp@Oa}
+  \setLCNode(@temp@b){1}(#2){-1}{@temp@Ob}
+  \setLCNode(@temp@Oa){1}(@temp@Ob){1}{@temp@Oc}
+  \setLCNode(#2){1}(@temp@Oc){1}{@temp@c}
+  \psline(@temp@a)(@temp@c)(@temp@b)
+  %\pcangle[angleA=(@temp@OB),angleB=(@temp@OA),arm=0pt]{\@temp@arrow}(@temp@a)(@temp@b)
+  \end@SpecialObj
+} %
+%   #1-------#4----------------#2
+% where #1#4= #3
+%
+\def\setLDNode(#1)(#2)#3#4{%
+  \pst@getcoor{#1}\pst@tempa%
+  \pst@getcoor{#2}\pst@tempb%
+  \pssetlength\pst@dima{#3}%
+  \pnode(!%
+    \pst@tempa /YA exch \pst@number\psyunit div def
+    /XA exch \pst@number\psxunit div def
+    \pst@tempb /YB exch \pst@number\psyunit div def
+    /XB exch \pst@number\psxunit div def
+    /dx XB XA sub def
+    /dy YB YA sub def
+    /dR dx dup mul dy dup mul add sqrt def
+    /Length \pst@number\pst@dima \pst@number\psunit div def
+    XA dx dR div Length mul add YA dy dR div Length mul add){#4}
+}
+\def\nLput{\pst@object{nLput}}
+\def\nLput@i(#1)(#2)#3#4{%
+  \begin@SpecialObj
+  \setLNode(#1)(#2){#3}{@temp@lnput}
+  \pcline[linestyle=none](#1)(@temp@lnput)%
+  \ncput[npos=1]{#4}%
+  \end@SpecialObj
+} %
+\def\nlput{\pst@object{nlput}}
+\def\nlput@i(#1)(#2)#3#4{%
+  \begin@SpecialObj
+  \setLDNode(#1)(#2){#3}{@temp@lnput}
+  \pcline[linestyle=none](#1)(@temp@lnput)%
+  \ncput[npos=1]{#4}%
+  \end@SpecialObj
+} %
+\SpecialCoor
+\psset{linewidth=0.8pt,labelsep=0.5ex,unit=2em}
+\def\thickline{\psset{linewidth=0.8pt}}
+\def\thinline{\psset{linewidth=0.4pt}}
+\def\solidline{\psset{linestyle=solid}}
+\def\dashline{\psset{linestyle=dashed}}
+\def\/#1/{\edef\@mmmm{\noexpand#1}\@mmmm}
+\endinput

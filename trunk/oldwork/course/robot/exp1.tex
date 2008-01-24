@@ -1,0 +1,46 @@
+\documentclass[12pt]{article}
+\input{ phscexpsetting.tex}
+\usepackage{listings}
+\renewcommand{\lstlistlistingname}{代码列表}
+\renewcommand{\lstlistingname}{代码}
+\renewcommand\figurename{\small 图}
+\renewcommand\tablename{\small 表}
+\begin{document}
+\begin{CJK*}{GBK}{song}
+\renewcommand{\thedate}{2006.5.12.}
+\setlength{\abovedisplayskip}{1pt}
+\setlength{\belowdisplayskip}{1pt}
+\setlength{\abovedisplayshortskip}{-2pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\lineskiplimit}{3pt}
+\setlength{\lineskip}{4pt minus 1pt}
+\CJKindent
+
+\exptitle{带避障的机器人遥控操作}
+
+\section{实验目的}
+改写给出的机器人遥控操作的机器人端的\ JC 代码，添加避障的功能，使得机器人能够在遥控操作的同时避开障碍物。
+
+\section{实验原理简述}
+\begin{itemize}
+	\item 为了在尽量不影响已经给出的主函数的情况下实现避障功能，我们采用了多进程调用的机制，在主函数开头新建了\
+		\mbox{bizhang()} 函数对应的
+		进程，并在主函数结束前杀死该进程。
+	\item 为了防止主进程和避障进程抢占发动机资源的情况发生，定义了一个全局变量作为互斥锁，在需要使用临界资源（发动机）
+		时运用。为了方便使用，新定义了加上互斥功能的\ drive、stop、wait 函数。
+	\item 定义一个全局变量记录遥控端发来的行走方向信息，以便避障时根据运动方向和障碍物位置进行相应处理。
+	\item 当前进时发现正前方有障碍物时，停止前进。
+	\item 当前进时发现左方有障碍物时，稍微向右转向后继续前进；前进时发现右方有障碍物时，稍微向左转向后继续前进。	
+	\item 当后退时撞到障碍物时，稍微前进后停止。	
+\end{itemize}
+
+\section{程序代码}
+\begingroup
+\renewcommand{\baselinestretch}{0.9}
+\lstinputlisting[language=C, basicstyle=\footnotesize, breaklines=true, texcl=true]{ exp1.jc }
+\endgroup
+
+\clearpage
+\end{CJK*}
+\end{document}
+

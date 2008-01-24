@@ -1,0 +1,37 @@
+%Created by jPicEdt 1.x
+%PsTricks format (pstricks.sty needed)
+%Tue Apr 04 13:23:34 CST 2006
+\psset{xunit=1mm,yunit=1mm,runit=1mm}
+\begin{pspicture}(0,0)(120.00,85.00)
+%Begin group
+\psellipse[linewidth=0.40,linecolor=black](55.00,50.00)(5.00,30.00)
+\psellipse[linewidth=0.40,linecolor=black](55.00,50.00)(5.00,30.00)
+%End group
+\psline[linewidth=0.20,linecolor=black,linestyle=dashed,dash=5.00 1.00]{-}(0.00,50.00)(120.00,50.00)
+\psline[linewidth=0.40,linecolor=black]{-}(115.00,80.00)(115.00,20.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,65.00)(60.00,45.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,65.00)(56.88,22.50)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,65.00)(59.38,65.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,35.00)(60.00,55.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,35.00)(56.88,77.50)
+\psline[linewidth=0.40,linecolor=black]{>-}(115.00,35.00)(59.38,35.00)
+\psline[linewidth=0.40,linecolor=black]{-}(74.00,67.00)(74.00,83.00)
+\psline[linewidth=0.40,linecolor=black]{-}(74.00,63.00)(74.00,52.00)
+\psline[linewidth=0.40,linecolor=black]{-}(74.00,48.00)(74.00,37.00)
+\psline[linewidth=0.40,linecolor=black]{-}(74.00,33.00)(74.00,18.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(5.00,55.00)(30.00,55.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(5.00,50.00)(30.00,50.00)
+\psline[linewidth=0.40,linecolor=black]{>-}(5.00,45.00)(30.00,45.00)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,55.00)(50.00,55.00)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,55.00)(53.13,76.88)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,55.00)(50.00,35.00)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,45.00)(50.63,65.63)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,45.00)(52.50,23.13)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,45.00)(50.00,45.00)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,55.00)(45.00,85.00)
+\psline[linewidth=0.40,linecolor=black]{->}(30.00,45.00)(45.00,15.00)
+\psline[linewidth=0.40,linecolor=black]{-}(30.00,57.00)(30.00,70.00)
+\psline[linewidth=0.40,linecolor=black]{-}(30.00,54.00)(30.00,51.00)
+\psline[linewidth=0.40,linecolor=black]{-}(30.00,49.00)(30.00,46.00)
+\psline[linewidth=0.40,linecolor=black]{-}(30.00,43.00)(30.00,30.00)
+\end{pspicture}
