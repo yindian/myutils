@@ -1,0 +1,13 @@
+# This is a default toolbar definition file for IceWM
+#
+# Place your personal variant in $HOME/.icewm directory.
+
+prog Rxvt xterm urxvt -rv -C -fn "9x15,xft:WenQuanYi Bitmap Song:pixelsize=11" -sl 500
+#prog FTE fte fte
+#prog Netscape netscape netscape
+#prog    "Vim" vim /usr/bin/gvim -f
+prog    "BBS" /usr/share/pixmaps/qterm_16x16.xpm qterm
+prog    "Zoom" /usr/share/pixmaps/ebview.xpm xzoom
+prog    "Dict" /usr/share/pixmaps/stardict.png stardict
+prog    "WWW" /usr/share/pixmaps/firefox.png x-www-browser
+

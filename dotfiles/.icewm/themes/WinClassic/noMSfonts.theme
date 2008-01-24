@@ -1,0 +1,54 @@
+# Clone of the Microsoft Windows Classic Standard Color Theme, based
+# on a couple of screenshots, made with Windows XP.
+
+ThemeDescription="Windows Klassisch (Xft without Tahoma/Verdana)"
+ThemeAuthor="Thomas Holder <thomasxholder(a)compuserve.de>"
+
+Look=pixmap
+
+TitleBarHeight=19
+BorderSizeX=4
+BorderSizeY=4
+CornerSizeX=23
+CornerSizeY=23
+
+# Key Stuff
+Win95Keys=1
+ModSuperIsCtrlAlt=1
+
+# Titlebar
+Gradients	="titleAB.xpm titleIB.xpm titleAT.xpm titleIT.xpm"
+TitleBarJoinRight	=1
+TitleButtonsLeft	="s"
+TitleButtonsRight	="xmi"
+TitleButtonsSupported	="shxmi"
+TitleFontNameXft	= "sans-serif:size=11:bold"
+ColorNormalTitleBarText	="#EEEEEE"
+ColorActiveTitleBarText	="#FFFFFF"
+
+# Taskbar
+NormalTaskBarFontNameXft	= "sans-serif:size=11:"
+ActiveTaskBarFontNameXft	= "sans-serif:size=11:bold"
+ColorDefaultTaskBar	="#D4D0C8"
+ColorNormalTaskBarApp	="#D4D0C8"
+ColorActiveTaskBarApp	="#EEEEEE"
+ColorNormalButton	="#D4D0C8"
+
+# Menu
+MenuFontNameXft 	= "sans-serif:size=10.5:"
+ColorActiveMenuItem	="#0A246A"
+ColorActiveMenuItemText	="#FFFFFF"
+ColorNormalMenu	="#D4D0C8"
+
+# Tooltips
+ColorToolTip	="#FFFFE1"
+ToolTipFontNameXft	="sans-serif:size=10"
+
+# Clock
+TimeFormat	="%R"
+ColorClock	=""
+ColorClockText	="#000000"
+ClockFontNameXft	="sans-serif:size=11"
+
+# Background
+DesktopBackgroundColor="#3a6ea5"

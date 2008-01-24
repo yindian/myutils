@@ -1,0 +1,468 @@
+
+menu "Applications" folder {
+menu "Accessibility" folder {
+  prog    "Xzoom" - /bin/sh -c "xzoom"
+}
+menu "Data Management" folder {
+  prog    "HSQLDB Database Manager" /usr/share/pixmaps/hsqldb.xpm /bin/sh -c "/usr/bin/hsqldb-databasemanager"
+  prog    "HSQLDB Database Manager (Swing)" /usr/share/pixmaps/hsqldb.xpm /bin/sh -c "/usr/bin/hsqldb-databasemanagerswing"
+  prog    "HSQLDB Query Tool" /usr/share/pixmaps/hsqldb.xpm /bin/sh -c "/usr/bin/hsqldb-querytool"
+  prog    "HSQLDB Transfer Tool" /usr/share/pixmaps/hsqldb.xpm /bin/sh -c "/usr/bin/hsqldb-transfer"
+  prog    "OpenOffice.org Base" /usr/share/icons/gnome/32x32/apps/openofficeorg22-base.xpm /bin/sh -c "/usr/bin/oobase"
+}
+menu "Network" folder {
+  prog    "Iceweasel" /usr/share/pixmaps/iceweasel.xpm /bin/sh -c "iceweasel"
+  prog    "Mutt" /usr/share/pixmaps/mutt.xpm /bin/sh -c "x-terminal-emulator  -T \"Mutt\" -e sh -c \"/usr/bin/mutt\""
+  prog    "Opera" /usr/share/pixmaps/opera.xpm /bin/sh -c "/usr/bin/opera"
+  prog    "Pidgin" /usr/share/pixmaps/pidgin-menu.xpm /bin/sh -c "/usr/bin/pidgin"
+  prog    "QTerm" /usr/share/pixmaps/qterm_32x32.xpm /bin/sh -c "/usr/bin/qterm"
+  prog    "Telnet" - /bin/sh -c "x-terminal-emulator  -T \"Telnet\" -e sh -c \"/usr/bin/telnet\""
+  prog    "w3m" - /bin/sh -c "x-terminal-emulator  -T \"w3m\" -e sh -c \"/usr/bin/w3m /usr/share/doc/w3m/MANUAL.html\""
+  prog    "Wireshark" /usr/share/pixmaps/wsicon32.xpm /bin/sh -c "/usr/bin/wireshark"
+}
+menu "Office" folder {
+  prog    "OpenOffice.org Calc" /usr/share/icons/gnome/32x32/apps/openofficeorg22-calc.xpm /bin/sh -c "/usr/bin/oocalc"
+  prog    "OpenOffice.org Impress" /usr/share/icons/gnome/32x32/apps/openofficeorg22-impress.xpm /bin/sh -c "/usr/bin/ooimpress"
+  prog    "OpenOffice.org Writer" /usr/share/icons/gnome/32x32/apps/openofficeorg22-writer.xpm /bin/sh -c "/usr/bin/oowriter"
+}
+menu "Shells" folder {
+  prog    "Bash" - /bin/sh -c "x-terminal-emulator  -T \"Bash\" -e sh -c \"/bin/bash --login\""
+  prog    "Sh" - /bin/sh -c "x-terminal-emulator  -T \"Sh\" -e sh -c \"/bin/sh --login\""
+  prog    "tcsh" - /bin/sh -c "x-terminal-emulator  -T \"tcsh\" -e sh -c \"/bin/tcsh\""
+}
+menu "Terminal Emulators" folder {
+  prog    "Rxvt" - /bin/sh -c "/usr/bin/rxvt-xterm"
+  prog    "Rxvt-Unicode" /usr/share/pixmaps/urxvt.xpm /bin/sh -c "urxvt"
+  prog    "Rxvt-Unicode (Black,Xft)" /usr/share/pixmaps/urxvt.xpm /bin/sh -c "urxvt -fn \"xft:Courier New\" -rv"
+  prog    "XTerm" /usr/share/pixmaps/xterm-color_32x32.xpm /bin/sh -c "xterm"
+  prog    "XTerm (Unicode)" /usr/share/pixmaps/xterm-color_32x32.xpm /bin/sh -c "uxterm"
+}
+menu "编程" folder {
+  prog    "BeanShell (text)" - /bin/sh -c "x-terminal-emulator  -T \"BeanShell (text)\" -e sh -c \"/usr/bin/bsh\""
+  prog    "BeanShell (windowed)" - /bin/sh -c "/usr/bin/xbsh"
+  prog    "Bouml" /usr/share/pixmaps/bouml32.xpm /bin/sh -c "/usr/bin/bouml"
+  prog    "GDB" - /bin/sh -c "x-terminal-emulator  -T \"GDB\" -e sh -c \"/usr/bin/gdb\""
+  prog    "ProjectControl" /usr/share/pixmaps/projectControl32.xpm /bin/sh -c "/usr/bin/projectControl"
+  prog    "ProjectSynchro" /usr/share/pixmaps/projectSynchro32.xpm /bin/sh -c "/usr/bin/projectSynchro"
+  prog    "Python (v2.4)" /usr/share/pixmaps/python2.4.xpm /bin/sh -c "x-terminal-emulator  -T \"Python (v2.4)\" -e sh -c \"/usr/bin/python2.4\""
+  prog    "Tclsh8.4" - /bin/sh -c "x-terminal-emulator  -T \"Tclsh8.4\" -e sh -c \"/usr/bin/tclsh8.4\""
+  prog    "TkWish8.4" - /bin/sh -c "x-terminal-emulator -e /usr/bin/wish8.4"
+}
+menu "编辑器" folder {
+  prog    "Gedit" /usr/share/pixmaps/gedit-icon.xpm /bin/sh -c "/usr/bin/gedit"
+  prog    "GVIM" /usr/share/pixmaps/vim-32.xpm /bin/sh -c "/usr/bin/gvim -f"
+  prog    "Kate" /usr/share/pixmaps/kate.xpm /bin/sh -c "/usr/bin/kate"
+  prog    "KWrite" /usr/share/pixmaps/kwrite.xpm /bin/sh -c "/usr/bin/kwrite"
+  prog    "Nano" /usr/share/nano/nano-menu.xpm /bin/sh -c "x-terminal-emulator  -T \"Nano\" -e sh -c \"/bin/nano\""
+}
+menu "工具" folder {
+  prog    "File-Roller" /usr/share/pixmaps/file-roller.xpm /bin/sh -c "/usr/bin/file-roller"
+  prog    "Kregexpeditor" /usr/share/pixmaps/kregexpeditor.xpm /bin/sh -c "/usr/bin/kregexpeditor"
+  prog    "Rclock" - /bin/sh -c "/usr/bin/rclock"
+  prog    "wmclockmon" - /bin/sh -c "/usr/bin/wmclockmon"
+  prog    "wmfire" - /bin/sh -c "/usr/bin/wmfire"
+  prog    "XArchive" /usr/share/pixmaps/xarchive.xpm /bin/sh -c "/usr/bin/xarchive"
+  prog    "Xarchiver" /usr/share/pixmaps/xarchiver.xpm /bin/sh -c "/usr/bin/xarchiver"
+  prog    "xournal" - /bin/sh -c "/usr/bin/xournal"
+}
+menu "观看器" folder {
+  prog    "Evince" /usr/share/pixmaps/evince.xpm /bin/sh -c "/usr/bin/evince"
+  prog    "gmplayer" - /bin/sh -c "/usr/bin/gmplayer"
+  prog    "gThumb Image Viewer" /usr/share/pixmaps/gthumb.xpm /bin/sh -c "/usr/bin/gthumb"
+  prog    "GV" /usr/share/pixmaps/mini-gv.xpm /bin/sh -c "/usr/bin/gv"
+  prog    "ImageMagick" - /bin/sh -c "/usr/bin/display"
+  prog    "KGhostView" /usr/share/pixmaps/kghostview.xpm /bin/sh -c "/usr/bin/kghostview"
+  prog    "XDvi" - /bin/sh -c "/usr/bin/xdvi"
+  prog    "Xpdf" /usr/share/pixmaps/xpdf.xpm /bin/sh -c "/usr/bin/xpdf"
+}
+menu "科学" folder {
+menu "Mathematics" folder {
+  prog    "Bc" - /bin/sh -c "x-terminal-emulator  -T \"Bc\" -e sh -c \"/usr/bin/bc\""
+  prog    "Dc" - /bin/sh -c "x-terminal-emulator  -T \"Dc\" -e sh -c \"/usr/bin/dc\""
+  prog    "OpenOffice.org Math" /usr/share/icons/gnome/32x32/apps/openofficeorg22-math.xpm /bin/sh -c "/usr/bin/oomath"
+}
+}
+menu "模拟器" folder {
+  prog    "DOSBox" /usr/share/pixmaps/dosbox.xpm /bin/sh -c "/usr/bin/dosbox"
+  prog    "Qemu Launcher" /usr/share/pixmaps/qemu-launcher-32x32.xpm /bin/sh -c "/usr/bin/qemu-launcher"
+}
+menu "声音" folder {
+  prog    "gmix (Gnome 2.0 Mixer)" /usr/share/pixmaps/gnome-mixer.xpm /bin/sh -c "/usr/bin/gnome-volume-control"
+  prog    "gnome-cd (Gnome 2.0 CD Player)" /usr/share/pixmaps/gnome-cd.xpm /bin/sh -c "/usr/bin/gnome-cd"
+  prog    "grecord (GNOME 2.0 Recorder)" /usr/share/pixmaps/gnome-grecord.xpm /bin/sh -c "/usr/bin/gnome-sound-recorder"
+  prog    "JACK Control" /usr/share/pixmaps/qjackctl.xpm /bin/sh -c "/usr/bin/qjackctl"
+  prog    "vumeter (Gnome 2.0 Volume Meter)" /usr/share/pixmaps/gnome-vumeter.xpm /bin/sh -c "/usr/bin/vumeter"
+}
+menu "图形" folder {
+  prog    "Dia" /usr/share/pixmaps/dia_menu.xpm /bin/sh -c "/usr/bin/dia-normal"
+  prog    "FontForge" /usr/share/icons/ffanvil32.xpm /bin/sh -c "/usr/bin/fontforge"
+  prog    "Inkscape" /usr/share/pixmaps/inkscape.xpm /bin/sh -c "/usr/bin/inkscape"
+  prog    "KPDF" /usr/share/pixmaps/kpdf.xpm /bin/sh -c "/usr/bin/kpdf"
+  prog    "Mensis" - /bin/sh -c "/usr/bin/mensis"
+  prog    "OpenOffice.org Draw" /usr/share/icons/gnome/32x32/apps/openofficeorg22-draw.xpm /bin/sh -c "/usr/bin/oodraw"
+}
+menu "文本" folder {
+  prog    "Character map" - /bin/sh -c "/usr/bin/gucharmap"
+  prog    "EBView" /usr/share/pixmaps/ebview.xpm /bin/sh -c "/usr/bin/ebview"
+  prog    "Fortune" - /bin/sh -c "sh -c 'while /usr/games/fortune | col -x | xmessage -center -buttons OK:1,Another:0 -default OK -file - ; do :; done'"
+}
+menu "系统" folder {
+menu "Administration" folder {
+  prog    "TeXconfig" - /bin/sh -c "x-terminal-emulator  -T \"TeXconfig\" -e sh -c \"/usr/bin/texconfig\""
+}
+  prog    "Aptitude" - /bin/sh -c "x-terminal-emulator  -T \"Aptitude\" -e sh -c \"/usr/bin/aptitude\""
+  prog    "Pstree" /usr/share/pixmaps/pstree16.xpm /bin/sh -c "x-terminal-emulator  -T \"Pstree\" -e sh -c \"/usr/bin/pstree.x11\""
+  prog    "reportbug" - /bin/sh -c "x-terminal-emulator  -T \"reportbug\" -e sh -c \"/usr/bin/reportbug --exit-prompt\""
+  prog    "ROX Filer" - /bin/sh -c "/usr/bin/rox"
+  prog    "Task selector" - /bin/sh -c "x-terminal-emulator  -T \"Task selector\" -e sh -c \"su-to-root -c tasksel\""
+  prog    "Top" - /bin/sh -c "x-terminal-emulator  -T \"Top\" -e sh -c \"/usr/bin/top\""
+  prog    "X-Terminal as root (GKsu)" /usr/share/pixmaps/gksu-debian.xpm /bin/sh -c "/usr/bin/gksu -u root /usr/bin/x-terminal-emulator"
+}
+}
+menu "Window Managers" folder {
+  restart "IceWM" /usr/share/icewm/icons/icewm_16x16.xpm /bin/sh -c "/usr/bin/icewm"
+  restart "Window Maker" - /bin/sh -c "/usr/bin/wmaker"
+}
+menu "帮助" folder {
+  prog    "Info" - /bin/sh -c "x-terminal-emulator  -T \"Info\" -e sh -c \"info\""
+  prog    "TeXdoctk" - /bin/sh -c "/usr/bin/texdoctk"
+  prog    "yelp" - /bin/sh -c "/usr/bin/yelp"
+}
+menu "屏幕" folder {
+menu "Locking" folder {
+menu "Assorted" folder {
+  prog    "Anemone" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode anemone"
+  prog    "Ball" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ball"
+  prog    "Blot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode blot"
+  prog    "Bounce" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bounce"
+  prog    "Bubble" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bubble"
+  prog    "Clock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode clock"
+  prog    "Crystal" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode crystal"
+  prog    "Daisy" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode daisy"
+  prog    "Dclock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode dclock"
+  prog    "Decay" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode decay"
+  prog    "Deco" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode deco"
+  prog    "Deluxe" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode deluxe"
+  prog    "Eyes" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode eyes +trackmouse"
+  prog    "Eyesptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode eyes -trackmouse"
+  prog    "Fiberlamp" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode fiberlamp"
+  prog    "Fzort" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode fzort"
+  prog    "Goop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode goop"
+  prog    "Juggle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode juggle"
+  prog    "Marquee" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode marquee"
+  prog    "Matrix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode matrix"
+  prog    "Munch" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode munch"
+  prog    "Nose" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode nose"
+  prog    "Pacman" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode pacman"
+  prog    "Pyro" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode pyro +use3d"
+  prog    "Pyro3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode pyro -use3d"
+  prog    "Roll" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode roll"
+  prog    "Slip" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode slip"
+  prog    "Solitare" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode solitare +trackmouse"
+  prog    "Solitareptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode solitare -trackmouse"
+  prog    "Starfish" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode starfish -install"
+  prog    "Swarm" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode swarm +trackmouse"
+  prog    "Swarmptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode swarm -trackmouse"
+  prog    "Swirl" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode swirl -install"
+  prog    "T3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode t3d"
+  prog    "Tetris" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode tetris"
+  prog    "Tube" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode tube -install"
+  prog    "Worm" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode worm +use3d"
+  prog    "Worm3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode worm -use3d"
+  prog    "Xcl" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode xcl"
+  prog    "Xjack" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode xjack"
+}
+menu "Automata" folder {
+  prog    "Ant" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ant -neighbors 4 +truchet"
+  prog    "Ant3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ant3d"
+  prog    "Ant Truchet" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ant -neighbors 4 -truchet"
+  prog    "Bee" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ant -neighbors 6 +truchet"
+  prog    "Bee Truchet" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ant -neighbors 6 -truchet"
+  prog    "Bug" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bug"
+  prog    "Demon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode demon"
+  prog    "Dilemma" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode dilemma"
+  prog    "Life" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life"
+  prog    "Life1d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life1d"
+  prog    "Life3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life3d"
+  prog    "Life Callahan" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life -callahan -size 7"
+  prog    "Loop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode loop"
+  prog    "Petri" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode petri"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allautomata -fullrandom -neighbors 0"
+  prog    "Voters" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode voters"
+  prog    "Wator" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode wator"
+  prog    "Wire" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode wire"
+}
+menu "Fractal" folder {
+  prog    "Coral" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode coral"
+  prog    "Discrete" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode discrete"
+  prog    "Dragon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode dragon"
+  prog    "Drift" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode drift -fullrandom"
+  prog    "Euler2d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode euler2d"
+  prog    "Flame" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode flame"
+  prog    "Flow" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode flow"
+  prog    "Forest" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode forest"
+  prog    "Hop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode hop -fullrandom"
+  prog    "IFS" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ifs"
+  prog    "Julia" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode julia +trackmouse"
+  prog    "Juliaptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode julia -trackmouse"
+  prog    "Kumppa" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode kumppa"
+  prog    "Lightning" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode lightning"
+  prog    "Lyapunov" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode lyapunov -install"
+  prog    "Mandelbrot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode mandelbrot -install"
+  prog    "Mountain" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode mountain"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allfractal -fullrandom"
+  prog    "Sierpinski" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode sierpinski"
+  prog    "Strange" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode strange"
+  prog    "Thornbird" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode thornbird"
+  prog    "Triangle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode triangle"
+  prog    "Turtle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode turtle"
+  prog    "Vines" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode vines"
+}
+menu "Geometry" folder {
+  prog    "Apollonian" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode apollonian"
+  prog    "Braid" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode braid"
+  prog    "Fadeplot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode fadeplot"
+  prog    "Helix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode helix -fullrandom"
+  prog    "Hyper" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode hyper"
+  prog    "Ico" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode ico"
+  prog    "Kaleid" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode kaleid"
+  prog    "Laser" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode laser"
+  prog    "Lisa" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode lisa"
+  prog    "Lissie" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode lissie"
+  prog    "Penrose" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode penrose +ammann"
+  prog    "Penrose Ammann" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode penrose -ammann"
+  prog    "Petal" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode petal"
+  prog    "Polyominoes" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode polyominoes"
+  prog    "Qix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode qix +complete"
+  prog    "Qix complete" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode qix -complete"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allgeometry -fullrandom"
+  prog    "Rotor" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode rotor"
+  prog    "Shape" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode shape"
+  prog    "Sphere" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode sphere"
+  prog    "Spiral" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode spiral"
+  prog    "Spline" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode spline"
+  prog    "Tik_Tak" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode tik_tak"
+  prog    "Toneclock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode toneclock"
+}
+menu "MarqueeMessage" folder {
+  prog    "Back Soon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode marquee -message \"$LOGNAME will be back soon.\""
+  prog    "Overnight" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode marquee -message \"$LOGNAME will be back in the morning.\""
+  prog    "Rude" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode marquee -message \"$LOGNAME not here, please go away!\""
+}
+menu "NoseMessage" folder {
+  prog    "Back Soon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode nose -message \"$LOGNAME will be back soon.\""
+  prog    "Overnight" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode nose -message \"$LOGNAME will be back in the morning.\""
+  prog    "Rude" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode nose -message \"$LOGNAME not here, please go away!\""
+}
+menu "Space" folder {
+  prog    "Bouboule" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bouboule +use3d"
+  prog    "Bouboule3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bouboule -use3d"
+  prog    "Galaxy" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode galaxy"
+  prog    "Grav" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode grav +trail +decay"
+  prog    "Grav Decay" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode grav -decay"
+  prog    "Grav Trail" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode grav -trail"
+  prog    "Random Space" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allspace"
+  prog    "Rock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode star -rock"
+  prog    "Space" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode space"
+  prog    "Star" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode star +rock +use3d +trek 0"
+  prog    "Star3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode star -use3d"
+  prog    "Star Trek" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode star -trek 100"
+  prog    "World" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode world"
+}
+menu "Special" folder {
+  prog    "Blank" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode blank"
+  prog    "Bomb" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bomb"
+  prog    "Random 3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist all3d -use3d -fullrandom"
+  prog    "Random all" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist all -fullrandom -neighbors 0"
+  prog    "Random nice" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allnice -fullrandom -neighbors 0"
+  prog    "Random ptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allmouse -trackmouse -fullrandom"
+  prog    "Random standard" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist all-allgl -fullrandom -neighbors 0"
+  prog    "Random write" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allwrite -install -fullrandom"
+  prog    "Transparent" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode blank -geometry 1x1 -enablesaver"
+}
+menu "XjackMessage" folder {
+  prog    "Crazy Boy" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode xjack -message \"All work and no play makes $LOGNAME a dull boy.\""
+  prog    "Crazy Girl" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode xjack -message \"All work and no play makes $LOGNAME a dull girl.\""
+}
+menu "XPM" folder {
+  prog    "Bat" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode bat"
+  prog    "Flag" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode flag"
+  prog    "Image" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode image"
+  prog    "Life" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life"
+  prog    "Life1d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode life1d"
+  prog    "Maze" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode maze"
+  prog    "Puzzle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode puzzle"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -mode random -modelist allxpm -fullrandom"
+}
+}
+menu "Saving" folder {
+menu "Assorted" folder {
+  prog    "Anemone" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode anemone"
+  prog    "Ball" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ball"
+  prog    "Blot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode blot"
+  prog    "Bounce" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bounce"
+  prog    "Bubble" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bubble"
+  prog    "Clock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode clock"
+  prog    "Crystal" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode crystal"
+  prog    "Daisy" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode daisy"
+  prog    "Dclock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode dclock"
+  prog    "Decay" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode decay"
+  prog    "Deco" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode deco"
+  prog    "Deluxe" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode deluxe"
+  prog    "Eyes" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode eyes +trackmouse"
+  prog    "Eyesptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode eyes -trackmouse"
+  prog    "Fiberlamp" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode fiberlamp"
+  prog    "Fzort" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode fzort"
+  prog    "Goop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode goop"
+  prog    "Juggle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode juggle"
+  prog    "Marquee" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode marquee"
+  prog    "Matrix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode matrix"
+  prog    "Munch" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode munch"
+  prog    "Nose" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode nose"
+  prog    "Pacman" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode pacman"
+  prog    "Pyro" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode pyro +use3d"
+  prog    "Pyro3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode pyro -use3d"
+  prog    "Roll" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode roll"
+  prog    "Slip" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode slip"
+  prog    "Solitare" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode solitare +trackmouse"
+  prog    "Solitareptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode solitare -trackmouse"
+  prog    "Starfish" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode starfish -install"
+  prog    "Swarm" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode swarm +trackmouse"
+  prog    "Swarmptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode swarm -trackmouse"
+  prog    "Swirl" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode swirl -install"
+  prog    "T3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode t3d"
+  prog    "Tetris" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode tetris"
+  prog    "Tube" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode tube -install"
+  prog    "Worm" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode worm +use3d"
+  prog    "Worm3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode worm -use3d"
+  prog    "Xcl" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode xcl"
+  prog    "Xjack" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode xjack"
+}
+menu "Automata" folder {
+  prog    "Ant" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ant -neighbors 4 +truchet"
+  prog    "Ant3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ant3d"
+  prog    "Ant Truchet" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ant -neighbors 4 -truchet"
+  prog    "Bee" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ant -neighbors 6 +truchet"
+  prog    "Bee Truchet" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ant -neighbors 6 -truchet"
+  prog    "Bug" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bug"
+  prog    "Demon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode demon"
+  prog    "Dilemma" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode dilemma"
+  prog    "Life" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life"
+  prog    "Life1d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life1d"
+  prog    "Life3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life3d"
+  prog    "Life Callahan" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life -callahan -size 7"
+  prog    "Loop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode loop"
+  prog    "Petri" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode petri"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allautomata -fullrandom -neighbors 0"
+  prog    "Voters" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode voters"
+  prog    "Wator" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode wator"
+  prog    "Wire" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode wire"
+}
+menu "Fractal" folder {
+  prog    "Coral" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode coral"
+  prog    "Discrete" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode discrete"
+  prog    "Dragon" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode dragon"
+  prog    "Drift" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode drift -fullrandom"
+  prog    "Euler2d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode euler2d"
+  prog    "Flame" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode flame"
+  prog    "Flow" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode flow"
+  prog    "Forest" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode forest"
+  prog    "Hop" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode hop -fullrandom"
+  prog    "IFS" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ifs"
+  prog    "Julia" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode julia +trackmouse"
+  prog    "Juliaptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode julia -trackmouse"
+  prog    "Kumppa" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode kumppa"
+  prog    "Lightning" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode lightning"
+  prog    "Lyapunov" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode lyapunov -install"
+  prog    "Mandelbrot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode mandelbrot -install"
+  prog    "Mountain" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode mountain"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allfractal -fullrandom"
+  prog    "Sierpinski" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode sierpinski"
+  prog    "Strange" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode strange"
+  prog    "Thornbird" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode thornbird"
+  prog    "Triangle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode triangle"
+  prog    "Turtle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode turtle"
+  prog    "Vines" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode vines"
+}
+menu "Geometry" folder {
+  prog    "Apollonian" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode apollonian"
+  prog    "Braid" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode braid"
+  prog    "Fadeplot" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode fadeplot"
+  prog    "Helix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode helix -fullrandom"
+  prog    "Hyper" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode hyper"
+  prog    "Ico" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode ico"
+  prog    "Kaleid" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode kaleid"
+  prog    "Laser" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode laser"
+  prog    "Lisa" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode lisa"
+  prog    "Lissie" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode lissie"
+  prog    "Penrose" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode penrose +ammann"
+  prog    "Penrose Ammann" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode penrose -ammann"
+  prog    "Petal" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode petal"
+  prog    "Polyominoes" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode polyominoes"
+  prog    "Qix" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode qix +complete"
+  prog    "Qix complete" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode qix -complete"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allgeometry"
+  prog    "Rotor" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode rotor"
+  prog    "Shape" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode shape"
+  prog    "Sphere" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode sphere"
+  prog    "Spiral" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode spiral"
+  prog    "Spline" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode spline"
+  prog    "Tik_Tak" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode tik_tak"
+  prog    "Toneclock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode toneclock"
+}
+menu "MarqueeMessage" folder {
+  prog    "Available" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode marquee -message \"Hey, I'm available now!\""
+  prog    "Brilliant!" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode marquee -message \"WOW! $LOGNAME, You're Brilliant!\""
+  prog    "Love You" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode marquee -message \"You know, I Love You $LOGNAME.\""
+}
+menu "NoseMessage" folder {
+  prog    "Available" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode nose -message \"Hey, I'm available now!\""
+  prog    "Brilliant!" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode nose -message \"WOW! $LOGNAME, You're Brilliant!\""
+  prog    "Love You" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode nose -message \"You know, I Love You $LOGNAME.\""
+}
+menu "Space" folder {
+  prog    "Bouboule" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bouboule +use3d"
+  prog    "Bouboule3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bouboule -use3d"
+  prog    "Galaxy" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode galaxy"
+  prog    "Grav" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode grav +trail +decay"
+  prog    "Grav Decay" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode grav -decay"
+  prog    "Grav Trail" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode grav -trail"
+  prog    "Random Space" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allspace"
+  prog    "Rock" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode star -rock"
+  prog    "Scooter" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode scooter"
+  prog    "Space" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode space"
+  prog    "Star" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode star +rock +use3d +trek 0"
+  prog    "Star3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode star -use3d"
+  prog    "Star Trek" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode star -trek 100"
+  prog    "World" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode world"
+}
+menu "Special" folder {
+  prog    "Blank" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode blank"
+  prog    "Bomb" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bomb"
+  prog    "Random 3d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist all3d -use3d -fullrandom"
+  prog    "Random all" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist all -fullrandom -neighbors 0"
+  prog    "Random nice" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allnice -fullrandom -neighbors 0"
+  prog    "Random ptr" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allmouse -trackmouse -fullrandom"
+  prog    "Random standard" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist all-allgl -fullrandom -neighbors 0"
+  prog    "Random write" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allwrite -fullrandom"
+}
+menu "XPM" folder {
+  prog    "Bat" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode bat"
+  prog    "Flag" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode flag"
+  prog    "Image" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode image"
+  prog    "Life" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life"
+  prog    "Life1d" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode life1d"
+  prog    "Maze" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode maze"
+  prog    "Puzzle" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode puzzle"
+  prog    "Random" - /bin/sh -c "/usr/bin/xlock -remote -nice 19 -nolock -mode random -modelist allxpm -fullrandom"
+}
+}
+}
+menu "游戏" folder {
+menu "Action" folder {
+  prog    "SuperTux" /usr/share/games/supertux/images/icon.xpm /bin/sh -c "/usr/games/supertux"
+}
+menu "策略类" folder {
+  prog    "Battle for Wesnoth" /usr/share/pixmaps/wesnoth-icon.xpm /bin/sh -c "/usr/games/wesnoth-nolog"
+}
+}
