@@ -1,0 +1,436 @@
+%%	Full Width Punctuation Kerning Adjusting Macro for XeTeX
+%%	File:	xfwpunct.sty
+%%	Author:	Dian YIN (yindian@ustc)
+%%	Descr:	This style file makes some of the full-width punctuations 
+%%		active and lets them behave like half-width puncts with glue,
+%%		or behave ligature-like for two adjacent punctuations. Spaces 
+%%		will be ignored after those puncts. \FWPsethalf or \FWPsetlig
+%%		is what you need to achieve this. \FWPreset resets the puncts
+%%		back to normal letters. These macros are for XeTeX and UTF-8
+%%		only, with the presupposition that one Chinese character has
+%%		the width of 1em.
+%%	Hist:	07.2.2.-07.2.4. I have finished the first version trickily. All 
+%%			punctuations on the same side are treated the same way 
+%%			that has been cut off 0.07em on one side and 0.43em on 
+%%			the other side using the command \FWPsethalf. This is
+%%			similar to apply the halfwidth feature to the opentype 
+%%			font. The trick lies in using for/tfor loop to batch
+%%			setting up punctuations.
+%%		07.2.5. RP *bursted*, finished the second version. Added command
+%%			\FWPsetlig, which applies ligature to two adjacent 
+%%			punctuations rather than treat them both as halfwidth.
+%%			This is done with the help of \futurelet.
+%%			In the evening added \FWPsetcompactlig, which lessens
+%%			the glue between two adjacent punctuations.
+%%		07.2.6. Minor changes to \FWPsetlig and \FWPsetcompactlig.
+%%			Added \FWPsetligbrkable, which ignore the punctuation
+%%			prohibition. Found bug that it cannot ensure that two
+%%			adjacent puncts nonbreakable.
+%%		07.2.7. Fixed the breakable bug in \FWPset*lig*. It requires
+%%			judgement of the next char using \futurelet. So
+%%			\FWPsethalf still can't avoid the bug. \FWPsetcompactlig
+%%			is the recommended setting when using.
+%%	TODO:	* Introduce the punctuation settings of CJKpunct so that
+%%		different punctuations behave differently. 
+%%		* Implement the punctuation settings for vertical fonts.
+\catcode`\@=11
+\ifx\LaTeX\@undefined
+\def\@nnil{\@nil}%
+\def\@empty{}%
+\def\@fornoop#1\@@#2#3{}%
+\long\def\@for#1:=#2\do#3{%
+  \expandafter\def\expandafter\@fortmp\expandafter{#2}%
+  \ifx\@fortmp\@empty \else
+    \expandafter\@forloop#2,\@nil,\@nil\@@#1{#3}\fi}%
+\long\def\@forloop#1,#2,#3\@@#4#5{\def#4{#1}\ifx #4\@nnil \else
+       #5\def#4{#2}\ifx #4\@nnil \else#5\@iforloop #3\@@#4{#5}\fi\fi}%
+\long\def\@iforloop#1,#2\@@#3#4{\def#3{#1}\ifx #3\@nnil
+       \expandafter\@fornoop \else
+      #4\relax\expandafter\@iforloop\fi#2\@@#3{#4}}%
+\def\@tfor#1:={\@tf@r#1 }%
+\long\def\@tf@r#1#2\do#3{\def\@fortmp{#2}\ifx\@fortmp\space\else
+    \@tforloop#2\@nil\@nil\@@#1{#3}\fi}%
+\long\def\@tforloop#1#2\@@#3#4{\def#3{#1}\ifx #3\@nnil
+       \expandafter\@fornoop \else
+      #4\relax\expandafter\@tforloop\fi#2\@@#3{#4}}%
+\newbox\@tempboxa
+\def\@settodim#1#2#3{\setbox\@tempboxa\hbox{{#3}}#2#1\@tempboxa
+       \setbox\@tempboxa\box\voidb@x}%
+\def\settoheight{\@settodim\ht}%
+\def\settodepth {\@settodim\dp}%
+\def\settowidth {\@settodim\wd}%
+\def\@namedef#1{\expandafter\def\csname #1\endcsname}%
+\def\@nameuse#1{\csname #1\endcsname}%
+\fi % end if
+% The code begins here
+\ifx\FWP@defined\@undefined
+\def\FWP@defined{\relax}%
+\def\rightpunct{、。，．：；！？’”〕）］｝〉》〗】」』}%
+\def\rightpunctname{caesura,period,comma,dot,colon,semicolon,exclamation,question,rsglquote,rdblquote,rcurve,rparenthesis,rsqrbracket,rbrace,rsglfrquote,rdblfrquote,rhollowref,rsolidref,rsglvertquote,rdblvertquote}%
+\def\leftpunct{‘“〔（［｛〈《〖【「『}%
+\def\leftpunctname{lsglquote,ldblquote,lcurve,lparenthesis,lsqrbracket,lbrace,lsglfrquote,ldblfrquote,lhollowref,lsolidref,lsglvertquote,ldblvertquote}%
+\newcount\FWP@tempcnta
+\newcount\FWP@tempcntb
+\newcount\FWP@tempcntc
+\newif\ifFWP@canlig
+\FWP@canligfalse
+\def\gettforitem#1#2#3{%	#1: tfor list  #2: index   #3: output macro
+  \FWP@tempcnta=0
+  \expandafter\@tfor\expandafter\getitem@member\expandafter:\expandafter=#1\do{%
+    \ifnum\FWP@tempcnta = #2%
+      \edef#3{\getitem@member}%
+    \fi
+    \advance\FWP@tempcnta by1%
+  }%
+}% end def
+\def\getforitem#1#2#3{%	#1: for list  #2: index   #3: output macro
+  \FWP@tempcnta=0
+  \expandafter\@for\expandafter\getitem@member\expandafter:\expandafter=#1\do{%
+    \ifnum\FWP@tempcnta = #2%
+      \edef#3{\getitem@member}%
+    \fi
+    \advance\FWP@tempcnta by1%
+  }%
+}% end def
+\def\FWP@sethalfwidthr#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to half width, shrink at right
+  \expandafter\edef\csname fwpunct@#2\endcsname{{\nobreak\hskip 0pt plus .07em\hbox to .5em{\kern -.07em#1\kern -.43em}\hskip 0pt plus .43em}\ignorespaces}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@sethalfwidthl#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to half width, shrink at left
+  \expandafter\edef\csname fwpunct@#2\endcsname{{\hskip 0pt plus .43em\hbox to .5em{\kern -.43em#1\kern -.07em}\hskip 0pt plus .07em\nobreak}\ignorespaces}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setligaturer#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable, for rightpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligr@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \FWP@canligfalse
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \hbox to .5em{|\kern -.5em}\FWP@nobreak\hskip 0pt plus .5em\ignorespaces
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+        \hbox to .5em{|\kern -.5em}\FWP@nobreak\hskip 0pt plus .5em\ignorespaces
+      \else
+        |\hskip 0pt minus .43em\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\nobreak\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligr@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setligaturel#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable, for leftpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligl@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \FWP@canligfalse
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \hskip 0pt plus .5em\FWP@nobreak\hbox to .5em{\kern -.5em|}\nobreak\ignorespaces
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+	\hskip 0pt plus .5em\FWP@nobreak\hbox to .5em{\kern -.5em|}\nobreak\ignorespaces
+      \else
+        \hskip 0pt minus .43em|\nobreak\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligl@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setcompactligaturer#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable and shrinkable, for rightpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligr@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \FWP@canligfalse
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \hbox to .5em{|\kern -.5em}\FWP@nobreak\hskip 0pt plus .07em\ignorespaces
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+        \hbox to .5em{|\kern -.5em}\FWP@nobreak\hskip 0pt plus .07em\ignorespaces
+      \else
+        \hbox to .5em{|\kern -.5em}\hskip .5em minus .43em\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\nobreak\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligr@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setcompactligaturel#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable and shrinkable, for leftpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligl@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \FWP@canligfalse
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \hskip 0pt plus .07em\FWP@nobreak\hbox to .5em{\kern -.5em|}\nobreak\ignorespaces
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+	\hskip 0pt plus .07em\FWP@nobreak\hbox to .5em{\kern -.5em|}\nobreak\ignorespaces
+      \else
+        \hskip .5em minus .43em\hbox to .5em{\kern -.5em|}\nobreak\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligl@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setligbrkabler#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable, for rightpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligr@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \hbox to .5em{|\kern -.5em}\hskip 0pt plus .5em\ignorespaces
+      \FWP@canligfalse
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+        \hbox to .5em{|\kern -.5em}\FWP@nobreak\hskip 0pt plus .5em\ignorespaces
+      \else
+        |\hskip 0pt minus .5em\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\hskip 0pt\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligr@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@setligbrkablel#1#2/{% #1: \temppunct  #2: \temppunctname  set \temppunct to ligaturable, for leftpunct
+  \expandafter\catcode\expandafter`#1=12
+  \bgroup
+  \catcode`|=11
+  \expandafter\lccode\expandafter`\expandafter|\expandafter`#1
+  \lowercase{%
+  \expandafter\gdef\csname @fwpligl@#2\endcsname{% macro to set possible ligature if the next char is a left or right punct
+    \ifFWP@canlig  % last char requires a ligature
+      \hskip 0pt plus .5em\hbox to .5em{\kern -.5em|}\hskip 0pt\ignorespaces
+      \FWP@canligfalse
+    \else
+      \let\FWP@nobreak\relax
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\rightpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	\fi
+      }%
+      \expandafter\@for\expandafter\FWPlig@member\expandafter:\expandafter=\leftpunctname\do{%
+        \expandafter\ifx\expandafter\FWP@nextpunct\csname fwpunct@\FWPlig@member\endcsname
+	  \FWP@canligtrue
+	  \let\FWP@nobreak\nobreak
+	\fi
+      }%
+      \ifFWP@canlig  % next char is also a punct. ligature required
+	\hskip 0pt plus .5em\hbox to .5em{\kern -.5em|}\FWP@nobreak\hskip 0pt\ignorespaces
+      \else
+        \hskip 0pt minus .5em|\hskip 0pt\ignorespaces
+      \fi
+    \fi
+  }% end def
+  }% end lowercase
+  \egroup
+  \expandafter\def\csname fwpunct@#2\endcsname{\let\FWP@nextpunct\relax\expandafter\futurelet\expandafter\FWP@nextpunct\csname @fwpligl@#2\endcsname}%
+  \expandafter\catcode\expandafter`#1=\active
+  \bgroup
+  \expandafter\lccode\expandafter`\expandafter~\expandafter`#1
+  \lowercase{\global\expandafter\let\expandafter~\csname fwpunct@#2\endcsname}%
+  \egroup
+}% end def
+\def\FWP@set#1#2{% #1: rightpunct macro, #2: leftpunct macro
+  \FWP@tempcntb=0
+  \FWP@tempcntc=0
+  \expandafter\@tfor\expandafter\member\expandafter:\expandafter=\rightpunct\do{%
+    \advance\FWP@tempcntc by 1
+  }%
+  \loop
+    \ifnum\FWP@tempcntb < \FWP@tempcntc
+    \gettforitem\rightpunct\FWP@tempcntb\temppunct
+    \getforitem\rightpunctname\FWP@tempcntb\temppunctname
+    \expandafter#2\expandafter\temppunct\temppunctname/%
+    \advance\FWP@tempcntb by 1
+  \repeat
+  \FWP@tempcntb=0
+  \FWP@tempcntc=0
+  \expandafter\@tfor\expandafter\member\expandafter:\expandafter=\leftpunct\do{%
+    \advance\FWP@tempcntc by 1
+  }%
+  \loop
+    \ifnum\FWP@tempcntb < \FWP@tempcntc
+    \gettforitem\leftpunct\FWP@tempcntb\temppunct
+    \getforitem\leftpunctname\FWP@tempcntb\temppunctname
+    \expandafter#1\expandafter\temppunct\temppunctname/%
+    \advance\FWP@tempcntb by 1
+  \repeat
+}% end def
+\def\FWPsethalf{\FWP@set\FWP@sethalfwidthl\FWP@sethalfwidthr}%
+\def\FWPsetlig{\FWP@set\FWP@setligaturel\FWP@setligaturer}%
+\def\FWPsetcompactlig{\FWP@set\FWP@setcompactligaturel\FWP@setcompactligaturer}%
+\def\FWPsetligbrkable{\FWP@set\FWP@setligbrkablel\FWP@setligbrkabler}%
+\def\FWPreset{%
+  \FWP@tempcntb=0
+  \FWP@tempcntc=0
+  \expandafter\@tfor\expandafter\member\expandafter:\expandafter=\rightpunct\do{%
+    \advance\FWP@tempcntc by 1
+  }%
+  \loop
+    \ifnum\FWP@tempcntb < \FWP@tempcntc
+    \gettforitem\rightpunct\FWP@tempcntb\temppunct
+    \expandafter\catcode\expandafter`\temppunct=11
+    \advance\FWP@tempcntb by 1
+  \repeat
+  \FWP@tempcntb=0
+  \FWP@tempcntc=0
+  \expandafter\@tfor\expandafter\member\expandafter:\expandafter=\leftpunct\do{%
+    \advance\FWP@tempcntc by 1
+  }%
+  \loop
+    \ifnum\FWP@tempcntb < \FWP@tempcntc
+    \gettforitem\leftpunct\FWP@tempcntb\temppunct
+    \expandafter\catcode\expandafter`\temppunct=11
+    \advance\FWP@tempcntb by 1
+  \repeat
+}% end def
+\fi
+%\catcode`\@=12
