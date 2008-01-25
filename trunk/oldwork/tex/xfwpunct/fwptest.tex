@@ -1,0 +1,155 @@
+\catcode`\@=11
+\XeTeXlinebreaklocale "zh"
+\font\Song="SimSun" at 16pt
+\font\smallsong="SimSun" at 8pt
+\font\Hei="SimHei" at 16pt
+\font\Kai="KaiTi_GB2312" at 16pt
+\font\Fang="FangSong_GB2312" at 16pt
+\font\LiSu="LiSu" at 16pt
+\font\Yao="FZYaoTi" at 16pt
+\Song
+\headline={\hrulefill}
+\input xfwpunct.sty
+
+\newbox\fbox@tmpbox
+\newdimen\fbox@linewidth
+\newdimen\fbox@tmpdim
+\fbox@linewidth=0.4pt
+\def\fbox#1{%
+  \setbox\fbox@tmpbox=\hbox{#1}%
+  \fbox@tmpdim=2\fbox@linewidth
+  \advance\fbox@tmpdim\wd\fbox@tmpbox
+  \leavevmode\hbox{\vbox{\hrule height \fbox@linewidth width \fbox@tmpdim
+  \hbox{\vrule width \fbox@linewidth height \ht\fbox@tmpbox
+  #1\vrule width \fbox@linewidth height \ht\fbox@tmpbox}%
+  \hrule height \fbox@linewidth width \fbox@tmpdim
+  }}%
+}
+
+\def\fboxlist#1{%
+  \expandafter\@tfor\expandafter\member\expandafter:\expandafter=#1\do{%
+    \fbox{\member}%
+  }%
+}
+
+abc\FWPsethalf def
+
+\fboxlist{右、。，．：；！？’”〕）］｝〉》〗】」』}
+
+\fboxlist{左‘“〔（［｛〈《〖【「『}
+
+abc\FWPsetlig def
+
+\fboxlist{右、。，．：；！？’”〕）］｝〉》〗】」』}
+
+\fboxlist{左‘“〔（［｛〈《〖【「『}
+、。，．：；！？’”〕）］｝〉》〗】
+‘“〔（［｛〈《〖【
+
+\FWPsethalf {\smallsong FWPsethalf}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+第二天白天，雨一直连绵不断的下着，很少有人愿意顶着大雨赶路，天地间一片萧条。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+艾米哑然失笑：“魔法哪里有那么神奇，我都说了，呼风唤雨如果真实存在的话，
+也必然是神明才有的能力。现在这个季节，夏秋相交。所以天空的风很多。巧妙利用后，
+不难下雨。根据资料记载，但是如果遇到了几年大旱，天空的风都干燥无比。
+除非去几个风系大魔导师，跨越千里，连续不断的从其他地区引入新风，
+才有可能下雨。”
+
+\noindent 魔导师，跨越千里，连续不断的从其他地区引入新风，才有可能下雨。”
+
+\FWPsetlig {\smallsong FWPsetlig}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+第二天白天，雨一直连绵不断的下着，很少有人愿意顶着大雨赶路，天地间一片萧条。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+艾米哑然失笑：“魔法哪里有那么神奇，我都说了，呼风唤雨如果真实存在的话，
+也必然是神明才有的能力。现在这个季节，夏秋相交。所以天空的风很多。巧妙利用后，
+不难下雨。根据资料记载，但是如果遇到了几年大旱，天空的风都干燥无比。
+除非去几个风系大魔导师，跨越千里，连续不断的从其他地区引入新风，
+才有可能下雨。”
+
+\noindent 魔导师，跨越千里，连续不断的从其他地区引入新风，才有可能下雨。”
+
+\FWPsetcompactlig {\smallsong FWPsetcompactlig}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+第二天白天，雨一直连绵不断的下着，很少有人愿意顶着大雨赶路，天地间一片萧条。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+艾米哑然失笑：“魔法哪里有那么神奇，我都说了，呼风唤雨如果真实存在的话，
+也必然是神明才有的能力。现在这个季节，夏秋相交。所以天空的风很多。巧妙利用后，
+不难下雨。根据资料记载，但是如果遇到了几年大旱，天空的风都干燥无比。
+除非去几个风系大魔导师，跨越千里，连续不断的从其他地区引入新风，
+才有可能下雨。”
+
+\noindent 魔导师，跨越千里，连续不断的从其他地区引入新风，才有可能下雨。”
+
+\FWPsetligbrkable {\smallsong FWPsetligbrkable}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+第二天白天，雨一直连绵不断的下着，很少有人愿意顶着大雨赶路，天地间一片萧条。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+艾米哑然失笑：“魔法哪里有那么神奇，我都说了，呼风唤雨如果真实存在的话，
+也必然是神明才有的能力。现在这个季节，夏秋相交。所以天空的风很多。巧妙利用后，
+不难下雨。根据资料记载，但是如果遇到了几年大旱，天空的风都干燥无比。
+除非去几个风系大魔导师，跨越千里，连续不断的从其他地区引入新风，
+才有可能下雨。”
+
+\noindent 魔导师，跨越千里，连续不断的从其他地区引入新风，才有可能下雨。”
+
+\FWPsetcompactlig {\smallsong FWPsetcompactlig}
+
+\Hei {\smallsong SimHei} \fbox{？} \fbox{\vphantom{？}\kern 1em}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+\Kai {\smallsong KaiTi\_GB2312} \fbox{？} \fbox{\vphantom{？}\kern 1em}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+\Fang {\smallsong FangSong\_GB2312} \fbox{？} \fbox{\vphantom{？}\kern 1em}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+\LiSu {\smallsong LiSu} \fbox{？} \fbox{\vphantom{？}\kern 1em}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+\Yao {\smallsong FZYaoTi} \fbox{？} \fbox{\vphantom{？}\kern 1em}
+
+“《‘三个代表’重要思想》是一本好书，”他点点头，说道。
+
+“大人。您这么大本事，那是不是以后帝国哪里干旱，把您请过去，
+就直接可以下一场大雨？”
+
+
+\bye
