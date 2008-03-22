@@ -23,6 +23,7 @@ set fo+=mM
 set fencs=cp936,utf-8,ucs-bom
 set ambw=double
 set nosol
+set vb
 set path+=/usr/include/c++/4.1.3/
 set path+=/usr/local/include/
 set ls=2
@@ -37,6 +38,7 @@ nmap <unique> <silent> <leader>c :ClearCurrentHighlighter<cr>
 vnoremap <silent> ,/ y/<C-R>=escape(@", '\\/.*$^~[]')<CR><CR>
 vnoremap <silent> ,? y?<C-R>=escape(@", '\\/.*$^~[]')<CR><CR>
 nmap <C-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
+imap <unique> <silent> <F2> <c-o>:up<cr>
 let g:fencview_autodetect = 0
 autocmd FileType tex set isk+=64-64| imap <F3> <C-v>~<C-v>~<++><Esc>4hi| imap <F2> <C-v>~| imap <F4> <C-v>~<C-v>\|<C-v>\|<C-v>~<++><Esc>5hi| imap <F6> <C-v>\||
 \let g:Tex_ViewRule_pdf = 'evince'|
@@ -45,6 +47,7 @@ autocmd FileType tex set isk+=64-64| imap <F3> <C-v>~<C-v>~<++><Esc>4hi| imap <F
 \nmap <silent> <Leader>lt :let mytemp = g:Tex_CompileRule_dvi<cr>:let g:Tex_CompileRule_dvi = 'etex -interaction=nonstopmode -src-specials $*'<cr>:let mytemp2 = g:Tex_CompileRule_pdf<cr>:let g:Tex_CompileRule_pdf = 'pdftex -interaction=nonstopmode -src-specials $*'<cr>:call Tex_RunLaTeX()<cr>:let g:Tex_CompileRule_dvi = mytemp<cr>:let g:Tex_CompileRule_pdf = mytemp2<cr>|
 \nmap <silent> <Leader>lx :TTarget pdf<cr>:let mytemp = g:Tex_CompileRule_pdf<cr>:let g:Tex_CompileRule_pdf = 'xetex -interaction=nonstopmode $*'<cr>:call Tex_RunLaTeX()<cr>:let g:Tex_CompileRule_pdf = mytemp<cr>|
 \nmap <silent> <Leader>le :TTarget pdf<cr>:let mytemp = g:Tex_CompileRule_pdf<cr>:let g:Tex_CompileRule_pdf = 'xelatex -interaction=nonstopmode $*'<cr>:call Tex_RunLaTeX()<cr>:let g:Tex_CompileRule_pdf = mytemp<cr>|
+let g:tex_flavor="tex"
 autocmd FileType cpp set sw=4| set ts=4
 " end user specific
 " allow backspacing over everything in insert mode

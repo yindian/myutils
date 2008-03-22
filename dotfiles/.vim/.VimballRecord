@@ -1,0 +1,2 @@
+AnsiEsc.vba: call delete('/home/yd/.vim/doc/AnsiEsc.txt')
+visincr.vba: call delete('/home/yd/.vim/plugin/visincr.vim')|call delete('/home/yd/.vim/plugin/visincrPlugin.vim')|call delete('/home/yd/.vim/doc/visincr.txt')|call delete('/home/yd/.vim/autoload/visincr.vim')
