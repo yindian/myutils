@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<meta http-equiv = Content-Type content = "text/html; charset=GB2312">
+
+<html>
+
+<head>
+<title>Novel Reading Platform Encrypted</title>
+</head>
+
+<body onload="addfiletoSelectList()">
+<script type="text/javascript" src="filelist.js">
+</script>
+<script language="JavaScript" type="text/javascript">
+<!--
+var srcFrame;
+var key;
+//External content into a layer
+function getIFrameDocument(aID) {
+  var rv = null; 
+
+  // if contentDocument exists, W3C compliant (Mozilla)
+  if (document.getElementById(aID).contentDocument){
+    rv = document.getElementById(aID).contentDocument;
+  } else {
+    // IE
+    rv = document.frames[aID].document;
+  }
+  return rv;
+}
+function loadOuter(doc) {
+	srcFrame = document.getElementById("tmpText");
+	srcFrame.src = '';
+	srcFrame.src = doc;
+	// workaround for missing onLoad event in IFRAME for NN6
+	//setTimeout("replaceit()", 1000)
+	getIFrameDocument("novelArea").write('<html><META http-equiv=Content-Type content="text/html; charset=GB2312"><body>');
+	getIFrameDocument("novelArea").write("正在加载，请稍候……<br>");
+	getIFrameDocument("novelArea").write("Now loading, please wait...<br>");
+	getIFrameDocument("novelArea").write("</body></html>");
+	getIFrameDocument("novelArea").close();
+}
+
+function clearfr()
+{
+	document.getElementById("novelArea").src = DocDft;
+}
+function encrypt(str, key)
+{
+	var i, p, newstr;
+	newstr = '';
+	for (i = p = 0; i < str.length; ++i)
+	{
+		newstr += String.fromCharCode((str.charCodeAt(i) ^ key.charCodeAt(p)) + 32);
+		//alert("i="+i.toString()+"  code="+(str.charCodeAt(i) ^ key.charCodeAt(p)).toString());
+		if (++p == key.length)
+			p = 0;
+	}
+	return escape(newstr);
+}
+function decrypt(str, key)
+{
+	var i, p, newstr;
+	str = unescape(str);
+	newstr = '';
+	for (i = p = 0; i < str.length; ++i)
+	{
+		newstr += String.fromCharCode((str.charCodeAt(i)-32) ^ key.charCodeAt(p));
+		if (++p == key.length)
+			p = 0;
+	}
+	return newstr;
+}
+function replaceit(){
+	srcContent='';
+	srcFrame = document.getElementById("tmpText");
+	if (srcFrame.contentDocument){
+		srcBody=srcFrame.contentDocument.getElementsByTagName("body")[0];
+	}
+	else if (srcFrame.contentWindow){
+		srcBody=srcFrame.contentWindow.document.body;
+	}
+	if (srcBody.innerText)	// ie
+		srcContent = srcBody.innerText;
+	else
+		srcContent = srcBody.textContent;
+	//srcContent = encrypt(srcContent, key);
+	srcContent = decrypt(srcContent, key);
+	srcContent = srcContent.replace(/WSTITLE(.*)/g, "<h1 align=center>$1</h1><hr>");
+	srcContent = srcContent.replace(/WSCHAPTER(.*)/g, "<h2 align=center>$1</h2>");
+	srcContent = srcContent.replace(/WSSECTION(.*)/g, "<h3 align=center>$1</h3>");
+	srcContent = srcContent.replace(/WSSUBSECTION(.*)/g, "<h3 align=left>$1</h3>");
+	srcContent = srcContent.replace(/WSLINK(.*)/g, "<a href=\"$1\">$1</a>");
+	srcContent = srcContent.replace(/\n/g, "<p>");
+	getIFrameDocument("novelArea").write('<html><META http-equiv=Content-Type content="text/html; charset=GB2312"><body>');
+	getIFrameDocument("novelArea").write(srcContent);
+	getIFrameDocument("novelArea").write("</body></html>");
+	getIFrameDocument("novelArea").close();
+}
+
+function addfiletoSelectList(){
+	selOU = document.getElementById("filelist");
+	for (i = 0; i < DocAry.length; ++i)
+	{
+		var oOption = document.createElement("option");
+		selOU.options.add(oOption);
+		oOption.innerText = DocAry[i];
+		oOption.value = DocAry[i];
+		oOption.text = DocAry[i];
+	}
+	clearfr();
+	key = prompt("Please input the key:","");
+}
+
+function testDocAry(){
+	alert(typeof(DocAry));
+	alert(DocAry.length);
+	for (i = 0; i < DocAry.length; ++i)
+	{
+		alert(DocAry[i]);
+	}
+}
+function SelectList(v){
+	if (v > 0)
+		loadOuter(DocAry[v-1]);
+	else {
+		srcFrame = document.getElementById("novelArea");
+		srcFrame.src = DocDft;
+	}
+	document.getElementById("nowy").focus();
+}
+
+function gotoy()
+{
+	var percen = parseFloat(document.getElementById("nowy").value) / 100 *
+		parseFloat(window.frames[0].document.body.scrollHeight);
+	window.frames[0].document.body.scrollTop = percen.toString();
+	document.getElementById("nowy").focus();
+}
+
+function showy()
+{
+	var percen = 
+		parseFloat(window.frames[0].document.body.scrollTop) / 
+		parseFloat(window.frames[0].document.body.scrollHeight) * 100;
+	document.getElementById("nowy").value = percen.toString();
+	document.getElementById("nowy").focus();
+}
+
+//-->
+</script>
+
+<center>
+	<h1>Novel Reading Platform Encrypted</h1>
+	Coded by Dian Yin.
+</center>
+<div align="right">
+	<a href="doall.exe">Html2Txt</a>
+</div>
+
+<table width="98%" cellpading="0" cellspacing="0">
+<tr>
+<td>
+<select id="filelist" name="fred" size="1" onchange="SelectList(this.selectedIndex);">
+<option >Select a File</option>
+</select>
+</td>
+<td>
+<div align="right">
+Percentage:
+<input type="text" id="nowy">
+<input type="submit" id="gotoy" value="Goto" onclick="gotoy()">
+<input type="button" id="showy" value="Show" onclick="showy()">
+</div>
+<td>
+</tr>
+</table>
+
+
+<iframe id="novelArea" width="98%" height="800" ></iframe>
+<iframe id="tmpText" onload="replaceit()" width="0" height="0" border="0" style="visibility:hidden;"></iframe>
+
+<center>
+	Novel Reading Platform Encrypted &nbsp;&nbsp;&nbsp; Last Update: 2006.12.16.
+</center>
+</body>
+
+</html>
