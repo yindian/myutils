@@ -3,17 +3,24 @@ if exist C:\progra~1\vim\vim64\vim.exe (
 set myvim="C:\progra~1\vim\vim64\vim.exe"
 ) else set myvim=vim.exe
 del *.txt
-for %%c in (*.shtml) do @(
+for %%c in (*.shtml,*.shtm) do @(
     echo Processing %%c ...
     %myvim% -e -s -c ":so wuaiwenxue.vim" -c ":sav %%:r.txt" -c ":q" "%%c"
 )
 echo Done processing texts.
 del index.txt
 echo Processing index ...
+if exist List.shtml (
 echo -e -s -c ":so wawxindex.vim" -c ":sav index.txt" -c ":q" List.shtml
 %myvim% -e -s -c ":so wawxindex.vim" -c ":sav index.txt" -c ":q" List.shtml
 echo Done processing index.
 findstr class=\"booktitle\" List.shtml > title
+) else (
+echo -e -s -c ":so wawxindex.vim" -c ":sav index.txt" -c ":q" Index.shtm
+%myvim% -e -s -c ":so wawxindex.vim" -c ":sav index.txt" -c ":q" Index.shtm
+echo Done processing index.
+findstr class=\"booktitle\" Index.shtm > title
+)
 %myvim% -e -s -c ":s/^.*booktitle.>\s*\(.\{-}\)<.*/WSTITLE\1/g" -c ":wq" title
 echo Done getting title.
 rem type nul > novel.txt
