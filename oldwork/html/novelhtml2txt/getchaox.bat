@@ -9,13 +9,21 @@ wget "http://origin.ssreader.com/worksmenu/%1.txt" -O index.js
 echo -e -s -c ":so cxindex.vim" -c ":sav index.txt" -c ":q" index.js
 %myvim% -e -s -c ":so cxindex.vim" -c ":sav index.txt" -c ":q" index.js
 echo Done processing index.
-echo Fetching pages and processing...
+echo Fetching pages...
+type nul > list
+for /f "tokens=1*" %%c in (index.txt) do @(
+    if not "%%d"=="" (
+            echo http://origin.ssreader.com/workscontent/cp/%1/%%c.txt>>list
+    )
+)
+wget -i list
+ren *.txt *.js
+echo Processing...
 for /f "tokens=1*" %%c in (index.txt) do @(
     if "%%d"=="" (
         echo chapter=%%c
     ) else (
             echo filename=%%c   name=%%d
-            wget "http://origin.ssreader.com/workscontent/cp/%1/%%c.txt" -O "%%c.js"
             if exist %%c.js %myvim% -e -s -c ":so chaoxing.vim" -c ":sav %%c.txt" -c ":q" "%%c.js"
     )
 )
