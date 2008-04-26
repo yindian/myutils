@@ -1,6 +1,6 @@
-1s/\_.\{-}<div id="\=content[^>]*>\(\_.\{-}\)<\(\/div\|script\)\_.*/\1/gi
-%s/<div[^>]*>//g
-%s/<br \/>//g
+1s/\_.\{-}<div id="\=content[^>]*>\(\_.\{-}\)<script\_.*/\1/gi
+%s/<\/\=div[^>]*>//g
+%s/<[bh]r \/>//g
 %s/&nbsp;/ /g
 %s/&quot;/"/g
 %s/^\s*$\n//g
