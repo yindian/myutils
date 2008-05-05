@@ -438,6 +438,7 @@ l_s_init:
                                 * o_tabsize - currentpos, ' ');
                     else
                         printf("\t");
+                    currentpos = (int)(currentpos / o_tabsize + 1) * o_tabsize;
                     status = S_INIT;
                 }
                 else if (ch == '\033')
