@@ -1,4 +1,5 @@
 // BBS Formatter ANSI C version, by YIN Dian on 08.5.4.
+// Revised on 08.5.5.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -12,7 +13,7 @@
 #define TRUE 1
 #define FALSE 0
 int o_join = FALSE;
-int o_width = 76;
+int o_width = 74;
 int o_maxwidth = 78;
 int o_encoding = GBK;
 int o_ansifilt = FALSE;
@@ -20,7 +21,7 @@ int o_prohibit = TRUE;
 int o_expandtab = FALSE;
 int o_tabsize = 4;
 
-#define BUFSIZE 256
+#define BUFSIZE 65536
 #define S_INIT 0
 #define S_READ 1
 #define S_ANSI 2
@@ -240,49 +241,49 @@ int breakable(wchar_utf8 buftext[], int bufpos, wchar_utf8 next)
 
 char *code2utf8(wchar_utf8 code, char buf[])
 {
-	char *q;
-	q = buf;
-	if (code <= 0x0000007f)
-		*q++ = code;
-	else if (code <= 0x000007ff)
-	{
-		*q++ = 0xc0 | (code >> 6);
-		*q++ = 0x80 | (code & 0x3f);
-	}
-	else if (code <= 0x0000ffff)
-	{
-		*q++ = 0xe0 | (code >> 12);
-		*q++ = 0x80 | ((code >> 6) & 0x3f) ;
-		*q++ = 0x80 | (code & 0x3f);
-	}
-	else if (code <= 0x001fffff)
-	{
-		*q++ = 0xf0 | (code >> 18);
-		*q++ = 0x80 | ((code >> 12) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 6) & 0x3f) ;
-		*q++ = 0x80 | (code & 0x3f);
-	}
-	else if (code <= 0x03ffffff)
-	{
-		*q++ = 0xf8 | (code >> 24);
-		*q++ = 0x80 | ((code >> 18) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 12) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 6) & 0x3f) ;
-		*q++ = 0x80 | (code & 0x3f);
-	}
-	else if (code <= 0x7fffffff)
-	{
-		*q++ = 0xfc | (code >> 30);
-		*q++ = 0x80 | ((code >> 24) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 18) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 12) & 0x3f) ;
-		*q++ = 0x80 | ((code >> 6) & 0x3f) ;
-		*q++ = 0x80 | (code & 0x3f);
-	}
-	else
-		assert(code <= 0x7fffffff);
-	*q = '\0';
-	return buf;
+    char *q;
+    q = buf;
+    if (code <= 0x0000007f)
+        *q++ = code;
+    else if (code <= 0x000007ff)
+    {
+        *q++ = 0xc0 | (code >> 6);
+        *q++ = 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0x0000ffff)
+    {
+        *q++ = 0xe0 | (code >> 12);
+        *q++ = 0x80 | ((code >> 6) & 0x3f) ;
+        *q++ = 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0x001fffff)
+    {
+        *q++ = 0xf0 | (code >> 18);
+        *q++ = 0x80 | ((code >> 12) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 6) & 0x3f) ;
+        *q++ = 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0x03ffffff)
+    {
+        *q++ = 0xf8 | (code >> 24);
+        *q++ = 0x80 | ((code >> 18) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 12) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 6) & 0x3f) ;
+        *q++ = 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0x7fffffff)
+    {
+        *q++ = 0xfc | (code >> 30);
+        *q++ = 0x80 | ((code >> 24) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 18) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 12) & 0x3f) ;
+        *q++ = 0x80 | ((code >> 6) & 0x3f) ;
+        *q++ = 0x80 | (code & 0x3f);
+    }
+    else
+        assert(code <= 0x7fffffff);
+    *q = '\0';
+    return buf;
 }
 
 void printbuf(int bufpos, wchar_utf8 buftext[])
@@ -292,9 +293,9 @@ void printbuf(int bufpos, wchar_utf8 buftext[])
     {
         for (i = 0; i < bufpos; ++i)
             if (buftext[i] <= 0xff)
-                printf("%c", buftext[i]);
+                printf("%c", (int)buftext[i]);
             else
-                printf("%c%c", buftext[i]>>8, buftext[i] & 0xff);
+                printf("%c%c", (int)(buftext[i]>>8), (int)(buftext[i] & 0xff));
     }
     else if (o_encoding == UTF8)
     {
@@ -337,9 +338,9 @@ void bbsformat(char *fname)
     int ansipos = 0, extrabytes = -1;
     wchar_utf8 buftext[BUFSIZE] = {'0'};
     unsigned char lastchar;
-    char ansitext[BUFSIZE] = {'0'};
+    char ansitext[256] = {'0'};
     int ch, i, j;
-    int lessnewline = FALSE;
+    int lessnewline = FALSE, firstnewline = FALSE;
 #define FLUSHBUF do{\
     currentpos += bufwidth;\
     if (currentpos > o_maxwidth)\
@@ -362,7 +363,7 @@ void bbsformat(char *fname)
     }\
     else\
     {\
-        if (ansipos > 0 && lessnewline)\
+        if (!o_ansifilt && ansipos > 0 && lessnewline)\
             printf("%s", ansitext);\
         printbuf(bufpos, buftext);\
         lessnewline = FALSE;\
@@ -371,7 +372,7 @@ void bbsformat(char *fname)
     bufwidth = 0;\
 }while(0)
 #define _NEWLINE do{\
-    if (ansipos > 0)\
+    if (!o_ansifilt && ansipos > 0)\
         printf("%s\n%s", endansi, ansitext);\
     else\
         printf("\n");\
@@ -379,7 +380,7 @@ void bbsformat(char *fname)
     lessnewline = FALSE;\
 }while(0)
 #define L_NEWLINE do{\
-    if (ansipos > 0)\
+    if (!o_ansifilt && ansipos > 0)\
         printf("%s\n", endansi);\
     else\
         printf("\n");\
@@ -412,6 +413,8 @@ l_s_init:
                             FLUSHBUF;
                         NEWLINE;
                     }
+                    else
+                        firstnewline = TRUE;
                     status = S_NEWL;
                 }
                 else if (ch == '\n')
@@ -422,6 +425,8 @@ l_s_init:
                             FLUSHBUF;
                         NEWLINE;
                     }
+                    else
+                        firstnewline = TRUE;
                     status = S_NEWL;
                 }
                 else if (ch == '\t')
@@ -519,11 +524,14 @@ l_s_init:
                         {
                             ansipos = 0;
                             if (currentpos > 0)
-                                printf("%s", ansitext);
+                            {
+                                if (!o_ansifilt)
+                                    printf("%s", ansitext);
+                            }
                             else
                                 lessnewline = TRUE;
                         }
-                        else
+                        else if (!o_ansifilt)
                             printf("%s", ansitext);
                     }
                 }
@@ -534,10 +542,12 @@ l_s_init:
                     
                     if (ch == '\r' && (ch = fgetc(fp)) != '\n')
                             ungetc(ch, fp);
-                    if (o_join && bufpos > 0)
+                    if (o_join && firstnewline)
                     {
-                        FLUSHBUF;
+                        if (bufpos > 0)
+                            FLUSHBUF;
                         NEWLINE;
+                        firstnewline = FALSE;
                     }
                     NEWLINE;
                 }
@@ -547,7 +557,7 @@ l_s_init:
         }
     if (bufpos > 0)
         FLUSHBUF;
-    if (ansipos > 0)
+    if (!o_ansifilt && ansipos > 0)
         printf("%s", endansi);\
     fclose(fp);
 }
@@ -604,7 +614,7 @@ int main(int argc, char *argv[])
 
 l_showhelp:
     printf("\
-BBS Formatter lite\n\
+BBS Formatter lite v.080505     coded by YIN Dian\n\
 Usage: %s [options] [filename(s)]\n\
 By default, the input/output encoding is GBK, ANSI control sequences\n\
  not filtered, punctuation prohibitions considered, paragraph separated by\n\
