@@ -1,5 +1,5 @@
 // BBS Formatter ANSI C version, by YIN Dian on 08.5.4.
-// Revised on 08.5.5.
+// Revised on 08.5.5. 08.5.7.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -239,9 +239,12 @@ int breakable(wchar_utf8 buftext[], int bufpos, wchar_utf8 next)
     return TRUE;
 }
 
-char *code2utf8(wchar_utf8 code, char buf[])
+char *code2utf8(wchar_utf8 code, char *buf)
 {
     char *q;
+    static char _buf[16];
+    if (buf == NULL)
+        buf = _buf;
     q = buf;
     if (code <= 0x0000007f)
         *q++ = code;
@@ -328,7 +331,7 @@ void bbsformat(char *fname)
     }
     else
         fp = fopen(fname, "r");
-    fprintf(stderr, "File %s\n", fname);
+    //fprintf(stderr, "File %s\n", fname);
     if (fp == NULL)
     {
         fprintf(stderr, "Unable to open file %s\n", fname);
@@ -474,6 +477,7 @@ l_s_init:
                     }
                     else
                     {
+                        fprintf(stderr, "Invalid char %c\n", lastchar);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
                         goto l_s_init;
@@ -488,11 +492,23 @@ l_s_init:
                     }
                     if (extrabytes <= 0) // invalid ansi char
                     {
+                        fprintf(stderr, "Invalid char %c\n", lastchar);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
+                        extrabytes = -1;
                         goto l_s_init;
                     }
-                    buftext[bufpos] = (buftext[bufpos] << 6) | (ch & 0x3F);
+                    if ((ch & 0xc0) == 0x80)
+                        buftext[bufpos] = (buftext[bufpos] << 6) | (ch & 0x3F);
+                    else
+                    {
+                        fprintf(stderr, "Invalid utf-8 seq %s\n", code2utf8(
+                                    buftext[bufpos], NULL));
+                        bufpos++;
+                        bufwidth += 2;
+                        extrabytes = -1;
+                        goto l_s_init;
+                    }
                     if (--extrabytes == 0)
                     {
                         ch = buftext[bufpos];
