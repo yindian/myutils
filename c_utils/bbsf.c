@@ -1,5 +1,9 @@
-// BBS Formatter ANSI C version, by YIN Dian on 08.5.4.
-// Revised on 08.5.5. 08.5.7.
+// BBS Formatter ANSI C version, by YIN Dian
+// Hist:    08.5.4. First coded.
+//          08.5.5. Completed and revised. Fixed bug of tab offset.
+//          08.5.7. Added invalid utf-8 sequence handling.
+//                  Wrap the word when a word is longer than the line width.
+//                  Changed some macros to functions.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -321,6 +325,99 @@ void printbuf(int bufpos, wchar_utf8 buftext[])
     }
 }
 
+int currentpos = 0, bufwidth = 0, bufpos = 0, ansipos = 0;
+wchar_utf8 buftext[BUFSIZE] = {'0'};
+char ansitext[256] = {'0'};
+int lessnewline = FALSE;
+
+void _newline()
+{
+    if (!o_ansifilt && ansipos > 0)
+        printf("%s\n%s", endansi, ansitext);
+    else
+        printf("\n");
+    currentpos = 0;
+    lessnewline = FALSE;
+}
+void l_newline()
+{
+    if (!o_ansifilt && ansipos > 0)
+        printf("%s\n", endansi);
+    else
+        printf("\n");
+    currentpos = 0;
+    lessnewline = TRUE;
+}
+#define NEWLINE do{\
+    if (!lessnewline)\
+        _newline();\
+    else\
+        lessnewline = FALSE;\
+}while(0)
+
+void flushbuf()
+{
+    int i, j, k;
+    currentpos += bufwidth;
+    if (currentpos > o_maxwidth)
+    {
+        for (i = 0; i < bufpos && buftext[i] == 32; ++i)
+            --bufwidth;
+        if (bufwidth <= o_maxwidth)
+        {
+            if (i > 0)
+                for (j = i; j < bufpos; ++j)
+                    buftext[j-i] = buftext[j];
+            bufpos -= i;
+            _newline();
+            printbuf(bufpos, buftext);
+            currentpos = bufwidth; 
+        }
+        else
+        {
+            bufwidth += i;
+            currentpos -= bufwidth;
+            for (i = 0; bufwidth > o_maxwidth; i = j)
+            {
+                for (j=i,k=0; currentpos+k <= o_maxwidth && j < bufpos; ++j)
+                    k += (buftext[j]>=128 ? 2 : 1); /* ambiguous? */
+                if (j < bufpos || currentpos+k > o_maxwidth)
+                    k -= (buftext[--j]>=128 ? 2 : 1);
+                currentpos += k, bufwidth -= k;
+                if (!o_ansifilt && ansipos > 0 && lessnewline)
+                    printf("%s", ansitext);
+                printbuf(j-i, buftext + i);
+                l_newline();
+            }
+            if (i < bufpos)
+            {
+                assert(bufwidth <= o_maxwidth);
+                if (!o_ansifilt && ansipos > 0 && lessnewline)
+                    printf("%s", ansitext);
+                printbuf(bufpos - i, buftext + i);
+                currentpos = bufwidth; 
+                lessnewline = FALSE;
+            }
+            else
+                assert(bufwidth == 0);
+        }
+    }
+    else if (currentpos >= o_width)
+    {
+        printbuf(bufpos, buftext);
+        l_newline();
+    }
+    else
+    {
+        if (!o_ansifilt && ansipos > 0 && lessnewline)
+            printf("%s", ansitext);
+        printbuf(bufpos, buftext);
+        lessnewline = FALSE;
+    }
+    bufpos = 0;
+    bufwidth = 0;
+}
+
 void bbsformat(char *fname)
 {
     FILE *fp;
@@ -337,65 +434,9 @@ void bbsformat(char *fname)
         fprintf(stderr, "Unable to open file %s\n", fname);
         return;
     }
-    int status = S_INIT, currentpos = 0, bufwidth = 0, bufpos = 0;
-    int ansipos = 0, extrabytes = -1;
-    wchar_utf8 buftext[BUFSIZE] = {'0'};
+    int status = S_INIT, extrabytes = -1;
     unsigned char lastchar;
-    char ansitext[256] = {'0'};
-    int ch, i, j;
-    int lessnewline = FALSE, firstnewline = FALSE;
-#define FLUSHBUF do{\
-    currentpos += bufwidth;\
-    if (currentpos > o_maxwidth)\
-    {\
-        for (i = 0; i < bufpos && buftext[i] == 32; ++i)\
-            --bufwidth;\
-        if (i > 0)\
-            for (j = i; j < bufpos; ++j)\
-                buftext[j-i] = buftext[j];\
-        bufpos -= i;\
-        _NEWLINE;\
-        printbuf(bufpos, buftext);\
-        currentpos = bufwidth; \
-    }\
-    else if (currentpos >= o_width)\
-    {\
-        printbuf(bufpos, buftext);\
-        L_NEWLINE;\
-        currentpos = 0;\
-    }\
-    else\
-    {\
-        if (!o_ansifilt && ansipos > 0 && lessnewline)\
-            printf("%s", ansitext);\
-        printbuf(bufpos, buftext);\
-        lessnewline = FALSE;\
-    }\
-    bufpos = 0;\
-    bufwidth = 0;\
-}while(0)
-#define _NEWLINE do{\
-    if (!o_ansifilt && ansipos > 0)\
-        printf("%s\n%s", endansi, ansitext);\
-    else\
-        printf("\n");\
-    currentpos = 0;\
-    lessnewline = FALSE;\
-}while(0)
-#define L_NEWLINE do{\
-    if (!o_ansifilt && ansipos > 0)\
-        printf("%s\n", endansi);\
-    else\
-        printf("\n");\
-    currentpos = 0;\
-    lessnewline = TRUE;\
-}while(0)
-#define NEWLINE do{\
-    if (!lessnewline)\
-        _NEWLINE;\
-    else\
-        lessnewline = FALSE;\
-}while(0)
+    int ch, firstnewline = FALSE;
     while ((ch = fgetc(fp)) != EOF)
         switch (status)
         {
@@ -413,7 +454,7 @@ l_s_init:
                     if (!o_join)
                     {
                         if (bufpos > 0)
-                            FLUSHBUF;
+                            flushbuf();
                         NEWLINE;
                     }
                     else
@@ -425,7 +466,7 @@ l_s_init:
                     if (!o_join)
                     {
                         if (bufpos > 0)
-                            FLUSHBUF;
+                            flushbuf();
                         NEWLINE;
                     }
                     else
@@ -435,7 +476,7 @@ l_s_init:
                 else if (ch == '\t')
                 {
                     if (bufpos > 0)
-                        FLUSHBUF;
+                        flushbuf();
                     if (o_expandtab)
                         printf("%*c", (int)(currentpos / o_tabsize + 1) 
                                 * o_tabsize - currentpos, ' ');
@@ -447,7 +488,7 @@ l_s_init:
                 else if (ch == '\033')
                 {
                     if (bufpos > 0)
-                        FLUSHBUF;
+                        flushbuf();
                     ansipos = 0;
                     ansitext[ansipos++] = ch;
                     status = S_ANSI;
@@ -456,7 +497,7 @@ l_s_init:
                 {
                     if (breakable(buftext, bufpos, ch))
                         if (bufpos > 0)
-                            FLUSHBUF;
+                            flushbuf();
                     buftext[bufpos++] = ch;
                     ++bufwidth;
                     status = S_INIT;
@@ -471,7 +512,7 @@ l_s_init:
                         ch = (lastchar << 8) | ch;
                         if (breakable(buftext, bufpos, ch))
                             if (bufpos > 0)
-                                FLUSHBUF;
+                                flushbuf();
                         buftext[bufpos++] = ch;
                         bufwidth += 2;
                     }
@@ -514,7 +555,7 @@ l_s_init:
                         ch = buftext[bufpos];
                         if (breakable(buftext, bufpos, ch))
                             if (bufpos > 0)
-                                FLUSHBUF;
+                                flushbuf();
                         buftext[bufpos++] = ch;
                         bufwidth += 2; // ambiguous?
                         status = S_INIT;
@@ -562,7 +603,7 @@ l_s_init:
                     if (o_join && firstnewline)
                     {
                         if (bufpos > 0)
-                            FLUSHBUF;
+                            flushbuf();
                         NEWLINE;
                         firstnewline = FALSE;
                     }
@@ -573,7 +614,7 @@ l_s_init:
                 break;
         }
     if (bufpos > 0)
-        FLUSHBUF;
+        flushbuf();
     if (!o_ansifilt && ansipos > 0)
         printf("%s", endansi);\
     fclose(fp);
