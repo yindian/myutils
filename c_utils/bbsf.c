@@ -4,7 +4,8 @@
 //          08.5.7. Added invalid utf-8 sequence handling.
 //                  Wrap the word when a word is longer than the line width.
 //                  Changed some macros to functions.
-//          08.5.13 Added encoding automatic detection.
+//          08.5.12 Added encoding automatic detection.
+//          08.5.13 Changed duplicate escape handling behavior.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -35,7 +36,8 @@ int o_tabsize = 4;
 #define S_NEWL 3
 #define ISEXTENDCHAR(x) (x & 0x80)
 typedef unsigned long wchar_utf8;
-const char endansi[] = "\033[0m";
+char s_endansi[] = "\033\033[0m";
+char *endansi = s_endansi + 1;
 const wchar_utf8 linestartforbid_gbk[] = {
     44,     //,
     46,     //.
@@ -443,6 +445,7 @@ void bbsformat(char *fname)
     currentpos = 0, bufwidth = 0, bufpos = 0, ansipos = 0;
     lessnewline = FALSE;
     int encsave = o_encoding;
+    endansi = s_endansi + 1;
 
     short charbuf[BUFSIZE] = {'\0'};
     int top = 0, i = 0;
@@ -463,12 +466,15 @@ void bbsformat(char *fname)
         charbuf[top++] = ch;
         for (i = 0; i < top-1; ++i)
             if (ISEXTENDCHAR(charbuf[i]))
+            {
                 if (isgbk(charbuf[i], charbuf[i+1]))
                     ++gbkok, ++i;
                 else
                     ++gbkerror;
+            }
         for (i = 0; i < top-6; ++i)
             if (ISEXTENDCHAR(charbuf[i]))
+            {
                 if (trailingBytesForUTF8[(int)charbuf[i]] == 0)
                     ++utf8error;
                 else
@@ -482,6 +488,7 @@ void bbsformat(char *fname)
                     i += j-1;
                     ++utf8ok;
                 }
+            }
         if (utf8ok > 0 && utf8error < utf8ok / 10)
             o_encoding = UTF8;
         else if (gbkok > 0 && gbkerror < gbkok / 10)
@@ -629,16 +636,23 @@ l_s_init:
                 }
                 break;
             case S_ANSI:
-                if (ch == '\033') // duplicate escape
-                    ;
-                else
+                //if (ch == '\033') // duplicate escape
+                //    ;
+                //else
                 {
+                    if (ansipos == 1)
+                        endansi = s_endansi + (ch != '\033');
                     ansitext[ansipos++] = ch;
                     if (ch == 'm')
                     {
                         ansitext[ansipos] = '\0';
                         status = S_INIT;
-                        if (strcmp(ansitext, "\033[0m") == 0)
+                        ch = ansitext[1] == '\033';
+                        if (ansitext[ch+1] == '[' && 
+                                ((ansitext[ch+2] == '0' &&
+                                (ansitext[ch+3] == 'm' ||
+                                ansitext[ch+3] == ';')) ||
+                                ansitext[ch+2] == 'm'))
                         {
                             ansipos = 0;
                             if (currentpos > 0)
@@ -735,7 +749,7 @@ int main(int argc, char *argv[])
 
 l_showhelp:
     printf("\
-BBS Formatter lite v.080512     coded by YIN Dian\n\
+BBS Formatter lite v.080513     coded by YIN Dian\n\
 Usage: %s [options] [filename(s)]\n\
 By default, the input/output encoding is auto-detected, ANSI control sequences\n\
  are not filtered, punctuation prohibitions are considered, paragraphs are\n\
