@@ -6,6 +6,7 @@
 //                  Changed some macros to functions.
 //          08.5.12 Added encoding automatic detection.
 //          08.5.13 Changed duplicate escape handling behavior.
+//                  Output line number when invalid char encountered.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -330,7 +331,7 @@ void printbuf(int bufpos, wchar_utf8 buftext[])
     }
 }
 
-int currentpos = 0, bufwidth = 0, bufpos = 0, ansipos = 0;
+int currentpos = 0, lineno = 1, bufwidth = 0, bufpos = 0, ansipos = 0;
 wchar_utf8 buftext[BUFSIZE] = {'0'};
 char ansitext[256] = {'0'};
 int lessnewline = FALSE;
@@ -342,6 +343,7 @@ void _newline()
     else
         printf("\n");
     currentpos = 0;
+    ++lineno;
     lessnewline = FALSE;
 }
 void l_newline()
@@ -351,6 +353,7 @@ void l_newline()
     else
         printf("\n");
     currentpos = 0;
+    ++lineno;
     lessnewline = TRUE;
 }
 #define NEWLINE do{\
@@ -442,7 +445,7 @@ void bbsformat(char *fname)
     int status = S_INIT, extrabytes = -1;
     unsigned char lastchar;
     int ch, firstnewline = FALSE;
-    currentpos = 0, bufwidth = 0, bufpos = 0, ansipos = 0;
+    currentpos = 0, lineno = 1, bufwidth = 0, bufpos = 0, ansipos = 0;
     lessnewline = FALSE;
     int encsave = o_encoding;
     endansi = s_endansi + 1;
@@ -581,7 +584,8 @@ l_s_init:
                     }
                     else
                     {
-                        fprintf(stderr, "Invalid char %c\n", lastchar);
+                        fprintf(stderr, "Invalid char near line %d.%d: %c\n",
+                                lineno, currentpos, lastchar);
                         assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
@@ -597,7 +601,8 @@ l_s_init:
                     }
                     if (extrabytes <= 0) // invalid ansi char
                     {
-                        fprintf(stderr, "Invalid char %c\n", lastchar);
+                        fprintf(stderr, "Invalid char near line %d.%d: %c\n",
+                                lineno, currentpos, lastchar);
                         assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
@@ -608,7 +613,8 @@ l_s_init:
                         buftext[bufpos] = (buftext[bufpos] << 6) | (ch & 0x3F);
                     else
                     {
-                        fprintf(stderr, "Invalid utf-8 seq %s\n", code2utf8(
+                        fprintf(stderr, "Invalid utf-8 seq near l %d.%d: %s\n",
+                                lineno, currentpos, code2utf8(
                                     buftext[bufpos], NULL));
                         assert(bufpos < BUFSIZE);
                         bufpos++;
