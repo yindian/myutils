@@ -4,6 +4,7 @@
 //          08.5.7. Added invalid utf-8 sequence handling.
 //                  Wrap the word when a word is longer than the line width.
 //                  Changed some macros to functions.
+//          08.5.13 Added encoding automatic detection.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -14,12 +15,14 @@
 
 #define GBK 0
 #define UTF8 1
+#define UNKNOWN 2
+#define DEFAULTENC GBK
 #define TRUE 1
 #define FALSE 0
 int o_join = FALSE;
 int o_width = 74;
 int o_maxwidth = 78;
-int o_encoding = GBK;
+int o_encoding = UNKNOWN;
 int o_ansifilt = FALSE;
 int o_prohibit = TRUE;
 int o_expandtab = FALSE;
@@ -437,7 +440,58 @@ void bbsformat(char *fname)
     int status = S_INIT, extrabytes = -1;
     unsigned char lastchar;
     int ch, firstnewline = FALSE;
-    while ((ch = fgetc(fp)) != EOF)
+    currentpos = 0, bufwidth = 0, bufpos = 0, ansipos = 0;
+    lessnewline = FALSE;
+    int encsave = o_encoding;
+
+    short charbuf[BUFSIZE] = {'\0'};
+    int top = 0, i = 0;
+    if (o_encoding == UNKNOWN)
+    {
+        int highcharcnt = 0, j;
+        int gbkok = 0, gbkerror = 0, utf8ok = 0, utf8error = 0;
+        while ((ch = fgetc(fp)) != EOF && highcharcnt < 200 && top < BUFSIZE-1
+                && i < o_width)
+        {
+            charbuf[top++] = ch;
+            if (ISEXTENDCHAR(ch))
+                ++highcharcnt;
+            ++i;
+            if (ch == '\n' || ch == '\r')
+                i = 0;
+        }
+        charbuf[top++] = ch;
+        for (i = 0; i < top-1; ++i)
+            if (ISEXTENDCHAR(charbuf[i]))
+                if (isgbk(charbuf[i], charbuf[i+1]))
+                    ++gbkok, ++i;
+                else
+                    ++gbkerror;
+        for (i = 0; i < top-6; ++i)
+            if (ISEXTENDCHAR(charbuf[i]))
+                if (trailingBytesForUTF8[(int)charbuf[i]] == 0)
+                    ++utf8error;
+                else
+                {
+                    for (j = 1; j <= trailingBytesForUTF8[(int)charbuf[i]]; ++j)
+                        if ((charbuf[i+j] & 0xc0) != 0x80)
+                        {
+                            ++utf8error;
+                            break;
+                        }
+                    i += j-1;
+                    ++utf8ok;
+                }
+        if (utf8ok > 0 && utf8error < utf8ok / 10)
+            o_encoding = UTF8;
+        else if (gbkok > 0 && gbkerror < gbkok / 10)
+            o_encoding = GBK;
+        else
+            o_encoding = DEFAULTENC;
+    }
+
+    for (i = 0; (i<top && (ch=charbuf[i++]) != EOF) || (ch != EOF &&
+			    (ch=fgetc(fp)) != EOF);)
         switch (status)
         {
             case S_INIT:
@@ -449,8 +503,8 @@ l_s_init:
                 }
                 else if (ch == '\r')
                 {
-                    if ((ch = fgetc(fp)) != '\n') // irregular newline in cmfu
-                        ungetc(ch, fp);
+                    //if ((ch = fgetc(fp)) != '\n') // irregular newline in cmfu
+                    //    ungetc(ch, fp);
                     if (!o_join)
                     {
                         if (bufpos > 0)
@@ -498,6 +552,7 @@ l_s_init:
                     if (breakable(buftext, bufpos, ch))
                         if (bufpos > 0)
                             flushbuf();
+                    assert(bufpos < BUFSIZE);
                     buftext[bufpos++] = ch;
                     ++bufwidth;
                     status = S_INIT;
@@ -513,12 +568,14 @@ l_s_init:
                         if (breakable(buftext, bufpos, ch))
                             if (bufpos > 0)
                                 flushbuf();
+                        assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = ch;
                         bufwidth += 2;
                     }
                     else
                     {
                         fprintf(stderr, "Invalid char %c\n", lastchar);
+                        assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
                         goto l_s_init;
@@ -534,6 +591,7 @@ l_s_init:
                     if (extrabytes <= 0) // invalid ansi char
                     {
                         fprintf(stderr, "Invalid char %c\n", lastchar);
+                        assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = lastchar;
                         bufwidth += 1;
                         extrabytes = -1;
@@ -545,6 +603,7 @@ l_s_init:
                     {
                         fprintf(stderr, "Invalid utf-8 seq %s\n", code2utf8(
                                     buftext[bufpos], NULL));
+                        assert(bufpos < BUFSIZE);
                         bufpos++;
                         bufwidth += 2;
                         extrabytes = -1;
@@ -556,6 +615,7 @@ l_s_init:
                         if (breakable(buftext, bufpos, ch))
                             if (bufpos > 0)
                                 flushbuf();
+                        assert(bufpos < BUFSIZE);
                         buftext[bufpos++] = ch;
                         bufwidth += 2; // ambiguous?
                         status = S_INIT;
@@ -597,9 +657,8 @@ l_s_init:
             case S_NEWL:
                 if (ch == '\r' || ch == '\n')
                 {
-                    
-                    if (ch == '\r' && (ch = fgetc(fp)) != '\n')
-                            ungetc(ch, fp);
+                    //if (ch == '\r' && (ch = fgetc(fp)) != '\n')
+                    //    ungetc(ch, fp);
                     if (o_join && firstnewline)
                     {
                         if (bufpos > 0)
@@ -616,14 +675,15 @@ l_s_init:
     if (bufpos > 0)
         flushbuf();
     if (!o_ansifilt && ansipos > 0)
-        printf("%s", endansi);\
+        printf("%s", endansi);
+    o_encoding = encsave;
     fclose(fp);
 }
 
 int main(int argc, char *argv[])
 {
     int ch, i;
-    while ((ch = getopt(argc, argv, "jhw:W:uUAPts:")) != -1)
+    while ((ch = getopt(argc, argv, "jhw:W:ugAPts:")) != -1)
     {
         switch (ch) 
         {
@@ -638,6 +698,9 @@ int main(int argc, char *argv[])
                 break;
             case 'u':
                 o_encoding = UTF8;
+                break;
+            case 'g':
+                o_encoding = GBK;
                 break;
             case 'A':
                 o_ansifilt = TRUE;
@@ -672,14 +735,15 @@ int main(int argc, char *argv[])
 
 l_showhelp:
     printf("\
-BBS Formatter lite v.080505     coded by YIN Dian\n\
+BBS Formatter lite v.080512     coded by YIN Dian\n\
 Usage: %s [options] [filename(s)]\n\
-By default, the input/output encoding is GBK, ANSI control sequences\n\
- not filtered, punctuation prohibitions considered, paragraph separated by\n\
- newlines, and tab not expanded. These options can be changed.\n\
+By default, the input/output encoding is auto-detected, ANSI control sequences\n\
+ are not filtered, punctuation prohibitions are considered, paragraphs are\n\
+ separated by newlines, and tabs are not expanded.\n\
 Options:\n\
   -h, -?    Show help and quit.\n\
   -u        Set input/output encoding as UTF-8.\n\
+  -g        Set input/output encoding as GBK.\n\
   -A        Filter out ANSI control sequences.\n\
   -P        Do not consider punctuation prohibitions.\n\
   -j        Use blank line as paragraph delimiter (join lines).\n\
