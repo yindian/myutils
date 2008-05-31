@@ -7,6 +7,7 @@
 //          08.5.12 Added encoding automatic detection.
 //          08.5.13 Changed duplicate escape handling behavior.
 //                  Output line number when invalid char encountered.
+//          08.5.31 Optimized breakable(). Added -r option.
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -28,6 +29,7 @@ int o_encoding = UNKNOWN;
 int o_ansifilt = FALSE;
 int o_prohibit = TRUE;
 int o_expandtab = FALSE;
+int o_ragged = FALSE;
 int o_tabsize = 4;
 
 #define BUFSIZE 65536
@@ -39,6 +41,7 @@ int o_tabsize = 4;
 typedef unsigned long wchar_utf8;
 char s_endansi[] = "\033\033[0m";
 char *endansi = s_endansi + 1;
+const wchar_utf8 *linestartforbid=0, *lineendforbid=0, *intercharforbid=0;
 const wchar_utf8 linestartforbid_gbk[] = {
     44,     //,
     46,     //.
@@ -211,32 +214,17 @@ int breakable(wchar_utf8 buftext[], int bufpos, wchar_utf8 next)
         return TRUE;
     if (!o_prohibit)
         return TRUE;
-    if (o_encoding == GBK)
+    if (lineendforbid && linestartforbid && intercharforbid)
     {
-        if (inwchararray(buftext[bufpos-1], lineendforbid_gbk)) // x(x
+        if (inwchararray(buftext[bufpos-1], lineendforbid)) // x(x
             return FALSE;
-        if (inwchararray(buftext[bufpos-1], linestartforbid_gbk)) // x)x
-            if (inwchararray(next, linestartforbid_gbk)) // x))
+        if (inwchararray(buftext[bufpos-1], linestartforbid)) // x)x
+            if (inwchararray(next, linestartforbid)) // x))
                 return FALSE;
-        if (inwchararray(next, linestartforbid_gbk)) // xx)
+        if (inwchararray(next, linestartforbid)) // xx)
             return FALSE;
-        if (inwchararray(buftext[bufpos-1], intercharforbid_gbk)
-                && inwchararray(next, intercharforbid_gbk)) // x--
-            return FALSE;
-        if (ISALNUM(next) && ISALNUM(buftext[bufpos-1]))
-            return FALSE;
-    }
-    else if (o_encoding == UTF8)
-    {
-        if (inwchararray(buftext[bufpos-1], lineendforbid_utf8)) // x(x
-            return FALSE;
-        if (inwchararray(buftext[bufpos-1], linestartforbid_utf8)) // x)x
-            if (inwchararray(next, linestartforbid_utf8)) // x))
-                return FALSE;
-        if (inwchararray(next, linestartforbid_utf8)) // xx)
-            return FALSE;
-        if (inwchararray(buftext[bufpos-1], intercharforbid_utf8)
-                && inwchararray(next, intercharforbid_utf8)) // x--
+        if (inwchararray(buftext[bufpos-1], intercharforbid)
+                && inwchararray(next, intercharforbid)) // x--
             return FALSE;
         if (ISALNUM(next) && ISALNUM(buftext[bufpos-1]))
             return FALSE;
@@ -412,8 +400,29 @@ void flushbuf()
     }
     else if (currentpos >= o_width)
     {
-        printbuf(bufpos, buftext);
-        l_newline();
+        if (o_ragged && currentpos > o_width && bufpos > 0 &&
+                inwchararray(buftext[0], lineendforbid))
+        {
+            for (i = bufpos-1, k = 0; i >= 0 &&
+                    inwchararray(buftext[i], linestartforbid); --i)
+                    k += (buftext[i]>=128 ? 2 : 1); /* ambiguous? */
+            if (currentpos - k > o_width + 1)
+            {
+                _newline();
+                printbuf(bufpos, buftext);
+                currentpos = bufwidth; 
+            }
+            else
+            {
+                printbuf(bufpos, buftext);
+                l_newline();
+            }
+        }
+        else
+        {
+            printbuf(bufpos, buftext);
+            l_newline();
+        }
     }
     else
     {
@@ -446,6 +455,7 @@ void bbsformat(char *fname)
     unsigned char lastchar;
     int ch, firstnewline = FALSE;
     currentpos = 0, lineno = 1, bufwidth = 0, bufpos = 0, ansipos = 0;
+    linestartforbid = NULL, lineendforbid = NULL, intercharforbid = NULL;
     lessnewline = FALSE;
     int encsave = o_encoding;
     endansi = s_endansi + 1;
@@ -457,7 +467,7 @@ void bbsformat(char *fname)
         int highcharcnt = 0, j;
         int gbkok = 0, gbkerror = 0, utf8ok = 0, utf8error = 0;
         while ((ch = fgetc(fp)) != EOF && highcharcnt < 200 && top < BUFSIZE-1
-                && i < o_width)
+                && (i < o_width || highcharcnt < 12))
         {
             charbuf[top++] = ch;
             if (ISEXTENDCHAR(ch))
@@ -498,10 +508,23 @@ void bbsformat(char *fname)
             o_encoding = GBK;
         else
             o_encoding = DEFAULTENC;
+        if (o_encoding == GBK)
+            lineendforbid = lineendforbid_gbk,
+                          linestartforbid = linestartforbid_gbk,
+                          intercharforbid = intercharforbid_gbk;
+        else if (o_encoding == UTF8)
+            lineendforbid = lineendforbid_utf8,
+                          linestartforbid = linestartforbid_utf8,
+                          intercharforbid = intercharforbid_utf8;
+        else
+        {
+            fprintf(stderr, "Encoding not supported\n");
+            exit(-1);
+        }
     }
 
     for (i = 0; (i<top && (ch=charbuf[i++]) != EOF) || (ch != EOF &&
-			    (ch=fgetc(fp)) != EOF);)
+                (ch=fgetc(fp)) != EOF);)
         switch (status)
         {
             case S_INIT:
@@ -703,7 +726,7 @@ l_s_init:
 int main(int argc, char *argv[])
 {
     int ch, i;
-    while ((ch = getopt(argc, argv, "jhw:W:ugAPts:")) != -1)
+    while ((ch = getopt(argc, argv, "jhw:W:ugAPts:r")) != -1)
     {
         switch (ch) 
         {
@@ -734,6 +757,9 @@ int main(int argc, char *argv[])
             case 's':
                 o_tabsize = asserted_atoi(optarg);
                 break;
+            case 'r':
+                o_ragged = TRUE;
+                break;
             case 'h':
             case '?':
             default:
@@ -755,7 +781,7 @@ int main(int argc, char *argv[])
 
 l_showhelp:
     printf("\
-BBS Formatter lite v.080513     coded by YIN Dian\n\
+BBS Formatter lite v.080531     coded by YIN Dian\n\
 Usage: %s [options] [filename(s)]\n\
 By default, the input/output encoding is auto-detected, ANSI control sequences\n\
  are not filtered, punctuation prohibitions are considered, paragraphs are\n\
@@ -768,6 +794,7 @@ Options:\n\
   -P        Do not consider punctuation prohibitions.\n\
   -j        Use blank line as paragraph delimiter (join lines).\n\
   -t        Expand tabs to spaces.\n\
+  -r        Newline when lineendforbid protrudes (ragged right).\n\
   -s SIZE   Set tab size to SIZE (4 by default).\n\
   -w WIDTH     Set text wrapping width to WIDTH, default is 74\n\
   -W WIDTH     Set max width of a line to WIDTH, default is 78\n\
