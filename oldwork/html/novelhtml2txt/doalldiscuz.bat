@@ -5,7 +5,7 @@ set myvim="C:\progra~1\vim\vim64\vim.exe"
 del *.txt
 for %%c in (tid*.html) do @(
     echo Processing %%c ...
-    %myvim% -e -s -c ":so discuztid.vim" -c ":sav %%:r.txt" -c ":q" "%%c"
+    %myvim% -e -s -c ":so discuztid%1.vim" -c ":sav %%:r.txt" -c ":q" "%%c"
 )
 echo Done processing texts.
 echo Processing index ...
