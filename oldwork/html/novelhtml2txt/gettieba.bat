@@ -25,7 +25,7 @@ echo Done fetching pages and processing texts.
 type nul > novel.txt
 for /f "tokens=1*" %%c in (index.txt) do @(
     echo filename=%%c.txt
-    type %%~nc.txt >> novel.txt
+    type "%%~nc.txt" >> novel.txt
 )
 goto end
 :help
