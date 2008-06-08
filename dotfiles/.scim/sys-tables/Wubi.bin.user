@@ -1,0 +1,146 @@
+SCIM_Generic_Table_Phrase_Library_TEXT
+VERSION_1_0
+### Begin Table definition.
+BEGIN_DEFINITION
+UUID = 98e4ca3b-8321-4903-a59d-84abce22f95a
+SERIAL_NUMBER = 20040227
+ICON = /usr/share/scim/icons/Wubi.png
+NAME = Wubi
+NAME.zh_CN = 五笔字型
+NAME.zh_HK = 五筆字型
+NAME.zh_TW = 五筆字型
+LANGUAGES = zh_CN,zh_SG,zh_TW,zh_HK
+### AUTHOR =
+STATUS_PROMPT = 中
+KEYBOARD_LAYOUT = US_Default
+VALID_INPUT_CHARS = abcdefghijklmnopqrstuvwxy
+### KEY_END_CHARS =
+SINGLE_WILDCARD_CHAR = z
+MULTI_WILDCARD_CHAR = *
+SPLIT_KEYS = apostrophe
+COMMIT_KEYS = space
+FORWARD_KEYS = Return
+SELECT_KEYS = 1,2,3,4,5,6,7,8,9
+PAGE_UP_KEYS = Page_Up,comma,minus
+PAGE_DOWN_KEYS = Page_Down,period,equal
+MODE_SWITCH_KEYS = Shift+KeyRelease+Shift_L,Shift+KeyRelease+Shift_R
+FULL_WIDTH_PUNCT_KEYS = Control+period
+FULL_WIDTH_LETTER_KEYS = Shift+space
+MAX_KEY_LENGTH = 4
+SHOW_KEY_PROMPT = FALSE
+AUTO_SELECT = TRUE
+AUTO_WILDCARD = TRUE
+AUTO_COMMIT = TRUE
+AUTO_SPLIT = FALSE
+AUTO_FILL = FALSE
+DISCARD_INVALID_KEY = TRUE
+DYNAMIC_ADJUST = FALSE
+ALWAYS_SHOW_LOOKUP = TRUE
+USE_FULL_WIDTH_PUNCT = TRUE
+DEF_FULL_WIDTH_PUNCT = TRUE
+USE_FULL_WIDTH_LETTER = TRUE
+DEF_FULL_WIDTH_LETTER = FALSE
+BEGIN_CHAR_PROMPTS_DEFINITION
+a 工
+b 子
+c 又
+d 大
+e 月
+f 土
+g 王
+h 目
+i 水
+j 日
+k 口
+l 田
+m 山
+n 已
+o 火
+p 之
+q 金
+r 白
+s 木
+t 禾
+u 立
+v 女
+w 人
+x 纟
+y 言
+END_CHAR_PROMPTS_DEFINITION
+END_DEFINITION
+
+### Begin Table data.
+BEGIN_TABLE
+abhk	节点	0
+atlt	攻略	0
+cbjt	预览	0
+cfyj	对齐	0
+dgdn	威盛	0
+dipg	大小写	0
+drwb	原创	0
+dxan	龙芯	0
+etwg	用例	0
+faqk	域名	0
+ffuf	封装	0
+fhjt	超星	0
+fjbw	进阶	0
+ghth	正版	0
+gkpa	带宽	0
+gqvo	死灵	0
+hkfm	点击	0
+iehk	浮点	0
+igpw	清空	0
+iiss	水木	0
+ipjg	常量	0
+jatj	晓得	0
+jfnw	时戳	0
+jmsk	帅哥	0
+julf	暗黑	0
+khlf	跳转	0
+lfmq	团购	0
+lfyq	置底	0
+mqiy	网游	0
+nmsm	刷机	0
+pbwd	字段	0
+pdiy	割注	0
+pdqc	宏包	0
+pdtr	宠物	0
+ptkk	字符串	0
+pvwx	初始化	0
+pyte	神舟	0
+pyum	客户端	0
+qtud	猪头	0
+rbuv	报歉	0
+rbyy	报文	0
+repf	拥塞	0
+rtsm	手机	0
+ruty	接入	0
+rwbb	迭代子	0
+rwwa	迭代	0
+ssmj	禁则	0
+svme	根骨	0
+tddc	乱码	0
+tfpf	德赛	0
+tfsm	待机	0
+tglf	重置	0
+tlyg	粤语	0
+tptm	重定向	0
+ujrt	单播	0
+utuk	首部	0
+vfsa	建模	0
+vwiy	媒体流	0
+wgwy	合集	0
+whlq	修罗	0
+wkdg	保研	0
+wqum	低端	0
+wyut	信道	0
+wyvt	集群	0
+xdpg	绑定	0
+xedh	缓存	0
+xert	组播	0
+xfhk	结点	0
+xfjg	结题	0
+yndl	遍历	0
+yqna	诡异	0
+yyuj	广韵	0
+END_TABLE
