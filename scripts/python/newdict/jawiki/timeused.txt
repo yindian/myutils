@@ -1,0 +1,11 @@
+ebstopcode -l 0 WIKIP/ WIKIP > jawiki.ebs	2m11.690s
+./ebs2tab.py jawiki.ebs > jawiki.tab	1m58.713s
+iconv -f euc-jp -t utf-8 jawiki.tab > jawiki.txt	0m31.014s
+./gettabidx jawiki.txt > idx	0m32.938s
+./tabbuildbyidx.py idx jawiki.txt	0m47.722s
+gzip out.dic	3m37.327s
+
+copy a:out.*	00:01:20.235
+copy out.dic.gz ..	00:00:58.856
+gzip -d out.dic.gz	00:01:58.766
+dictzip jawiki.dict	00:04:38.977
