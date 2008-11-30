@@ -32,11 +32,11 @@ if __name__ == '__main__':
 		if line.startswith('#') or len(line) < 2:
 			continue
 		assert line[0] in 'hz'
-		line = line.split('\t')
+		line = line[:-1].split('\t')
 		code = line[0][1:].lower()
-		if line[1]:
+		if line[1] and line[1] != '-':
 			what = (touni(line[1]),)
-		elif line[2]:
+		elif line[2] and line[2] != '-':
 			what = (line[2],)
 		elif len(line) > 4:
 			what = (None, unicode(' '.join(line[4:]), fileenc
