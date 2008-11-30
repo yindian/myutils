@@ -15,7 +15,7 @@ def char2utf8(code):
 
 def touni(str):
 	if not str or str[0].lower() != 'u':
-		return ''
+		return str
 	return ''.join(map(lambda s: char2utf8(int(s[1:], 16)), str.split(',')))
 
 fileenc = 'utf-8'
