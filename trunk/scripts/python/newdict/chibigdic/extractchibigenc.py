@@ -46,7 +46,8 @@ def parseDiv(div):
 		assert nodes[0].nodeValue.strip() == ''
 	except:
 		print >> sys.stderr,'Warning: missing newline after div article'
-		nodes.insert(0, None)
+		textnode = nodes[0].createTextNode(' ')
+		nodes.insert(0, textnode)
 	assert nodes[1].nodeType == nodes[1].ELEMENT_NODE
 	result = []
 	try:
@@ -77,8 +78,9 @@ def parseDiv(div):
 			del nodes[2:p]
 		assert synonyms.find('|') < 0
 		synonyms = map(string.strip, synonyms[1:-1].split(','))
+		result.append(u'(')
 		result.append(u','.join(synonyms))
-		result.append(u'\n')
+		result.append(u')\n')
 		assert nodes[2].nodeType == nodes[2].TEXT_NODE
 		assert nodes[2].nodeValue.strip() == ''
 		del nodes[1:3]
@@ -184,7 +186,7 @@ for filename in filelist:
 			assert not found
 			found = True
 			sym, res = parseDiv(div)
-			if not title in sym:
+			if sym and not title in sym:
 				print >> sys.stderr, "Error: title not in sym"
 				print >> sys.stderr, title.encode('gbk', 
 						'replace'), sym
