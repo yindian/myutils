@@ -81,9 +81,28 @@ def parseDiv(div):
 		result.append(u'(')
 		result.append(u','.join(synonyms))
 		result.append(u')\n')
-		assert nodes[2].nodeType == nodes[2].TEXT_NODE
-		assert nodes[2].nodeValue.strip() == ''
+		try:
+			assert nodes[2].nodeType == nodes[2].TEXT_NODE
+			assert nodes[2].nodeValue.strip() == ''
+		except IndexError:
+			print >> sys.stderr, 'Error: comment end after synonym'
+			return synonyms, u''.join(result)
 		del nodes[1:3]
+		# for bt pages that have both reference and synonym
+		if nodes[1].hasAttribute('style'):
+			assert nodes[1].getAttribute('style').startswith(
+					'color:')
+			synonyms = nodes[1].textContent.strip()
+			assert synonyms.startswith('(')
+			assert synonyms.endswith(')')
+			assert synonyms.find('|') < 0
+			synonyms = map(string.strip, synonyms[1:-1].split(','))
+			result.append(u'(')
+			result.append(u','.join(synonyms))
+			result.append(u')\n')
+			assert nodes[2].nodeType == nodes[2].TEXT_NODE
+			assert nodes[2].nodeValue.strip() == ''
+			del nodes[1:3]
 	else:
 		synonyms = []
 	if nodes[1].hasAttribute('class'):
