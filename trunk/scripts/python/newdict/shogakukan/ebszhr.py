@@ -40,6 +40,8 @@ def isallcjk(str):
 			return False
 	return True
 
+simp = {}
+
 def gettitle(lines, state):
 	if lines[0].startswith('【'):
 		if lines[0].endswith('】'):
@@ -107,6 +109,23 @@ def gettitle(lines, state):
 			print >>sys.stderr, `str`, lines[0] == unicode(
 				lines[0], 'utf-8').encode('utf-8')
 			raise
+		str = str.replace(u'||', u'|')
+		global simp
+		ar = str.split(u'|')
+		for c in ar[1:]:
+			if len(c) > 1 or c.encode('gb2312', 'ignore'):
+				continue
+			if simp.has_key(c) and ar[0] not in simp[c]:
+				print >>sys.stderr,'Multiple trad-simp mapping'
+				print >>sys.stderr, c.encode('gbk', 'replace'),
+				print >>sys.stderr, '->', simp[c][0].encode(
+						'gbk', 'replace'), 'and',
+				print >>sys.stderr, c.encode('gbk', 'replace'),
+				print >>sys.stderr, '->', ar[0].encode('gbk',
+						'replace')
+				simp[c].append(ar[0])
+			elif not simp.has_key(c) and c != ar[0]:
+				simp[c] = [ar[0]]
 		return str.encode('utf-8')
 
 if __name__ == '__main__':
@@ -121,6 +140,8 @@ if __name__ == '__main__':
 	lastline = None
 	titleline = []
 	wordcount = 0
+	finaldic = []
+	result = None
 	for line in f:
 		if line.startswith(stopcodestr):
 			laststate = state
@@ -144,14 +165,22 @@ if __name__ == '__main__':
 			if chgflag:
 				chgflag = False
 				if state == keycode:
-					sys.stdout.write('\n\n')
+					#sys.stdout.write('\n\n')
+					assert result is not None
+					finaldic.append(result)
+					result = None
 				elif laststate == keycode and (state == begcode\
 						or state == endcode):
 					#sys.stdout.write('\t')
-					sys.stdout.write(gettitle(titleline, 
-						state))
-					sys.stdout.write('\n')
-					sys.stdout.write('<br>'.join(titleline))
+					#sys.stdout.write(gettitle(titleline, 
+					#	state))
+					#sys.stdout.write('\n')
+					#sys.stdout.write('<br>'.join(titleline))
+					assert result is None
+					result = [gettitle(titleline, state)]
+					if titleline[-1] == '':
+						del titleline[-1]
+					result.extend(titleline)
 					titleline = []
 					wordcount += 1
 				elif laststate == keycode:
@@ -164,9 +193,10 @@ if __name__ == '__main__':
 							state, laststate)
 			else:
 				if lastline is not None and state != keycode:
-					sys.stdout.write(lastline)
-					#sys.stdout.write('\\n')
-					sys.stdout.write('<br>')
+					#sys.stdout.write(lastline)
+					##sys.stdout.write('\\n')
+					#sys.stdout.write('<br>')
+					result.append(lastline)
 			if line.endswith('\r\n'):
 				lastline = line[:-2]
 			else:
@@ -184,6 +214,56 @@ if __name__ == '__main__':
 					chunks = lastline.split('　')
 					for chunk in chunks:
 						assert chunk[-1].isdigit()
-	sys.stdout.write('\n\n')
+	#sys.stdout.write('\n\n')
+	if result is not None:
+		finaldic.append(result)
 	f.close()
 	print >> sys.stderr, 'Word count =', wordcount
+	for entry in finaldic:
+		if entry[1].startswith('【'):
+			word = unicode(entry[0], 'utf-8')
+			result = []
+			ch = None
+			for c in word:
+				if 0xD800 <= ord(c) <= 0xDBFF:
+					ch = c
+					continue
+				elif 0xDC00 <= ord(c) <= 0xDFFF:
+					c = ch + c
+					ch = None
+				if simp.has_key(c) and c != u'\u7947':
+					print >> sys.stderr, 'Warning: traditional character %s in compound word' % c.encode('gbk', 'replace'), word.encode('gbk', 'replace'),
+				else:
+					result.append(c)
+					continue
+				if len(simp[c]) == 1:
+					print >> sys.stderr, 'replace with',
+					print >> sys.stderr, simp[c][0].encode(
+							'gbk', 'replace'),
+					result.append(simp[c][0])
+					continue
+				print >> sys.stderr, 'do not replace due to',
+				print >> sys.stderr, 'multiple mappings:',
+				for s in simp[c]:
+					print >> sys.stderr, s.encode(
+							'gbk', 'replace'),
+				print >> sys.stderr
+				result.append(c)
+			newword = u''.join(result)
+			if word != newword:
+				result = word.split(u'|')
+				for str in newword.split(u'|'):
+					if str not in result:
+						result.append(str)
+				word = u'|'.join(result).encode('utf-8')
+				print >> sys.stderr, 'done',
+				print >> sys.stderr, u'|'.join(result).encode(
+						'gbk', 'replace')
+			else:
+				word = entry[0]
+		else:
+			word = entry[0]
+		sys.stdout.write(word)
+		sys.stdout.write('\n')
+		sys.stdout.write('<br>'.join(entry[1:]))
+		sys.stdout.write('<br>\n\n')
