@@ -12,15 +12,51 @@ endcode = 0x0001
 
 markchars = u'\u2051*\u2982\uffee\u2192\u237e'
 
+def removedigit(str):
+	result = []
+	last = False
+	for c in str:
+		if 0x2276 <= ord(c) <= 0x277c or 0xff10 <= ord(c) <= 0xff19:
+			last = True
+		elif c in u',-.\u3000' and last:
+				pass
+		else:
+			last = False
+			result.append(c)
+	return u''.join(result)
+
+def isallcjk(str):
+	for c in str:
+		p = ord(c)
+		if 0x4e00 <= p <= 0x9fc3 or 0x3400 <= p <= 0x4db5 or\
+			0xf900 <= p <= 0xfad9 or 0x20000 <= p <= 0x2a6d6 or\
+			0x2f800 <= p <= 0x2fa1d or p == 0x3007: # CJK characters
+			pass
+		elif 0xD800 <= p <= 0xDFFF: # surrogate pair for narrow python
+			pass
+		elif c in u'{/@}|':
+			pass
+		else:
+			return False
+	return True
+
 def gettitle(lines, state):
 	if lines[0].startswith('【'):
 		if lines[0].endswith('】'):
-			return lines[0][len('【'):-len('】')]
-		pos = lines[0].index('】')
-		str = unicode(lines[0][pos+len('】'):], 'utf-8')
-		for c in str:
-			assert c in markchars
-		return lines[0][len('【'):pos]
+			str = lines[0][len('【'):-len('】')]
+		else:
+			pos = lines[0].index('】')
+			str = unicode(lines[0][pos+len('】'):], 'utf-8')
+			for c in str:
+				assert c in markchars
+			str = lines[0][len('【'):pos]
+		if str not in ('一二・九运动', '十・一'):
+			str = str.replace('・', '|')
+		else:
+			str = str.replace('・', '·')
+		if str.startswith('‐'):
+			str = str[len('‐'):]
+		return str
 	else:
 		str = unicode(lines[0], 'utf-8')
 		try:
@@ -47,9 +83,30 @@ def gettitle(lines, state):
 				raise
 		str = str[:i]
 		if str.find(u'(') < 0:
+			try:
+				assert isallcjk(str)
+			except:
+				print >>sys.stderr,'Contain non-CJK char'
+				print >>sys.stderr, str.encode('gbk', 'replace')
+				print >>sys.stderr, `lines[0]`
+				print >>sys.stderr, `str`, lines[0] == unicode(
+					lines[0], 'utf-8').encode('utf-8')
+				raise
 			return str.encode('utf-8')
 		assert str.endswith(u')')
 		str = str[:-1].replace(u'(', u'|').replace(u'\u30fb', u'|')
+		if str.startswith(u'\u2015'):
+			str = str[1:]
+		str = removedigit(str)
+		try:
+			assert isallcjk(str)
+		except:
+			print >>sys.stderr,'Contain non-CJK char'
+			print >>sys.stderr, str.encode('gbk', 'replace')
+			print >>sys.stderr, `lines[0]`
+			print >>sys.stderr, `str`, lines[0] == unicode(
+				lines[0], 'utf-8').encode('utf-8')
+			raise
 		return str.encode('utf-8')
 
 if __name__ == '__main__':
