@@ -117,11 +117,16 @@ if __name__ == '__main__':
 			if state == keycode:
 				titleline += [lastline]
 			elif lastline.find('　') >= 0:
-				if not lastline.startswith('ＧＢ'):
+				if not lastline.startswith('ＧＢ') and not \
+						lastline.startswith('電碼'):
 					lastline = lastline.replace('　', 
 							'<br>')
 					if lastline.endswith('<br>'):
 						lastline = lastline[:-4]
+				else:
+					chunks = lastline.split('　')
+					for chunk in chunks:
+						assert chunk[-1].isdigit()
 	sys.stdout.write('\n\n')
 	f.close()
 	print >> sys.stderr, 'Word count =', wordcount
