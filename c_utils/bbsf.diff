@@ -1,0 +1,56 @@
+Thu Oct 23 14:35:08 China Standard Time 2008  
+  * fix encoding failure
+diff -rN -u oldold-bbsf/bbsf.c oldnew-bbsf/bbsf.c
+--- oldold-bbsf/bbsf.c	Mon Mar 30 19:32:23 2009
++++ oldnew-bbsf/bbsf.c	Mon Mar 30 19:32:23 2009
+@@ -8,6 +8,7 @@
+ //          08.5.13 Changed duplicate escape handling behavior.
+ //                  Output line number when invalid char encountered.
+ //          08.5.31 Optimized breakable(). Added -r option.
++//          08.10.23 Fixed bug of -g & -u failure.
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include<string.h>
+@@ -508,19 +509,19 @@
+             o_encoding = GBK;
+         else
+             o_encoding = DEFAULTENC;
+-        if (o_encoding == GBK)
+-            lineendforbid = lineendforbid_gbk,
+-                          linestartforbid = linestartforbid_gbk,
+-                          intercharforbid = intercharforbid_gbk;
+-        else if (o_encoding == UTF8)
+-            lineendforbid = lineendforbid_utf8,
+-                          linestartforbid = linestartforbid_utf8,
+-                          intercharforbid = intercharforbid_utf8;
+-        else
+-        {
+-            fprintf(stderr, "Encoding not supported\n");
+-            exit(-1);
+-        }
++    }
++    if (o_encoding == GBK)
++        lineendforbid = lineendforbid_gbk,
++                      linestartforbid = linestartforbid_gbk,
++                      intercharforbid = intercharforbid_gbk;
++    else if (o_encoding == UTF8)
++        lineendforbid = lineendforbid_utf8,
++                      linestartforbid = linestartforbid_utf8,
++                      intercharforbid = intercharforbid_utf8;
++    else
++    {
++        fprintf(stderr, "Encoding not supported\n");
++        exit(-1);
+     }
+ 
+     for (i = 0; (i<top && (ch=charbuf[i++]) != EOF) || (ch != EOF &&
+@@ -781,7 +782,7 @@
+ 
+ l_showhelp:
+     printf("\
+-BBS Formatter lite v.080531     coded by YIN Dian\n\
++BBS Formatter lite v.081023     coded by YIN Dian\n\
+ Usage: %s [options] [filename(s)]\n\
+ By default, the input/output encoding is auto-detected, ANSI control sequences\n\
+  are not filtered, punctuation prohibitions are considered, paragraphs are\n\
+

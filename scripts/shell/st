@@ -1,0 +1,72 @@
+#!/bin/sh
+THIS=`basename $0`
+Help () {
+echo Usage: $THIS command
+echo
+echo Commands:
+echo   rec: save timestamps of changed file, and do darcs rec
+echo   all: save timestamps of all the files managed by darcs
+echo touch: apply saved timestamps to all the files managed
+echo
+echo Both commands work on the files in the current directory
+echo Changed files are listed by darcs wha -s, file listed by darcs sh f
+}
+Commit () {
+darcs wha -s > $THIS.tmp || Error
+darcs wha -s | sed "s/^[^M]/&/;t;s/\( [+-][0-9]*\)\{1,2\}//" | sed "s+/$++;s/^\w //" > $THIS.tmp
+while read c; do test -e "$c" || Error; done < $THIS.tmp
+test -e $THIS.dat && cat $THIS.dat > $THIS.old
+cat $THIS.tmp
+while read c; do
+  find "$c" -prune -printf "%TY%Tm%Td%TH%TM.%TS %p\n"
+done < $THIS.tmp >> $THIS.dat
+cat $THIS.dat | sort -k 2 > $THIS.tmp
+cat $THIS.tmp | uniq -f 1 > $THIS.dat
+rm $THIS.tmp
+echo OK
+darcs $*
+}
+All () {
+darcs sh f > $THIS.tmp || Error
+darcs sh f | sed '1d;s+/$++' > $THIS.tmp
+while read c; do test -e "$c" || Error; done < $THIS.tmp
+test -e $THIS.dat && cat $THIS.dat > $THIS.old
+cat $THIS.tmp
+: > $THIS.dat
+while read c; do
+  find "$c" -prune -printf "%TY%Tm%Td%TH%TM.%TS %p\n"
+done < $THIS.tmp >> $THIS.dat
+cat $THIS.dat | sort -k 2 > $THIS.tmp
+cat $THIS.tmp | uniq -f 1 > $THIS.dat
+rm $THIS.tmp
+echo OK
+}
+Touch () {
+while read c d; do test -e "$d" || Error; done < $THIS.dat
+while read c d; do
+  echo Touching $d ...
+  touch -t $c "$d"
+done < $THIS.dat
+echo OK
+}
+Error () {
+echo An error occurred. May be darcs is not properly configured or current directory incorrect.
+rm $THIS.tmp
+exit 1
+}
+
+#main
+case $1 in
+	rec*)
+	Commit $*
+	;;
+	all)
+	All
+	;;
+	to*)
+	Touch
+	;;
+	*)
+	Help
+	;;
+esac
