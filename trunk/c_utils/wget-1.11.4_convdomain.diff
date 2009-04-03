@@ -1,0 +1,87 @@
+diff -ur orig\wget-1.11.4\src\init.c wget-1.11.4\src\init.c
+--- orig\wget-1.11.4\src\init.c	Sun Apr 27 12:48:24 2008
++++ wget-1.11.4\src\init.c	Fri Apr 03 21:30:16 2009
+@@ -134,6 +134,9 @@
+   { "connecttimeout",   &opt.connect_timeout,   cmd_time },
+   { "contentdisposition", &opt.content_disposition, cmd_boolean },
+   { "continue",         &opt.always_rest,       cmd_boolean },
++#ifdef CONV_DOMAIN
++  { "convertdomains",   &opt.convert_domains,   cmd_vector },
++#endif
+   { "convertlinks",     &opt.convert_links,     cmd_boolean },
+   { "cookies",          &opt.cookies,           cmd_boolean },
+   { "cutdirs",          &opt.cut_dirs,          cmd_number },
+diff -ur orig\wget-1.11.4\src\main.c wget-1.11.4\src\main.c
+--- orig\wget-1.11.4\src\main.c	Mon Jun 30 09:22:54 2008
++++ wget-1.11.4\src\main.c	Fri Apr 03 22:27:08 2009
+@@ -147,6 +147,9 @@
+     { "clobber", 0, OPT__CLOBBER, NULL, optional_argument },
+     { "connect-timeout", 0, OPT_VALUE, "connecttimeout", -1 },
+     { "continue", 'c', OPT_BOOLEAN, "continue", -1 },
++#ifdef CONV_DOMAIN
++    { "convert-domains", 0, OPT_VALUE, "convertdomains", -1 },
++#endif
+     { "convert-links", 'k', OPT_BOOLEAN, "convertlinks", -1 },
+     { "content-disposition", 0, OPT_BOOLEAN, "contentdisposition", -1 },
+     { "cookies", 0, OPT_BOOLEAN, "cookies", -1 },
+@@ -616,6 +619,10 @@
+   -D,  --domains=LIST              comma-separated list of accepted domains.\n"),
+     N_("\
+        --exclude-domains=LIST      comma-separated list of rejected domains.\n"),
++#ifdef CONV_DOMAIN
++    N_("\
++       --convert-domains=LIST      comma-separated list of domain conversion pairs.\n"),
++#endif
+     N_("\
+        --follow-ftp                follow FTP links from HTML documents.\n"),
+     N_("\
+diff -ur orig\wget-1.11.4\src\options.h wget-1.11.4\src\options.h
+--- orig\wget-1.11.4\src\options.h	Sun Apr 27 12:48:24 2008
++++ wget-1.11.4\src\options.h	Fri Apr 03 21:29:56 2009
+@@ -71,6 +71,9 @@
+ 
+   char **domains;		/* See host.c */
+   char **exclude_domains;
++#ifdef CONV_DOMAIN
++  char **convert_domains;
++#endif
+   bool dns_cache;		/* whether we cache DNS lookups. */
+ 
+   char **follow_tags;           /* List of HTML tags to recursively follow. */
+diff -ur orig\wget-1.11.4\src\url.c wget-1.11.4\src\url.c
+--- orig\wget-1.11.4\src\url.c	Sun Apr 27 18:20:14 2008
++++ wget-1.11.4\src\url.c	Fri Apr 03 22:21:44 2009
+@@ -845,6 +845,32 @@
+       host_modified = true;
+     }
+ 
++#ifdef CONV_DOMAIN
++  if (opt.convert_domains)
++    {
++      int i, found;
++      for (i = found = 0; opt.convert_domains[i]; i += 2)
++      {
++        if (strcmp(u->host, opt.convert_domains[i]) == 0)
++        {
++          if (opt.convert_domains[i+1])
++            found = 1;
++          break;
++        }
++        if (!opt.convert_domains[i+1])
++          break;
++      }
++      if (found)
++      {
++        DEBUGP(("Found convert domain mapping %s => %s\n",
++                u->host, opt.convert_domains[i+1]));
++        xfree(u->host);
++        u->host = xstrdup(opt.convert_domains[i+1]);
++        host_modified = true;
++      }
++    }
++#endif
++
+   if (params_b)
+     u->params = strdupdelim (params_b, params_e);
+   if (query_b)
+
