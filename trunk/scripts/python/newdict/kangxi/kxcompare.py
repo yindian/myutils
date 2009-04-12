@@ -107,7 +107,8 @@ def roughcompareline(line1, line2):
 	if line1 == line2:
 		return True
 	else:
-		if abs(len(line1) - len(line2)) <= 2 and len(line1) > 3:
+		#abs(len(line1) - len(line2)) <= 2 and 
+		if len(line1) > 2 and len(line2) > 2:
 			if line1.startswith(line2) or line2.startswith(line1):
 				return True
 		return False
@@ -224,8 +225,10 @@ kmap12 = {}
 for k2 in kdif2:
 	for k1 in kdif1:
 		if k1.find(k2+'|') >= 0 or k1.find('|'+k2) >= 0:
-			kmap21[k2] = k1
-			kmap12[k1] = k2
+			if not kmap21.has_key(k2): kmap21[k2] = set([])
+			if not kmap12.has_key(k1): kmap12[k1] = set([])
+			kmap21[k2].add(k1)
+			kmap12[k1].add(k2)
 print 'Keys in %s but not in %s considering synonym:' % tuple(sys.argv[1:3])
 kd1 = []
 for k in kdif1:
@@ -249,7 +252,8 @@ for k in kd1:
 	for key, val in d2.iteritems():
 		if roughcompare(d1[k], val):
 			found = True
-			kmap12[k] = key
+			if not kmap12.has_key(k): kmap12[k] = set([])
+			kmap12[k].add(key)
 			#kmap21[key] = k
 			#print >> sys.stderr, 'Found match ',
 			#writeunicode(d1[k], sys.stderr, False)
@@ -270,7 +274,8 @@ for k in kd2:
 	for key, val in d1.iteritems():
 		if roughcompare(d2[k], val):
 			found = True
-			kmap21[k] = key
+			if not kmap21.has_key(k): kmap21[k] = set([])
+			kmap21[k].add(key)
 			#kmap12[key] = k
 			#print >> sys.stderr, 'Found match ',
 			#writeunicode(d2[k], sys.stderr, False)
@@ -303,9 +308,9 @@ print 'Keys mapping from %s to %s:' % tuple(sys.argv[1:3])
 for k in kmap12.keys():
 	writeunicode(k, sys.stdout, False)
 	print ' -> ',
-	writeunicode(kmap12[k])
+	writeunicode(u','.join(list(kmap12[k])))
 print 'Keys mapping from %s to %s:' % tuple(sys.argv[2:0:-1])
 for k in kmap21.keys():
 	writeunicode(k, sys.stdout, False)
 	print ' -> ',
-	writeunicode(kmap21[k])
+	writeunicode(u','.join(list(kmap21[k])))
