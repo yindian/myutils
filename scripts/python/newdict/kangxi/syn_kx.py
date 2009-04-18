@@ -3,7 +3,6 @@
 import sys
 
 syn = {
-'𠦌': '卌',
 '蘄': '蕲|蘄',
 '輊': '輊|轾',
 '預': '預|预',
@@ -1885,6 +1884,26 @@ for c in syn.keys():
 	else:
 		s.remove(c)
 		syn[c] = c+'|'+'|'.join(s)
+
+try:
+	f = open('kangxi_gaiji.txt', 'r')
+	for line in f:
+		if line.startswith('#'):
+			continue
+		line = line[:-1].split('\t')
+		assert len(line) in (2, 3)
+		if not line[0] or (len(line) == 3 and line[2] == '×'):
+			continue
+		c = line[0]
+		if syn.has_key(c):
+			s = set(syn[c].split('|'))
+			if line[1] not in s:
+				syn[c] = syn[c]+'|'+line[1]
+		else:
+			syn[c] = c+'|'+line[1]
+	f.close()
+except IOError:
+	pass
 
 ss = set(syn.keys())
 
