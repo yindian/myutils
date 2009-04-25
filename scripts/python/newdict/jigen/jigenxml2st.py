@@ -51,7 +51,8 @@ for i in range(NUM_RADICALS):
 			try:
 				assert len(child.textContent.strip()) == 2
 			except:
-				print >> sys.stderr, 'Len not 2:', child.textContent
+				print >> sys.stderr, 'Len not 2: ',
+				writeunicode(child.textContent, sys.stderr)
 			sRadical = u"" + child.textContent[0];
 		elif (sTagName == (u"筆畫")):
 			strokes = -1;
@@ -66,6 +67,8 @@ for i in range(NUM_RADICALS):
 					codePoint = 0;
 					
 					infoList = [];
+					infoList.append(u"【部首】" + sRadical);
+					infoList.append(u"【畫數】 %d" % strokes);
 
 					for child3 in child2.childNodes:
 						if (child3.nodeType != Node.ELEMENT_NODE):
@@ -83,9 +86,10 @@ for i in range(NUM_RADICALS):
 										codePoint = ((ord(sCharacter[0]) - 0xD800) << 10) + (
 												(ord(sCharacter[1]) - 0xDC00)) + 0x10000
 									except:
-										print >> sys.stderr, 'sCharacter = ',
-										writeunicode(sCharacter, sys.stderr)
-										raise
+										if not sCharacter.startswith(u'{'):
+											print >> sys.stderr, 'sCharacter = ',
+											writeunicode(sCharacter, sys.stderr)
+											raise
 						elif (sTagName3 == (u"字解")):
 							for child4 in child3.childNodes:
 								if (child4.nodeType != Node.ELEMENT_NODE):
@@ -195,23 +199,27 @@ for i in range(NUM_RADICALS):
 											raise
 									infoList.append(u"【同訓】" + u''.join(sValue));
 								else:
-									print >> sys.stderr, 'Tagname4 =', sTagName4
+									print >> sys.stderr, 'Tagname4 = ',
+									writeunicode(sTagName4, sys.stderr)
 									raise
 						elif (sTagName3 == (u"熟語")):
 							pass
 						else:
-							print >> sys.stderr, 'Tagname3 =', sTagName3
+							print >> sys.stderr, 'Tagname3 = ',
+							writeunicode(sTagName3, sys.stderr)
 							raise
 					if (codePoint == 0):
-						print >> sys.stderr, (u'%03d' % (i+1) + u", radical:" + sRadical + u", strokes:" + repr(strokes) + u" codePoint==0");
+						writeunicode(u'%03d' % (i+1) + u", radical:" + sRadical + u", strokes:" + repr(strokes) + u" codePoint==0  char=" + sCharacter, sys.stderr);
 					else:
-						if (characterMap.get(int(codePoint)) is not None):
-							print >> sys.stderr, (u'%03d' % (i+1) + u", radical:" + sRadical + u", strokes:" + repr(strokes) + u" " + String.format(u"%c", codePoint));
+						if (characterMap.get(sCharacter) is not None):
+							writeunicode(u'%03d' % (i+1) + u", radical:" + sRadical + u", strokes:" + repr(strokes) + u" " + sCharacter + ' dup with ' + u''.join(characterMap[sCharacter][:2]), sys.stderr);
 						characterMap.__setitem__(sCharacter, infoList);
 				else:
 					pass
 
+sys.exit(0)
+
 for key, value in characterMap.items():
-	writeunicode(key)
+	writeunicode(key, sys.stdout, False)
+	print '\t',
 	writeunicode(u'\n'.join(value).replace('\n', '\\n'))
-	writeunicode('')
