@@ -24,8 +24,8 @@ type %0.tmp
 for /f %%c in (%0.tmp) do @(
   ufind %%c -prune -printf "%%TY%%Tm%%Td%%TH%%TM.%%TS %%p\n"
 ) >> %0.dat
-type %0.dat | usort -k 2 > %0.tmp
-type %0.tmp | uniq -f 1 > %0.dat
+type %0.dat | usort -k 2 -r > %0.tmp
+type %0.tmp | uniq -f 1 | usort -k 2 > %0.dat
 del %0.tmp
 echo OK
 darcs %*
