@@ -20,8 +20,8 @@ cat $THIS.tmp
 while read c; do
   find "$c" -prune -printf "%TY%Tm%Td%TH%TM.%TS %p\n"
 done < $THIS.tmp >> $THIS.dat
-cat $THIS.dat | sort -k 2 > $THIS.tmp
-cat $THIS.tmp | uniq -f 1 > $THIS.dat
+cat $THIS.dat | sort -k 2 -r > $THIS.tmp
+cat $THIS.tmp | uniq -f 1 | tac > $THIS.dat
 rm $THIS.tmp
 echo OK
 darcs $*
