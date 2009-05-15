@@ -1,0 +1,65 @@
+--- wv-1.2.4\text.c~	Tue Apr 19 05:14:48 2005
++++ wv-1.2.4\text.c	Fri May 15 20:44:30 2009
+@@ -719,7 +719,9 @@
+     static int need_swapping;
+     gchar *ibuf, *obuf;
+     size_t ibuflen, obuflen, len, count, i;
+-    U8 buffer[2], buffer2[5];
++    U8 buffer[2], buffer2[7];
++    static U8 lastbuffer[4];
++    static size_t lastlen = 0;
+ 
+     if ((wvConvertUnicodeToEntity != NULL)
+ 	&& wvConvertUnicodeToEntity (eachchar))
+@@ -781,6 +783,51 @@
+ 	  wvError (("iconv failed errno: %d, char: 0x%X, %s -> %s\n",
+ 		    errno, eachchar, "UCS-2", outputtype));
+ 
++	  if (eachchar >= 0xD800 && eachchar < 0xE000) /* surrogate pair */
++	    {
++		if (eachchar < 0xDC00 && lastlen == 0)
++		  {
++		      lastbuffer[0] = ibuf[0];
++		      lastbuffer[1] = ibuf[1];
++		      lastlen = 2;
++		  }
++		else if (eachchar >= 0xDC00 && lastlen == 2)
++		  {
++		      lastbuffer[2] = ibuf[0];
++		      lastbuffer[3] = ibuf[1];
++		      lastlen = 4;
++		  }
++		else
++		    lastlen = 5;
++
++		if (lastlen == 5)
++		  {
++		      fprintf(stderr, "Unexpected surrogate pair char 0x%X. Last buffer is 0x%02X, 0x%02X, 0x%02X, 0x%02X\n", eachchar, lastbuffer[0], lastbuffer[1], lastbuffer[2], lastbuffer[3]);
++		      lastlen = 0;
++		      memset(lastbuffer, 0, 4);
++		  }
++		else if (lastlen == 4)
++		  {
++		      ibuf = lastbuffer;
++		      ibuflen = 4;
++		      obuf = buffer2;
++		      len = obuflen = 7;
++		      count = g_iconv (g_iconv_handle, &ibuf, &ibuflen, &obuf,
++				       &obuflen);
++		      if (count == (size_t) - 1)
++			  fprintf(stderr, "Erroneous surrogate pair char 0x%X. Last buffer is 0x%02X, 0x%02X, 0x%02X, 0x%02X\n", eachchar, lastbuffer[0], lastbuffer[1], lastbuffer[2], lastbuffer[3]);
++		      else
++		      {
++			  len = len - obuflen;
++
++			  for (i = 0; i < len; i++)
++			      printf ("%c", buffer2[i]);
++		      }
++		      lastlen = 0;
++		      memset(lastbuffer, 0, 4);
++		  }
++	    }
++	  else
+ 	  /* I'm torn here - do i just announce the failure, continue, or copy over to the other buffer? */
+ 
+ 	  /* errno is usually 84 (illegal byte sequence)
