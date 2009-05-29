@@ -60,7 +60,7 @@ diff -U 0 -r orig\jigen\024.xml jigen\024.xml
 +				<見出語>𠦄犬</見出語>
 diff -U 0 -r orig\jigen\030.xml jigen\030.xml
 --- orig\jigen\030.xml	Sat Jan 03 23:00:24 2009
-+++ jigen\030.xml	Fri May 29 22:13:44 2009
++++ jigen\030.xml	Sat May 30 01:12:54 2009
 @@ -8402 +8402 @@
 -				<見出語>？？</見出語>
 +				<見出語>㕼㕼</見出語>
@@ -70,13 +70,26 @@ diff -U 0 -r orig\jigen\030.xml jigen\030.xml
 @@ -18904 +18904 @@
 -				<見出語>？？</見出語>
 +				<見出語>噳噳</見出語>
+@@ -20789 +20789 @@
+-		<畫數>12</畫數>
++		<畫數>20</畫數>
+diff -U 0 -r orig\jigen\031.xml jigen\031.xml
+--- orig\jigen\031.xml	Sat Oct 11 01:25:54 2008
++++ jigen\031.xml	Sat May 30 00:27:18 2009
+@@ -1945 +1945 @@
+-				<見出語></見出語>
++				<見出語>困蹙</見出語>
 diff -U 0 -r orig\jigen\037.xml jigen\037.xml
 --- orig\jigen\037.xml	Sat Oct 11 01:25:54 2008
-+++ jigen\037.xml	Fri May 29 20:36:44 2009
-@@ -9018 +9018 @@
++++ jigen\037.xml	Sat May 30 01:01:30 2009
+@@ -3035,2 +3035 @@
+-				<見出語>
+-				</見出語>
++				<見出語>夬夬</見出語>
+@@ -9018 +9017 @@
 -			<見出字>畚</見出字>
 +			<見出字>𡘞</見出字>
-@@ -9029 +9029 @@
+@@ -9029 +9028 @@
 -				<見出語>畚鍤</見出語>
 +				<見出語>𡘞鍤</見出語>
 diff -U 0 -r orig\jigen\038.xml jigen\038.xml
@@ -288,7 +301,7 @@ diff -U 0 -r orig\jigen\085.xml jigen\085.xml
 +			<見出字>瀞</見出字>
 diff -U 0 -r orig\jigen\086.xml jigen\086.xml
 --- orig\jigen\086.xml	Sun Jan 11 23:53:58 2009
-+++ jigen\086.xml	Fri May 29 22:52:06 2009
++++ jigen\086.xml	Sat May 30 01:16:18 2009
 @@ -38 +38 @@
 -				<見出語>火？</見出語>
 +				<見出語>火焱</見出語>
@@ -301,6 +314,12 @@ diff -U 0 -r orig\jigen\086.xml jigen\086.xml
 @@ -8046 +8046 @@
 -				<見出語>熟？</見出語>
 +				<見出語>熟柿</見出語>
+@@ -11136 +11136 @@
+-		<畫數>1</畫數>
++		<畫數>21</畫數>
+@@ -11151 +11151 @@
+-		<畫數>5</畫數>
++		<畫數>25</畫數>
 diff -U 0 -r orig\jigen\093.xml jigen\093.xml
 --- orig\jigen\093.xml	Tue Dec 23 02:12:34 2008
 +++ jigen\093.xml	Fri May 29 22:53:12 2009
