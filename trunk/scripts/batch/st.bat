@@ -17,12 +17,12 @@ goto end
 :commit
 darcs wha -s > %0.tmp
 if errorlevel 1 goto error
-darcs wha -s | sed "s/^[^M]/&/;t;s/\( [+-][0-9]*\)\{1,2\}//" | sed "s+/$++;s+/+\\+g;s/^\w //" > %0.tmp
-for /f %%c in (%0.tmp) do @if not exist %%c goto error
+darcs wha -s | sed "s/^[^M]/&/;t;s/\( [+-][0-9]*\)\{1,2\}$//" | sed "s+/$++;s+/+\\+g;s/^\w //" > %0.tmp
+for /f "tokens=*" %%c in (%0.tmp) do @if not exist "%%c" goto error
 if exist %0.dat type %0.dat > %0.old
 type %0.tmp
-for /f %%c in (%0.tmp) do @(
-  ufind %%c -prune -printf "%%TY%%Tm%%Td%%TH%%TM.%%TS %%p\n"
+for /f "tokens=*" %%c in (%0.tmp) do @(
+  ufind "%%c" -prune -printf "%%TY%%Tm%%Td%%TH%%TM.%%TS %%p\n"
 ) >> %0.dat
 type %0.dat | usort -k 2 -r > %0.tmp
 type %0.tmp | uniq -f 1 | usort -k 2 > %0.dat
@@ -34,12 +34,12 @@ goto end
 darcs sh f > %0.tmp
 if errorlevel 1 goto error
 darcs sh f | sed "1d;s+/$++;s+/+\\+g" > %0.tmp
-for /f %%c in (%0.tmp) do @if not exist %%c goto error
+for /f "tokens=*" %%c in (%0.tmp) do @if not exist "%%c" goto error
 if exist %0.dat type %0.dat > %0.old
 type %0.tmp
 type nul > %0.dat
-for /f %%c in (%0.tmp) do @(
-  ufind %%c -prune -printf "%%TY%%Tm%%Td%%TH%%TM.%%TS %%p\n"
+for /f "tokens=*" %%c in (%0.tmp) do @(
+  ufind "%%c" -prune -printf "%%TY%%Tm%%Td%%TH%%TM.%%TS %%p\n"
 ) >> %0.dat
 type %0.dat | usort -k 2 > %0.tmp
 type %0.tmp > %0.dat
