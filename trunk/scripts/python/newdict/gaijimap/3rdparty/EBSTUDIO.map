@@ -1,0 +1,263 @@
+# EBStudio 標準（英辞郎等）	EBWin用(Large版)
+#
+#	Ver.2	2007.8.19	結合分音記号対応
+
+
+zB021	u9127 				
+zB024	u00E6	ae	#	aelig
+zB025	-		
+zB026	u01FD		
+
+hA121	u00A0		#	nbsp
+hA122	u00A1	i	#	iexcl
+hA123	u00A2		#	cent
+hA124	u00A3		#	pound
+hA125	u00A4		#	curren
+hA126	u00A5		#	yen
+hA127	u00A6		#	brvbar
+hA128	u00A7		#	sect
+hA129	u00A8		#	uml
+hA12A	u00A9		#	copy
+hA12B	u00AA		#	ordf
+hA12C	u00AB		#	laquo
+hA12D	u00AC		#	not
+hA12E	u00AD		#	shy
+hA12F	u00AE		#	reg
+hA130	u00AF		#	macr
+hA131	u00B0		#	deg
+hA132	u00B1		#	plusmn
+hA133	u00B2	2	#	sup2
+hA134	u00B3	3	#	sup3
+hA135	u00B4		#	acute
+hA136	u00B5		#	micro
+hA137	u00B6		#	para
+hA138	u00B7		#	middot
+hA139	u00B8		#	cedil
+hA13A	u00B9	1	#	sup1
+hA13B	u00BA		#	ordm
+hA13C	u00BB		#	raquo
+hA13D	u00BC		#	frac14
+hA13E	u00BD		#	frac12
+hA13F	u00BE		#	frac34
+hA140	u00BF		#	iquest
+hA141	u00C0	A	#	Agrave
+hA142	u00C1	A	#	Aacute
+hA143	u00C2	A	#	Acirc
+hA144	u00C3	A	#	Atilde
+hA145	u00C4	A	#	Auml
+hA146	u00C5	A	#	Aring
+hA147	u00C6	AE	#	AElig
+hA148	u00C7	C	#	Ccedil
+hA149	u00C8	E	#	Egrave
+hA14A	u00C9	E	#	Eacute
+hA14B	u00CA	E	#	Ecirc
+hA14C	u00CB	E	#	Euml
+hA14D	u00CC	I	#	Igrave
+hA14E	u00CD	I	#	Iacute
+hA14F	u00CE	I	#	Icirc
+hA150	u00CF	I	#	Iuml
+hA151	u00D0		#	ETH
+hA152	u00D1	N	#	Ntilde
+hA153	u00D2	O	#	Ograve
+hA154	u00D3	O	#	Oacute
+hA155	u00D4	O	#	Ocirc
+hA156	u00D5	O	#	Otilde
+hA157	u00D6	O	#	Ouml
+hA158	u00D7		#	times
+hA159	u00D8	O	#	Oslash
+hA15A	u00D9	U	#	Ugrave
+hA15B	u00DA	U	#	Uacute
+hA15C	u00DB	U	#	Ucirc
+hA15D	u00DC	U	#	Uuml
+hA15E	u00DD	Y	#	Yacute
+hA15F	u00DE		#	THORN
+hA160	u00DF		#	szlig
+hA161	u00E0	a	#	agrave
+hA162	u00E1	a	#	aacute
+hA163	u00E2	a	#	acirc
+hA164	u00E3	a	#	atilde
+hA165	u00E4	a	#	auml
+hA166	u00E5	a	#	aring
+hA167	u00E6	ae	#	aelig
+hA168	u00E7	c	#	ccedil
+hA169	u00E8	e	#	egrave
+hA16A	u00E9	e	#	eacute
+hA16B	u00EA	e	#	ecirc
+hA16C	u00EB	e	#	euml
+hA16D	u00EC	i	#	igrave
+hA16E	u00ED	i	#	iacute
+hA16F	u00EE	i	#	icirc
+hA170	u00EF	i	#	iuml
+hA171	u00F0		#	eth
+hA172	u00F1	n	#	ntilde
+hA173	u00F2	o	#	ograve
+hA174	u00F3	o	#	oacute
+hA175	u00F4	o	#	ocirc
+hA176	u00F5	o	#	otilde
+hA177	u00F6	o	#	ouml
+hA178	u00F7		#	divide
+hA179	u00F8		#	oslash
+hA17A	u00F9	u	#	ugrave
+hA17B	u00FA	u	#	uacute
+hA17C	u00FB	u	#	ucirc
+hA17D	u00FC	u	#	uuml
+hA17E	u00FD	y	#	yacute
+hA221	u00FE		#	thorn
+hA222	u00FF	y	#	yuml
+hA223	u0100	A	#	Amacr
+hA224	u0101	a	#	amacr
+hA225	u0102	A	#	Abreve
+hA226	u0103	a	#	abreve
+hA227	u0104	A	#	Aogon
+hA228	u0105	a	#	aogon
+hA229	u0106	C	#	Cacute
+hA22A	u0107	c	#	cacute
+hA22B	u0108	C	#	Ccirc
+hA22C	u0109	c	#	ccirc
+hA22D	u010A	C	#	Cdot
+hA22E	u010B	c	#	cdot
+hA22F	u010C	C	#	Ccaron
+hA230	u010D	c	#	ccaron
+hA231	u010E	D	#	Dcaron
+hA232	u010F	d	#	dcaron
+hA233	u0110	D	#	Dstrok
+hA234	u0111	d	#	dstrok
+hA235	u0112	E	#	Emacr
+hA236	u0113	e	#	emacr
+hA237	u0114	E	#	Ebreve
+hA238	u0115	e	#	ebreve
+hA239	u0116	E	#	Edot
+hA23A	u0117	e	#	edot
+hA23B	u0118	E	#	Eogon
+hA23C	u0119	e	#	eogon
+hA23D	u011A	E	#	Ecaron
+hA23E	u011B	e	#	ecaron
+hA23F	u011C	G	#	Gcirc
+hA240	u011D	g	#	gcirc
+hA241	u011E	G	#	Gbreve
+hA242	u011F	g	#	gbreve
+hA243	u0120	G	#	Gdot
+hA244	u0121	g	#	gdot
+hA245	u0122	G	#	Gcedil
+hA246	u0123	g	#	gcedil
+hA247	u0124	H	#	Hcirc
+hA248	u0125	h	#	hcirc
+hA249	u0126	H	#	Hstrok
+hA24A	u0127	h	#	hstrok
+hA24B	u0128	I	#	Itilde
+hA24C	u0129	i	#	itilde
+hA24D	u012A	I	#	Imacr
+hA24E	u012B	i	#	imacr
+hA24F	u012C	I	#	Ibreve
+hA250	u012D	i	#	ibreve
+hA251	u012E	I	#	Iogon
+hA252	u012F	i	#	iogon
+hA253	u0130	I	#	Idot
+hA254	u0131	i	#	inodot
+hA255	u0132	I	#	IJlig
+hA256	u0133	i	#	ijlig
+hA257	u0134	J	#	Jcirc
+hA258	u0135	j	#	jcirc
+hA259	u0136	K	#	Kcedil
+hA25A	u0137	k	#	kcedil
+hA25B	u0138	k	#	kgreen
+hA25C	u0139	L	#	Lacute
+hA25D	u013A	l	#	lacute
+hA25E	u013B	L	#	Lcedil
+hA25F	u013C	l	#	lcedil
+hA260	u013D	L	#	Lcaron
+hA261	u013E	l	#	lcaron
+hA262	u013F	L	#	Lmidot
+hA263	u0140	l	#	lmidot
+hA264	u0141	L	#	Lstrok
+hA265	u0142	l	#	lstrok
+hA266	u0143	N	#	Nacute
+hA267	u0144	n	#	nacute
+hA268	u0145	N	#	Ncedil
+hA269	u0146	n	#	ncedil
+hA26A	u0147	N	#	Ncaron
+hA26B	u0148	n	#	ncaron
+hA26C	u0149	n	#	napos
+hA26D	u014A		#	ENG
+hA26E	u014B		#	eng
+hA26F	u014C	O	#	Omacr
+hA270	u014D	o	#	omacr
+hA271	u014E	O	#	Obreve
+hA272	u014F	o	#	obreve
+hA273	u0150	O	#	Odblac
+hA274	u0151	o	#	odblac
+hA275	u0152	OE	#	OElig
+hA276	u0153	oe	#	oelig
+hA277	u0154	R	#	Racute
+hA278	u0155	r	#	racute
+hA279	u0156	R	#	Rcedil
+hA27A	u0157	r	#	rcedil
+hA27B	u0158	R	#	Rcaron
+hA27C	u0159	r	#	rcaron
+hA27D	u015A	S	#	Sacute
+hA27E	u015B	s	#	sacute
+hA321	u015C	S	#	Scirc
+hA322	u015D	s	#	scirc
+hA323	u015E	S	#	Scedil
+hA324	u015F	s	#	scedil
+hA325	u0160	S	#	Scaron
+hA326	u0161	s	#	scaron
+hA327	u0162	T	#	Tcedil
+hA328	u0163	t	#	tcedil
+hA329	u0164	T	#	Tcaron
+hA32A	u0165	t	#	tcaron
+hA32B	u0166	T	#	Tstrok
+hA32C	u0167	t	#	tstrok
+hA32D	u0168	U	#	Utilde
+hA32E	u0169	u	#	utilde
+hA32F	u016A	U	#	Umacr
+hA330	u016B	u	#	umacr
+hA331	u016C	U	#	Ubreve
+hA332	u016D	u	#	ubreve
+hA333	u016E	U	#	Uring
+hA334	u016F	u	#	uring
+hA335	u0170	U	#	Udblac
+hA336	u0171	u	#	udblac
+hA337	u0172	U	#	Uogon
+hA338	u0173	u	#	uogon
+hA339	u0174	W	#	Wcirc
+hA33A	u0175	w	#	wcirc
+hA33B	u0176	Y	#	Ycirc
+hA33C	u0177	y	#	ycirc
+hA33D	u0178	Y	#	Yuml
+hA33E	u0179	Z	#	Zacute
+hA33F	u017A	z	#	zacute
+hA340	u017B	Z	#	Zdot
+hA341	u017C	z	#	zdot
+hA342	u017D	Z	#	Zcaron
+hA343	u017E	z	#	zcaron
+hA344	u017F		#	
+hA345	u01CD	A	#	Acaron
+hA346	u01CE	a	#	acaron
+hA347	u01CF	I	#	Icaron
+hA348	u01D0	i	#	icaron
+hA349	u01D1	O	#	Ocaron
+hA34A	u01D2	o	#	ocaron
+hA34B	u01D3	U	#	Ucaron
+hA34C	u01D4	u	#	ucaron
+hA34D	u0192		#	fnof
+hA34E	u02C6	^	#	circ
+hA34F	u02DC	~	#	tilde
+hA350	u0254		#
+hA351	u0254,u0300	#
+hA352	u0254,u0301	#
+hA353	u0259		#
+hA354	u0259,u0300	#
+hA355	u0259,u0301	#
+hA356	u028C		#
+hA357	u028C,u0300	#
+hA358	u028C,u0301	#
+hA359	u02D0		#
+hA35A	u0251		#
+hA35B	u0251,u0300	#
+hA35C	u0251,u0301	#
+hA35D	u0283		#
+hA35E	u028A		#
+hA35F	u03B8		#
+hA360	u0292		#
+hA361	u0252		#

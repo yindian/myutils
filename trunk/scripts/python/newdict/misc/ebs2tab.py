@@ -30,7 +30,6 @@ if __name__ == '__main__':
 	if len(sys.argv) != 2:
 		print "Usage: %s filename" % (sys.argv[0])
 		print "Convert output of ebstopcode to stardict babylon text format"
-		print "This version is specialized for Jilin JC bilingual"
 		sys.exit(0)
 	f = open(sys.argv[1], 'r')
 	state = laststate = keycode
