@@ -76,9 +76,11 @@ int main()
 			{
 				buf[bufpos] = '\0';
 				p = htmlunescape(buf);
+                /*
 				if (strcmp(p, "&") == 0)
 					status = 1;
 				else
+                */
 				{
 					printf("%s", p);
 					status = 0;
