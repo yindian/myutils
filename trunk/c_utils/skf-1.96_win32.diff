@@ -1,0 +1,109 @@
+diff -du -r orig\skf-1.96\dyn_table.c skf-1.96\dyn_table.c
+--- orig\skf-1.96\dyn_table.c	Thu Mar 19 11:32:18 2009
++++ skf-1.96\dyn_table.c	Tue Sep 29 23:26:02 2009
+@@ -44022,23 +44022,23 @@
+ /* output side table preparation */
+     if ((out_fmt == FORMAT_SKF) ||
+     	(out_fmt == FORMAT_SKFL)) {
+-	if ((iof = fopen(SKF_IN_CODE_FILE,"w")) == NULL) {
++	if ((iof = fopen(SKF_IN_CODE_FILE,"wb")) == NULL) {
+ 	    fprintf(stderr,"skf_dyn_table: input table open failed %s\n",
+ 			SKF_IN_CODE_FILE);
+ 			exit(0);
+ 	};
+-	if ((of = fopen(SKF_OUT_CODE_FILE,"w")) == NULL) {
++	if ((of = fopen(SKF_OUT_CODE_FILE,"wb")) == NULL) {
+ 	    fprintf(stderr,"skf_dyn_table: output table open failed %s\n",
+ 			SKF_OUT_CODE_FILE);
+ 			exit(0);
+ 	};
+     } else {
+-	if ((iof = fopen(SKF_IN_CODE_FILE,"w")) == NULL) {
++	if ((iof = fopen(SKF_IN_CODE_FILE,"wb")) == NULL) {
+ 	    fprintf(stderr,"skf_dyn_table: input table open failed %s\n",
+ 			SKF_IN_CODE_FILE);
+ 			exit(0);
+ 	};
+-	if ((of = fopen(SKF_ALT_TABLE_FILE,"w")) == NULL) {
++	if ((of = fopen(SKF_ALT_TABLE_FILE,"wb")) == NULL) {
+ 	    fprintf(stderr,"skf_dyn_table: output table open failed %s\n",
+ 			SKF_ALT_TABLE_FILE);
+ 			exit(0);
+@@ -44088,7 +44088,7 @@
+ 		    exit(0);
+ 		};
+ 		fprintf(stderr,"%s ",filename);
+-		if ((f = fopen(filename,"w")) == NULL) {
++		if ((f = fopen(filename,"wb")) == NULL) {
+     fprintf(stderr,"skf_dyn_table: output table open failed %s\n",
+ 		    filename);
+ 		    exit(0);
+@@ -44349,7 +44349,7 @@
+ 		};
+ 		fprintf(stderr,"%s ",filename);
+ 		fflush(stderr);
+-		if ((f = fopen(filename,"w")) == NULL) {
++		if ((f = fopen(filename,"wb")) == NULL) {
+ 	fprintf(stderr,"skf_dyn_table: output table open failed %s\n",
+ 		    filename);
+ 		    exit(0);
+diff -du -r orig\skf-1.96\in_code_table.c skf-1.96\in_code_table.c
+--- orig\skf-1.96\in_code_table.c	Wed Mar 18 22:36:20 2009
++++ skf-1.96\in_code_table.c	Tue Sep 29 23:26:20 2009
+@@ -2701,7 +2701,7 @@
+     if (is_v_debug) 
+ 		fprintf(stderr,"\n- loading table:%s ",table_name);
+ #endif
+-    if ((table = fopen(table_name,"r")) == NULL) {
++    if ((table = fopen(table_name,"rb")) == NULL) {
+ 				/* failed to open		   */
+ 	    in_tablefault(SKF_TBLUNDEF,tbl_entry->desc);
+ 	if (disp_warn) {
+diff -du -r orig\skf-1.96\in_decoder.c skf-1.96\in_decoder.c
+--- orig\skf-1.96\in_decoder.c	Wed Mar 18 22:36:20 2009
++++ skf-1.96\in_decoder.c	Tue Sep 29 23:22:34 2009
+@@ -315,6 +315,7 @@
+ 	return punycode_big_output;
+     };
+ 
++#define HAVE_MEMMOVE 1
+ #ifdef HAVE_MEMMOVE
+ 	/* SVR4, 4.3 BSD, C99 */
+     memmove(output + i + 1, output + i, 
+diff -du -r orig\skf-1.96\out_code_table.c skf-1.96\out_code_table.c
+--- orig\skf-1.96\out_code_table.c	Wed Mar 18 22:36:24 2009
++++ skf-1.96\out_code_table.c	Tue Sep 29 23:26:28 2009
+@@ -2305,7 +2305,7 @@
+ 		siz+siz+12);	/* 12 is length of header	   */
+ #endif
+ 
+-    if ((table = fopen(table_name,"r")) == NULL) {
++    if ((table = fopen(table_name,"rb")) == NULL) {
+ 				/* failed to open		   */
+ 	in_tablefault(SKF_TBLBROKN,table_name);
+ 	fail = 1;
+diff -du -r orig\skf-1.96\skf.c skf-1.96\skf.c
+--- orig\skf-1.96\skf.c	Tue Apr 07 22:59:24 2009
++++ skf-1.96\skf.c	Tue Sep 29 23:18:04 2009
+@@ -955,7 +955,7 @@
+ #endif
+ #ifdef HAVE_GETENV		/* environment argument eval.      */
+ #ifdef NO_GETEUID
+-#ifndef HAVE_GETUID
++#ifdef HAVE_GETUID
+     if (getuid() != 0) {
+ 	if ((c_arg = getenv("SKFENV"))!= NULL) argeval(2,&c_arg);
+ 	if ((c_arg = getenv("skfenv"))!= NULL) argeval(2,&c_arg);
+diff -du -r orig\skf-1.96\skf_fileio.c skf-1.96\skf_fileio.c
+--- orig\skf-1.96\skf_fileio.c	Wed Mar 18 22:36:32 2009
++++ skf-1.96\skf_fileio.c	Tue Sep 29 23:29:58 2009
+@@ -141,7 +141,7 @@
+ {
+ 	/* actually, skf_fopen is called only with mode "r", we	  */
+ 	/* don't have to make certain.				  */
+-	skf_infile = (skfFILE) open(name, O_RDONLY);
++	skf_infile = (skfFILE) open(name, O_RDONLY | O_BINARY);
+ 	buf_p = -1; skf_fpntr = 0; 
+ 	Qflush();
+ 	if (skf_infile >=0) return ((skfFILE *) &skf_infile);
+
