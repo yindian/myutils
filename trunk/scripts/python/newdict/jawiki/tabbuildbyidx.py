@@ -37,7 +37,7 @@ if __name__ == '__main__':
 		line = f.readline()[:deleol].split('\t', 1)
 		if not line[0] or not line[1]: continue
 		itemnum += 1
-		line[1] = line[1].replace('<br>\\n', '\n')
+		line[1] = line[1].replace('\\n', '\n')
 		offset_old = dicfile.tell()
 		dicfile.write(line[1])
 		idxfile.write(line[0])
