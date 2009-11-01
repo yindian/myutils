@@ -3,13 +3,13 @@
 import sys, os, string, re, glob
 import libxml2dom
 import pdb, traceback
-fencoding = 'big5-hkscs'
+fencoding = 'big5'
 outenc = 'gbk'
 DEBUG = True
 
 getindex = re.compile(r'href="([^"]*)"')
-getword = re.compile(ur'\u3010(.*?)\u3011')
-getword2 = re.compile(r'<?FE50>(.*?)<?FE51>')
+getword = re.compile(ur'\u3010(.*?)\u3011'.encode(fencoding))
+getword2 = re.compile(r'<\?FE50>(.*?)<\?FE51>')
 tsemuk = unicode(u'\u8a5e\u76ee'.encode(fencoding), 'latin-1')
 chusik = unicode(u'\u6ce8\u91cb'.encode(fencoding), 'latin-1')
 
@@ -42,7 +42,7 @@ def genmoedict(result, dirname, fnames):
 					fname, dirname)
 			continue
 		if isdir: continue
-		if not (fname.startswith('s_') and fname.endswith('.html')):
+		if not (fname.startswith('m_') and fname.endswith('.html')):
 			print >> sys.stderr, 'Ignoring ' + fname
 			continue
 		num = int(fname[2:-5])
@@ -88,13 +88,15 @@ def getwordmeanfromdoc(doc):
 	assert len(node.childNodes) == 2
 	assert node.firstChild.textContent == tsemuk
 	word = node2text(node.childNodes[1])
-	try:
-		word = unicode(word.encode('latin-1'), fencoding)
-	except:
-		print >> sys.stderr, 'Error decoding word %s' % (unicode(
-			word.encode('latin-1'), fencoding, 'replace').encode(
-				outenc, 'replace'),)
-		raise
+	word = word.encode('latin-1')
+	#try:
+	#	word = unicode(word.encode('latin-1'), fencoding)
+	#except:
+	#	print >> sys.stderr, 'Error decoding word %s' % (unicode(
+	#		word.encode('latin-1'), fencoding, 'replace').encode(
+	#			outenc, 'replace'),)
+	#	#raise
+	#	word = unicode(word.encode('latin-1'), fencoding, 'replace')
 	words = getword.findall(word)
 	try:
 		assert len(words) == 1
@@ -127,18 +129,20 @@ def getwordmeanfromdoc(doc):
 				mean.append(node2text(node))
 			mean.append('\n')
 	mean = ''.join(mean)
-	try:
-		mean = unicode(mean.encode('latin-1'), fencoding)
-	except UnicodeDecodeError, e:
-		print >> sys.stderr, e
-		codes = getinvcode.findall(str(e))
-		assert len(codes) == 1
-		st, ed = map(int, codes[0])
-		print >> sys.stderr, 'Invalid character %s for'%`mean[st:ed+1]`, 
-		print >> sys.stderr, unicode(
-				mean[:mean.index('\n')].encode('latin-1'),
-				fencoding).encode(outenc, 'replace')
-		mean = unicode(mean.encode('latin-1'), fencoding, 'replace')
+	mean = mean.encode('latin-1')
+	#try:
+	#	mean = unicode(mean.encode('latin-1'), fencoding)
+	#except UnicodeDecodeError, e:
+	#	print >> sys.stderr, e
+	#	codes = getinvcode.findall(str(e))
+	#	assert len(codes) == 1
+	#	st, ed = map(int, codes[0])
+	#	print >> sys.stderr, 'Invalid character %s for'%`mean[st:ed+1]`, 
+	#	print >> sys.stderr, unicode(
+	#			mean[:mean.index('\n')].encode('latin-1'),
+	#			fencoding, 'replace').encode(outenc, 'replace')
+	#	#raise
+	#	mean = unicode(mean.encode('latin-1'), fencoding, 'replace')
 	return word, mean
 
 def node2text(node):
@@ -183,9 +187,9 @@ result.sort()
 result = [b for a, b in result]
 
 for word, mean in result:
-	sys.stdout.write(word.encode('utf-8'))
+	sys.stdout.write(word)
 	sys.stdout.write('\t')
-	sys.stdout.write(mean.replace('\n', '\\n').encode('utf-8'))
+	sys.stdout.write(mean.replace('\n', '\\n'))
 	sys.stdout.write('\n')
 
 print >> sys.stderr, 'Done'
