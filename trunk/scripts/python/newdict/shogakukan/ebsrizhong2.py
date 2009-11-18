@@ -58,6 +58,7 @@ def splitkanji(str, sep):
 
 foreignlang = set([])
 specialcasemap = {
+		u'Rh—': u'Rh-',
 		u'ID—': u'IDカード',
 		u'I—': u'Iビーム',
 		u'EE—': u'EEカメラ',
@@ -82,7 +83,7 @@ specialcasemap = {
 		u'新—': u'新モス（リン）',
 		u'第三—': u'第三インター（ナショナル）',
 		u'第二—': u'第二インター（ナショナル）',
-		u'—Q{?w=e132}': u'ダイヤルQ{?w=e132}',
+		u'—Q\u00b2': u'ダイヤルQ2',
 		u'T—': u'Tシャツ',
 		u'T—': u'Tバック',
 		u'生—': u'生コン（クリート）',
@@ -145,6 +146,19 @@ def gettitle(lines, state):
 				kanji = specialcasemap[kanji]
 			else:
 				print >> sys.stderr, 'Unable to split katakana:', kana.encode('gbk', 'replace')
+	if kanji.find(u'\u30fb') >= 0:
+		kanji = kanji.split(u'\u30fb')
+		try:
+			if 0x3040 < ord(kanji[0][-1]) < 0x3050:
+				for i in range(1, len(kanji)):
+					assert kanji[i-1][-1] == kanji[i][-1]
+			kanji = u'|'.join(kanji)
+		except AssertionError:
+			kanji = u'\u30fb'.join(kanji)
+			if kanji == u'全う・真っ当':
+				kanji = kanji.replace(u'\u30fb', u'|')
+			else:
+				print >> sys.stderr, 'Unable to split kanji:', kanji.encode('gbk', 'replace')
 	if kanji:
 		return (u'%s|%s' % (kana, kanji)).encode('utf-8')
 	else:
