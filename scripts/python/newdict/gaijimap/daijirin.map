@@ -1,0 +1,133 @@
+hC32A	-	^4	#	上付	
+hC32B	-	^5	#	上付	
+hC32C	-	^6	#	上付	
+hC32D	-	^7	#	上付	
+hC32E	-	^8	#	上付	
+hC32F	-	^9	#	上付	
+hC330	-	^M	#	上付	
+hC332	-	^b	#	上付	
+hC333	-	_a^b	#		
+hC335	-	^i	#	上付	
+hC336	-	^m	#	上付	
+hC337	-	^n	#	上付	
+hC338	-	^r	#	上付	
+hC339	-	^t	#	上付	
+hC33A	-	^x	#	上付	
+hC33B	-	_a^x	#		
+hC33C	-	^y	#	上付	
+hC33D	-	^+	#	上付	
+hC33E	-	^-	#	上付	
+hC33F	-	^±	#	±	
+hC340	-	^θ	#		
+hC341	-	_0	#	下付	
+hC342	-	_1	#	下付	
+hC343	-	_2	#	下付	
+hC344	-	_3	#	下付	
+hC345	-	_4	#	下付	
+hC346	-	_5	#	下付	
+hC347	-	_6	#	下付	
+hC348	-	_7	#	下付	
+hC349	-	_8	#	下付	
+hC34A	-	_9	#	下付	
+hC34B	-	_A	#	下付	
+hC34C	-	_a	#	下付(α?)	
+hC34D	-	_b	#	下付	
+hC34E	-	_i	#	下付	
+hC34F	-	_k	#	下付	
+hC350	-	_m	#	下付	
+hC351	-	_n	#	下付	
+hC352	-	_r	#	下付	
+hC353	-	_x	#	下付	
+hC355	-	_+	#		
+hC356	-	_-	#		
+hC423	u03C2		#		
+zA53E	u353A		#		「世」の異体字 
+zAE2C	-	亻	#		にんべん
+zAE2E	u2E8B		#		u2E8B(⺋)
+zAE37	u201A2		#		やね
+zAE39	u2EB3		#		u2EB3(⺳)
+zAE3C	uFA49		#		のつ
+zAE3E	u38FA		#		u38FA(㣺)
+zAE40	u248E9		#		王偏 &M020824;
+zAE45	u2967F		#		食
+zAE46	u2011F		#		「末」の初二画
+zAE47	-		#	[中、]	すてふで
+zAE4B	u248E5		#		「玄」の欠画
+zAE4D	u248E9		#		たまへんの偏
+zAE4E	-	尣	#		尩の部分
+zAE65	-	卐	#		右まんじ(卍の逆)
+zAE73	-	∧	#		やまがた
+zB032	u268B		#		卦を表す横段。（陰）
+zB033	u268A		#		卦を表す横段。（陽）
+zB03B	-	〳	#	〳	u3033
+zB03C	-	〴	#	〴	u3034
+zB03D	-	〵	#	〵	u3035
+zB03E	-	〻	#	〻	u303B 二の字点
+zB03F	-	キ	#		複十字
+zB046	u1D110		#		フェルマータ
+zB047	u2125		#		オンス
+zB049	-	乀	#		いおりてん 
+zB04B	u1D109		#		ダルセーニョ 
+zB04C	u1D12A		#		重嬰記号
+zA577	u385C		#	[巾+祭]	(Ext-A)*
+zA62E	u3E05		#	㸅	(Ext-A)*
+zA85E	u47FD		#	䟽	(Ext-A)*
+zA86D	u496B		#	䥫	(Ext-A)
+zA940	u3BB6		#	[木+朔]	(Ext-A)*
+zAA2F	u4207		#	[竹/卓]	(Ext-A)*
+zAA30	u41EE		#	[竹/任]	(Ext-A)*
+zAC49	u4BCA		#	[骨+可]	(Ext-A)*
+zAC4F	u4CD1		#	䳑	(Ext-A)*
+zAD57	u3FAE		#	㾮	(Ext-A)*
+zAE50	u3402		#	㐂	(Ext-A)*
+zA548	u20D45		#	[口+花]	(Ext-B)*
+zA54C	u20E95		#	[口+留]	(Ext-B)*
+zA554	u21742		#	[女+壯]	(Ext-B)*
+zA55B	u2146E		#	[土+塞]	(Ext-B)*
+zA56C	u21C56		#	[尸+朱]	(Ext-B)*
+zA57E	u22DE1		#	[扌+丙丙/木]	(Ext-B)*
+zA648	u24096		#	[さんずい+影]	(Ext-B)*
+zA73F	u2344A		#	[木+在]	(Ext-B)*
+zA751	u233D5		#	[木+朮]	(Ext-B)*
+zA756	u285C8		#	[辶+景]	(Ext-B)*
+zA772	u25122		#	[目+木]	(Ext-B)*
+zA776	u25241		#	[目目/夰]	(Ext-B)
+zA77B	u27631		#	[ころもへん+比]	(Ext-B)*
+zA829	u25EE8		#	[米+索]	(Ext-B)*
+zA82A	u2600C		#	[糸+如]	(Ext-B)*
+zA83F	u273DB		#	[討/虫]	(Ext-B)*
+zA842	u2A190		#	[集+鳥]	(Ext-B)*
+zA848	u2A0F9		#	[即/鳥]	(Ext-B)*
+zA94B	u2370C		#	[木+鼠]	(Ext-B)*
+zA976	u27684		#	[ころもへん+我]	(Ext-B)*
+zAA2A	u25AF1		#	[竹/屯]	(Ext-B)*
+zAA48	u25FE0		#	[糸+布]	(Ext-B)*
+zAA55	u27410		#	[虫+責]	(Ext-B)*
+zAA6A	u28D66		#	[門+楡-木]	(Ext-B)
+zAA6D	u28AE4		#	[金+通]	(Ext-B)*
+zAB5A	u223F3		#	[弓+幷]	(Ext-B)
+zAB71	u24B6F		#	[瓦+泉]	(Ext-B)*
+zAB73	u246A5		#	[牟+含]	(Ext-B)*
+zAC26	u25771		#	[禾+予]	(Ext-B)*
+zAC30	u26A1E		#	[舟+元]	(Ext-B)*
+zAC53	u2A01A		#	[鳥+戎]	(Ext-B)*
+zAD24	u26B07		#	[艸/廾]	(Ext-B)
+zAD51	u2726B		#	[虫+囗又]	(Ext-B)
+zAD59	u24E0E		#	[疒+曷]	(Ext-B)*
+zAD62	u283CD		#	[車+火火/宋]	(Ext-B)*
+zAD69	u292B1		#	[革+毎]	(Ext-B)*
+zAD6A	u292A0		#	[革+光]	(Ext-B)*
+zAD6E	u29E2D		#	[魚+戻]	(Ext-B)
+zAD73	u29E3D		#	[魚+花]	(Ext-B)*
+zAD78	u29E8A		#	[魚+荒]	(Ext-B)*
+zA56E	-		#×	[艸/廾、]
+zA67A	-		#×	[艹/皀]
+zA739	u3B9C		#×	[木匨]	
+zA840	u27387		#×	[虫+蚤]	
+zA84D	u2A0BE		#×	[飠+鳥]	
+zA85B	-		#×	[金+丘]
+zAB4B	-		#×	[縁-糸]
+zAC31	-		#×	[舟+若]
+zAC7E	-	芸	#×	[艹/云]	
+zAD6C	-		#×	[魚+近]
+zAE2B	-		#×	[鹿+子]
