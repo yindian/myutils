@@ -71,18 +71,34 @@ def splitkanji(str, sep):
 	return [u''.join(x) for x in result]
 
 def vbar2eqsyn(str):
-	return str
+	ar = str.split(u'|')
+	if len(ar) == 1:
+		return str
+	return u'\uff1d%s\uff08\uff1d%s\uff09' % (ar[0], u'\uff1d'.join(ar[1:]))
 
 def expandsyn(str):
+	assert str.count(u'|') == 0
 	p = str.find(u'\uff1d')
+	if p < 0:
+		return str
 	q = str.find(u'\uff08')
 	r = str.find(u'\uff09')
 	try:
 		assert p < q < r or (p == q+1 and p < r)
+		if p == q+1:
+			print >> sys.stderr, 'Info:',str.encode('gbk','replace')
+			p = -1
 	except:
 		print >> sys.stderr, str.encode('gbk', 'replace'), p, q, r
 		raise
-	return str
+	head = p >= 0 and str[:p] or u''
+	middle = str[p+1:q] + u'|'.join(str[q+1:r].split(u'\uff1d'))
+	tail = expandsyn(str[r+1:])
+	result = []
+	for m in middle.split(u'|'):
+		for t in tail.split(u'|'):
+			result.append(head + m + t)
+	return u'|'.join(result)
 
 foreignlang = set([])
 lastmidashi = None
@@ -188,7 +204,7 @@ def gettitle(lines, state, lineno):
 		kana = kanaraw.replace(u'\u30fb', u'').replace(u'-', u''
 				).replace(u'\u2218', u'')
 		if iskana(kana):
-			pass
+			lastmidashi = kana
 		else:
 			try:
 				assert len(ar) == 1 or (len(ar) == 2 and
