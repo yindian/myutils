@@ -92,7 +92,7 @@ def expandsyn(str):
 		print >> sys.stderr, str.encode('gbk', 'replace'), p, q, r
 		raise
 	head = p >= 0 and str[:p] or u''
-	middle = str[p+1:q] + u'|'.join(str[q+1:r].split(u'\uff1d'))
+	middle= u'|'.join([str[p+1:q]]+filter(None,str[q+1:r].split(u'\uff1d')))
 	tail = expandsyn(str[r+1:])
 	result = []
 	for m in middle.split(u'|'):
@@ -273,6 +273,23 @@ def gettitle(lines, state, lineno):
 						kanji[p+1:q], kanji[
 							q+1:])
 			kanjis[k] = kanji
+	else:
+		for k in range(len(kanjis)):
+			kanji = kanjis[k]
+			#assert kanji.count(u'(') < 2
+			assert kanji.count(u')') == kanji.count(u'(')
+			assert kanji.count(u'\uff08') == kanji.count(u'\uff09')
+			if kanji.find(u'\uff08') >= 0:
+				assert kanji.find(u'(') < 0
+				kanjis[k] = expandsyn(kanji)
+			elif kanji.find(u')') >= 0:
+				kanji = u'|'.join([
+					delparen.sub(u'', kanji),
+					kanji.replace(u'(', u'').replace(
+						u')', u'')
+					])
+				assert kanji.find(u'(') < 0
+				kanjis[k] = kanji
 	line = linenew
 	while line.find(u'\u3010') >= 0:
 		p = line.find(u'\u3010')
