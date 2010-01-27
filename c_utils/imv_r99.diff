@@ -1,0 +1,71 @@
+--- imv.c.bak	Wed Jan 27 23:37:50 2010
++++ imv.c	Thu Jan 28 00:16:58 2010
+@@ -704,7 +704,7 @@
+ }
+ 
+ HFONT label_font;
+-int label_font_height=12;
++int label_font_height=18;
+ 
+ // build the font for the filename label
+ void build_label_font(void)
+@@ -2360,6 +2360,7 @@
+                stb_splitpath(path_to_file, buffer, STB_PATH);
+                if (recursive)
+                   init_filelist();
++			   advance(0);
+                break;
+             }
+ 
+@@ -2484,6 +2485,51 @@
+                init_filelist();
+                advance(0);
+                break;
++            }
++
++            case 'B' | MY_ALT:
++            case 'F' | MY_ALT: {
++                static int stat = 0;
++                int frac = 4;
++                int adv;
++                int n;
++                char buffer[512], buffer2[256], **subdir;
++
++                if (code == ('B' | MY_ALT))
++                    adv = -1;
++                else
++                    adv = 1;
++                stat += adv;
++                if (stat < 0 || stat >= frac) {
++                    stat += frac * -adv;
++
++                    recursive = TRUE;
++                    strcpy(buffer, path_to_file);
++                    if (buffer[strlen(buffer)-1] == '/')
++                        buffer[strlen(buffer)-1] = 0;
++                    stb_splitpath(path_to_file, buffer, STB_PATH);
++                    stb_splitpath(buffer2, buffer, STB_FILE);
++                    subdir = stb_readdir_subdirs(path_to_file);
++                    for (n = stb_arr_len(subdir)-1; n >= 0; --n)
++                        if (!strcmp(subdir[n], buffer2))
++                            break;
++                    n += adv;
++                    if (n < 0)
++                        n += stb_arr_len(subdir);
++                    else if (n >= stb_arr_len(subdir))
++                        n -= stb_arr_len(subdir);
++                    strcpy(path_to_file, subdir[n]);
++                    stb_readdir_free(subdir);
++                    init_filelist();
++                    advance(stb_arr_len(fileinfo) * stat / frac);
++                } else {
++                    if (fileinfo == NULL)
++                        init_filelist();
++                    n = stb_arr_len(fileinfo);
++                    advance((n * stat / frac) - cur_loc);
++                }
++
++                break;
+             }
+ 
+             case 'I' | MY_CTRL: {
