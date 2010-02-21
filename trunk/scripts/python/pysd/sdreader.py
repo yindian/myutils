@@ -3,6 +3,7 @@
 # History:
 #	2010.02.17.	First version without synonym nor wildcard support
 #	2010.02.18.	Second version with synonym support
+#			Build trie for wildcard support
 import sys, os, re, string, struct, types
 import gzip, dictzip, cStringIO
 import pdb, pprint, time
@@ -47,11 +48,94 @@ def _default_cmp_func(a, b):
 	else:
 		return aa < bb and -1 or 1
 
+def _get_word_by_cursor(cursorarray, idxmatches, synmatches, cursor):
+	idx = cursorarray[cursor]
+	if idx >= 0:
+		return idxmatches[idx]
+	else:
+		return synmatches[-idx - 1]
+
+def _getalphabetlist(cursorarray, idxmatches, synmatches, depth, low, high):
+	visited = {}
+	queue = [(low, high)] # all words between (low, high) shall have len > depth
+	while queue:
+		lo, hi = queue.pop() # order no matter, pop last is stack
+		loword = _get_word_by_cursor(cursorarray, idxmatches, synmatches, lo)
+		loch = loword[depth]
+		if not visited.has_key(loch) or visited[loch] > lo:
+			visited[loch] = lo
+		if lo < hi-1:
+			hiword = _get_word_by_cursor(cursorarray, idxmatches, synmatches, hi-1)
+			hich = hiword[depth]
+			if not visited.has_key(hich) or visited[hich] > hi-1:
+				visited[hich] = hi-1
+			mid = (lo + hi) / 2
+			midword = _get_word_by_cursor(cursorarray, idxmatches, synmatches, mid)
+			midch = midword[depth]
+			if mid < hi-1 and midch != hich:
+				queue.append((mid, hi-1))
+			elif not visited.has_key(midch) or visited[midch] > mid:
+				visited[midch] = mid
+			if mid > lo and midch != loch:
+				queue.append((lo+1, mid))
+	result = visited.items()
+	result.sort()
+	for i in xrange(len(result)):
+		assert _get_word_by_cursor(cursorarray, idxmatches, synmatches, result[i][1])[depth] == result[i][0]
+		if i > 1:
+			assert _get_word_by_cursor(cursorarray, idxmatches, synmatches, result[i][1]-1)[depth] == result[i-1][0]
+	return result
+
+def _reversesort(reversedword, depth, low, high):
+	#st = time.time()
+	#result = []
+	#for i in xrange(low, high):
+	#	word = reversedword[i][:-depth] or reversedword[i]
+	#	result.append((word, i))
+	#info_msg('Reverse sort middle %g seconds' % (time.time() - st,))
+	#result.sort()
+	#info_msg('Reverse sort middle 2 %g seconds' % (time.time() - st,))
+	#result = [b for a, b in result]
+	result = range(low, high)
+	result.sort(lambda a, b: reversedword[a] < reversedword[b] and -1 or (reversedword[a] > reversedword[b] and 1 or 0))
+	#info_msg('Reverse sort (%d, %d) costs %g seconds' % (low, high, time.time() - st,))
+	return result
+
+def buildtrie(cursorarray, idxmatches, synmatches, reversedword, path, low, high, minchldnum=2048):
+	depth = len(path)
+	# node value, exact match / all range, children, reverse sorted list
+	#info_msg('Enter buildtrie for "%s" (%d, %d)' % (path, low, high))
+	result = [None, [low], [], _reversesort(reversedword, depth, low, high)]
+	while low < high and _get_word_by_cursor(cursorarray, idxmatches, synmatches, low) == path:
+		low += 1
+	result[1].append(low)
+	result[1].append(high)
+	if high - low > minchldnum:
+		#st = time.time()
+		alphabet = _getalphabetlist(cursorarray, idxmatches, synmatches, len(path), low, high)
+		#info_msg('Get alphabet list for "%s" costs %g seconds' % (path, time.time() - st,))
+		assert alphabet
+		for i in xrange(len(alphabet)-1):
+			result[2].append(buildtrie(cursorarray, idxmatches, synmatches, reversedword,
+					path + alphabet[i][0], alphabet[i][1], alphabet[i+1][1], minchldnum))
+			result[2][-1][0] = alphabet[i][0]
+		result[2].append(buildtrie(cursorarray, idxmatches, synmatches, reversedword,
+				path + alphabet[-1][0], alphabet[-1][1], high, minchldnum))
+		result[2][-1][0] = alphabet[-1][0]
+	return result
+
+def serializetrie(node, path=''):
+	print `path`.rjust(len(path)*4), node[1]
+	for n in node[2]:
+		serializetrie(n, path+n[0])
+	return ''
+
 def getpossize(wordcount, synwordcount):
 	return (wordcount + synwordcount) * 4
 
-def buildpos(base, idxfilesize, wordcount, synwordcount, cmpfunc=_default_cmp_func):
-	info_msg('Loading %s.idx...' % (base,))
+def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
+	global starttime
+	info_msg('Loading %s.idx...\t%.4gs' % (base, time.time() - starttime))
 	try:
 		f = open(base + '.idx', 'rb')
 	except IOError:
@@ -66,7 +150,7 @@ def buildpos(base, idxfilesize, wordcount, synwordcount, cmpfunc=_default_cmp_fu
 	del idxcontent
 
 	if synwordcount > 0:
-		info_msg('Loading %s.syn...' % (base,))
+		info_msg('Loading %s.syn...\t%.4gs' % (base, time.time() - starttime))
 		try:
 			f = open(base + '.syn', 'rb')
 		except IOError:
@@ -80,40 +164,70 @@ def buildpos(base, idxfilesize, wordcount, synwordcount, cmpfunc=_default_cmp_fu
 	else:
 		synmatches = []
 
-	info_msg('Writing %s.pos...' % (base,))
+	info_msg('Writing %s.pos...\t%.4gs' % (base, time.time() - starttime))
 	f = open(base + '.pos', 'wb')
 	pos = 0
 	synpos = 0
 	synidx = 0
-	for record in idxmatches:
-		p = record.find('\x00')
+	cursorarray = []
+	cachedsynidx = cachedq = cachedsynword = None
+	reversedword = []
+	for idx in xrange(len(idxmatches)):
+		p = idxmatches[idx].find('\x00')
+		word = idxmatches[idx][:p]
 		if p >= 192:
 			warn_msg('Warning: keyword longer than 200 bytes:', False)
-			warn_msg(record[:p])
+			warn_msg(word)
 		while synidx < synwordcount:
-			q = synmatches[synidx].find('\x00')
-			if p >= 192:
-				warn_msg('Warning: syn keyword longer than 200 bytes:', False)
-				warn_msg(synmatches[synidx][:q])
-			if cmpfunc(synmatches[synidx][:q], record[:p]) < 0:
+			if cachedsynidx == synidx:
+				q = cachedq
+				synword = cachedsynword
+			else:
+				q = synmatches[synidx].find('\x00')
+				synword = synmatches[synidx][:q]
+				if q >= 192:
+					warn_msg('Warning: syn keyword longer than 200 bytes:', False)
+					warn_msg(synword)
+				cachedsynidx = synidx
+				cachedq = q
+				cachedsynword = synword
+			if cmpfunc(synword, word) < 0:
 				f.write(struct.pack('<L', synpos | 0x80000000L))
+				cursorarray.append(-synidx - 1)
 				synpos += len(synmatches[synidx])
+				synmatches[synidx] = lwrfunc(synword)
+				reversedword.append(synmatches[synidx])
 				synidx += 1
 			else:
 				break
 		f.write(struct.pack('<L', pos))
-		pos += len(record)
+		cursorarray.append(idx)
+		pos += len(idxmatches[idx])
+		idxmatches[idx] = lwrfunc(word)
+		reversedword.append(idxmatches[idx])
 	while synidx < synwordcount:
 		q = synmatches[synidx].find('\x00')
-		if p >= 192:
+		if q >= 192:
 			warn_msg('Warning: syn keyword longer than 200 bytes:', False)
 			warn_msg(synmatches[synidx][:q])
 		f.write(struct.pack('<L', synpos | 0x80000000L))
+		cursorarray.append(-synidx - 1)
 		synpos += len(synmatches[synidx])
+		synmatches[synidx] = lwrfunc(synmatches[synidx][:q])
+		reversedword.append(synmatches[synidx])
 		synidx += 1
 	f.close()
+	info_msg('Done building .pos\t\t%.4gs' % (time.time() - starttime,))
+	info_msg('Building wildcard tier...\t%.4gs' % (time.time() - starttime,))
+	assert len(cursorarray) == wordcount + synwordcount
+	root = buildtrie(cursorarray, idxmatches, synmatches, reversedword, '', 0, len(cursorarray)) # totally ignore case
+	info_msg('Writing %s.wcd...\t%.4gs' % (base, time.time() - starttime))
+	f = open(base + '.pos', 'wb')
+	f.write(serializetrie(root))
+	f.close()
+	info_msg('Done building .wcd\t\t%.4gs' % (time.time() - starttime,))
 	del idxmatches
-	info_msg('Done building .pos')
+	del synmatches
 
 class StarDictReader:
 	def __init__(self, ifoname, cmpfunc=None, cachesize=10, bufsize=200):
@@ -368,6 +482,61 @@ assert __name__ == '__main__'
 ioenc = sys.getfilesystemencoding()
 debug = True
 
+def showhelp():
+	print "Simple Stardict Reader"
+	print "Usage: %s [-l] [-b] somedict.ifo [more .ifo]" % (os.path.basename(sys.argv[0]), )
+	print "   -l: use Latin-1 for lowercase sorting"
+	print "   -b: build auxiliary files only"
+
+if len(sys.argv) == 1 or (sys.argv[1] == '-l' and len(sys.argv) < 3):
+	showhelp()
+	sys.exit(0)
+elif sys.argv[1] == '-l':
+	latinsort = True
+	flist = sys.argv[2:]
+else:
+	latinsort = False
+	flist = sys.argv[1:]
+
+if flist[0] == '-b':
+	buildonly = True
+	flist = flist[1:]
+else:
+	buildonly = False
+
+if latinsort:
+	latinlwrmap = string.maketrans(string.ascii_uppercase + ''.join(map(chr, range(0xc0, 0xd7) +
+	range(0xd8, 0xdf))), string.ascii_lowercase + ''.join(map(chr, range(0xe0, 0xf7) + range(
+	0xf8, 0xff))))
+	lower = lambda s: s.translate(latinlwrmap)
+	def cmpfunc(a, b):
+		if a == b:
+			return 0
+		aa = lower(a)
+		bb = lower(b)
+		if aa == bb:
+			return a < b and -1 or 1
+		else:
+			return aa < bb and -1 or 1
+else:
+	lower = string.lower
+	cmpfunc = _default_cmp_func
+
+starttime = time.time()
+dictpool = []
+for ifoname in flist:
+	inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
+	if not os.path.exists(inbase + '.pos') or os.stat(inbase + '.pos')[6] != getpossize(wordcount, synwordcount
+		) or os.stat(inbase + '.pos')[-2] < os.stat(inbase + '.ifo')[-2] or not os.path.exists(inbase + '.wcd'
+		) or os.stat(inbase + '.wcd')[6] == 0 or os.stat(inbase + '.wcd')[-2] < os.stat(inbase + '.ifo')[-2]:
+		buildposwcd(inbase, idxfilesize, wordcount, synwordcount, cmpfunc=cmpfunc, lwrfunc=lower)
+	dictpool.append(StarDictReader(ifoname, cmpfunc=cmpfunc))
+endtime = time.time()
+debug and warn_msg('Loading time: %g seconds' % (endtime - starttime,))
+
+if buildonly:
+	sys.exit(0)
+
 try:
 	from ctypes import windll
 	from ctypes.wintypes import DWORD
@@ -403,57 +572,6 @@ def writetoconsole(ustr, newline=True):
 	#else:
 	#	print ustr.encode(ioenc, 'replace'),
 	writeunicode(ustr, sys.stdout, newline)
-
-def showhelp():
-	print "Simple Stardict Reader"
-	print "Usage: %s [-l] [-b] somedict.ifo [more .ifo]" % (os.path.basename(sys.argv[0]), )
-	print "   -l: use Latin-1 for lowercase sorting"
-	print "   -b: build auxiliary files only"
-
-if len(sys.argv) == 1 or (sys.argv[1] == '-l' and len(sys.argv) < 3):
-	showhelp()
-	sys.exit(0)
-elif sys.argv[1] == '-l':
-	latinsort = True
-	flist = sys.argv[2:]
-else:
-	latinsort = False
-	flist = sys.argv[1:]
-
-if flist[0] == '-b':
-	buildonly = True
-	flist = flist[1:]
-else:
-	buildonly = False
-
-if latinsort:
-	lower = lambda s: unicode(s, 'latin-1').lower().encode('latin-1')
-	def cmpfunc(a, b):
-		if a == b:
-			return 0
-		aa = lower(a)
-		bb = lower(b)
-		if aa == bb:
-			return a < b and -1 or 1
-		else:
-			return aa < bb and -1 or 1
-else:
-	lower = string.lower
-	cmpfunc = None
-
-starttime = time.time()
-dictpool = []
-for ifoname in flist:
-	inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
-	if not os.path.exists(inbase + '.pos') or os.stat(inbase + '.pos')[6] != getpossize(wordcount, synwordcount
-		) or os.stat(inbase + '.pos')[-2] < os.stat(inbase + '.ifo')[-2]:
-		buildpos(inbase, idxfilesize, wordcount, synwordcount)
-	dictpool.append(StarDictReader(ifoname, cmpfunc=cmpfunc))
-endtime = time.time()
-debug and warn_msg('Loading time: %g seconds' % (endtime - starttime,))
-
-if buildonly:
-	sys.exit(0)
 
 def touni(str):
 	return unicode(str, 'utf-8')
