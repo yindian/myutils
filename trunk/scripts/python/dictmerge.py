@@ -142,6 +142,15 @@ if not mergekey: # no need to reorder mean
 			del rawsynonym
 		#continue
 		findex.sort()
+		result = []
+		for offset, length, word, syn in findex:
+			if result and result[-1][0] == offset:
+				assert result[-1][1] == length
+				result[-1][-1].append(word)
+				result[-1][-1].extend(syn)
+			else:
+				result.append((offset, length, word, syn))
+		findex = result
 		if os.path.exists(inbase + '.dict.dz'):
 			f = gzip.GzipFile(inbase + '.dict.dz', 'rb')
 			fname = inbase + '.dict.dz'
