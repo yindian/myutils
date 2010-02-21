@@ -88,16 +88,17 @@ def _getalphabetlist(cursorarray, idxmatches, synmatches, depth, low, high):
 
 def _reversesort(reversedword, depth, low, high):
 	#st = time.time()
-	#result = []
-	#for i in xrange(low, high):
-	#	word = reversedword[i][:-depth] or reversedword[i]
-	#	result.append((word, i))
+	result = []
+	for i in xrange(low, high):
+		#word = reversedword[i][:-depth] or reversedword[i]
+		#result.append((word, i))
+		result.append((reversedword[i], i))
 	#info_msg('Reverse sort middle %g seconds' % (time.time() - st,))
-	#result.sort()
+	result.sort()
 	#info_msg('Reverse sort middle 2 %g seconds' % (time.time() - st,))
-	#result = [b for a, b in result]
-	result = range(low, high)
-	result.sort(lambda a, b: reversedword[a] < reversedword[b] and -1 or (reversedword[a] > reversedword[b] and 1 or 0))
+	result = [b for a, b in result]
+	#result = range(low, high)
+	#result.sort(lambda a, b: reversedword[a] < reversedword[b] and -1 or (reversedword[a] > reversedword[b] and 1 or 0))
 	#info_msg('Reverse sort (%d, %d) costs %g seconds' % (low, high, time.time() - st,))
 	return result
 
@@ -125,7 +126,8 @@ def buildtrie(cursorarray, idxmatches, synmatches, reversedword, path, low, high
 	return result
 
 def serializetrie(node, path=''):
-	print `path`.rjust(len(path)*4), node[1]
+	# one node costs 4*4 bytes plus reverse sorted list
+	#print `path`.rjust(len(path)*4), node[1]
 	for n in node[2]:
 		serializetrie(n, path+n[0])
 	return ''
@@ -170,7 +172,7 @@ def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
 	synpos = 0
 	synidx = 0
 	cursorarray = []
-	cachedsynidx = cachedq = cachedsynword = None
+	cachedsynidx = None
 	reversedword = []
 	for idx in xrange(len(idxmatches)):
 		p = idxmatches[idx].find('\x00')
@@ -179,18 +181,13 @@ def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
 			warn_msg('Warning: keyword longer than 200 bytes:', False)
 			warn_msg(word)
 		while synidx < synwordcount:
-			if cachedsynidx == synidx:
-				q = cachedq
-				synword = cachedsynword
-			else:
+			if cachedsynidx != synidx:
 				q = synmatches[synidx].find('\x00')
 				synword = synmatches[synidx][:q]
 				if q >= 192:
 					warn_msg('Warning: syn keyword longer than 200 bytes:', False)
 					warn_msg(synword)
 				cachedsynidx = synidx
-				cachedq = q
-				cachedsynword = synword
 			if cmpfunc(synword, word) < 0:
 				f.write(struct.pack('<L', synpos | 0x80000000L))
 				cursorarray.append(-synidx - 1)
@@ -218,8 +215,13 @@ def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
 		synidx += 1
 	f.close()
 	info_msg('Done building .pos\t\t%.4gs' % (time.time() - starttime,))
+	assert len(cursorarray) == wordcount + synwordcount == len(reversedword)
+	info_msg('Building reversed words...\t%.4gs' % (time.time() - starttime,))
+	for i in xrange(len(reversedword)):
+		ar = list(reversedword[i])
+		ar.reverse()
+		reversedword[i] = ''.join(ar)
 	info_msg('Building wildcard tier...\t%.4gs' % (time.time() - starttime,))
-	assert len(cursorarray) == wordcount + synwordcount
 	root = buildtrie(cursorarray, idxmatches, synmatches, reversedword, '', 0, len(cursorarray)) # totally ignore case
 	info_msg('Writing %s.wcd...\t%.4gs' % (base, time.time() - starttime))
 	f = open(base + '.pos', 'wb')
