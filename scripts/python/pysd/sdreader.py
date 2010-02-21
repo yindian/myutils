@@ -2,6 +2,7 @@
 # Simple StarDict Reader by YIN Dian
 # History:
 #	2010.02.17.	First version without synonym nor wildcard support
+#	2010.02.18.	Second version with synonym support
 import sys, os, re, string, struct, types
 import gzip, dictzip, cStringIO
 import pdb, pprint, time
@@ -36,34 +37,6 @@ def parseifo(ifoname):
 	f.close()
 	return os.path.splitext(ifoname)[0], bookname, idxfilesize, wordcount, synwordcount
 
-def getpossize(wordcount, synwordcount):
-	return wordcount * 4
-
-def buildpos(base, idxfilesize, wordcount, synwordcount):
-	info_msg('Loading %s.idx...' % (base,))
-	f = open(base + '.idx', 'rb')
-	idxcontent = f.read()
-	assert f.tell() == idxfilesize
-	f.close()
-	reidx = re.compile(r'.*?\x00.{8}', re.S)
-	idxmatches = reidx.findall(idxcontent)
-	assert len(idxmatches) == wordcount
-	del idxcontent
-
-	info_msg('Writing %s.pos...' % (base,))
-	f = open(base + '.pos', 'wb')
-	pos = 0
-	for record in idxmatches:
-		p = record.find('\x00')
-		if p >= 192:
-			warn_msg('Warning: keyword longer than 200 bytes:', False)
-			warn_msg(record[:p])
-		f.write(struct.pack('<L', pos))
-		pos += len(record)
-	f.close()
-	del idxmatches
-	info_msg('Done building .pos')
-
 def _default_cmp_func(a, b):
 	if a == b:
 		return 0
@@ -74,13 +47,82 @@ def _default_cmp_func(a, b):
 	else:
 		return aa < bb and -1 or 1
 
+def getpossize(wordcount, synwordcount):
+	return (wordcount + synwordcount) * 4
+
+def buildpos(base, idxfilesize, wordcount, synwordcount, cmpfunc=_default_cmp_func):
+	info_msg('Loading %s.idx...' % (base,))
+	try:
+		f = open(base + '.idx', 'rb')
+	except IOError:
+		f = gzip.GzipFile(base + '.idx.gz', 'rb')
+	idxcontent = f.read()
+	assert f.tell() == idxfilesize
+	assert idxfilesize <= 0x80000000L
+	f.close()
+	reidx = re.compile(r'.*?\x00.{8}', re.S)
+	idxmatches = reidx.findall(idxcontent)
+	assert len(idxmatches) == wordcount
+	del idxcontent
+
+	if synwordcount > 0:
+		info_msg('Loading %s.syn...' % (base,))
+		try:
+			f = open(base + '.syn', 'rb')
+		except IOError:
+			f = gzip.GzipFile(base + '.syn.gz', 'rb')
+		syncontent = f.read()
+		f.close()
+		resyn = re.compile(r'.*?\x00.{4}', re.S)
+		synmatches = resyn.findall(syncontent)
+		assert len(synmatches) == synwordcount
+		del syncontent
+	else:
+		synmatches = []
+
+	info_msg('Writing %s.pos...' % (base,))
+	f = open(base + '.pos', 'wb')
+	pos = 0
+	synpos = 0
+	synidx = 0
+	for record in idxmatches:
+		p = record.find('\x00')
+		if p >= 192:
+			warn_msg('Warning: keyword longer than 200 bytes:', False)
+			warn_msg(record[:p])
+		while synidx < synwordcount:
+			q = synmatches[synidx].find('\x00')
+			if p >= 192:
+				warn_msg('Warning: syn keyword longer than 200 bytes:', False)
+				warn_msg(synmatches[synidx][:q])
+			if cmpfunc(synmatches[synidx][:q], record[:p]) < 0:
+				f.write(struct.pack('<L', synpos | 0x80000000L))
+				synpos += len(synmatches[synidx])
+				synidx += 1
+			else:
+				break
+		f.write(struct.pack('<L', pos))
+		pos += len(record)
+	while synidx < synwordcount:
+		q = synmatches[synidx].find('\x00')
+		if p >= 192:
+			warn_msg('Warning: syn keyword longer than 200 bytes:', False)
+			warn_msg(synmatches[synidx][:q])
+		f.write(struct.pack('<L', synpos | 0x80000000L))
+		synpos += len(synmatches[synidx])
+		synidx += 1
+	f.close()
+	del idxmatches
+	info_msg('Done building .pos')
+
 class StarDictReader:
 	def __init__(self, ifoname, cmpfunc=None, cachesize=10, bufsize=200):
 		inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
+		assert 0 < idxfilesize <= 0x80000000L
+		assert 0 < wordcount
+		assert 0 <= synwordcount
 		if os.path.exists(inbase + '.idx'):
 			self.idxfile = open(inbase + '.idx', 'rb')
-		elif os.path.exists(inbase + '.idx.dz'):
-			self.idxfile = dictzip.DictzipFile(inbase + '.idx.dz', 'rb')
 		elif os.path.exists(inbase + '.idx.gz'):
 			self.idxfile = gzip.GzipFile(inbase + '.idx.gz', 'rb')
 			buf = self.idxfile.read()
@@ -89,6 +131,19 @@ class StarDictReader:
 			del buf
 		else:
 			raise Exception('Index file not found for ' + inbase)
+		if synwordcount > 0:
+			if os.path.exists(inbase + '.syn'):
+				self.synfile = open(inbase + '.syn', 'rb')
+			elif os.path.exists(inbase + '.syn.gz'):
+				self.synfile = gzip.GzipFile(inbase + '.syn.gz', 'rb')
+				buf = self.synfile.read()
+				self.synfile.close()
+				self.synfile = cStringIO.StringIO(buf)
+				del buf
+			else:
+				raise Exception('Synonym file not found for ' + inbase)
+		else:
+			self.synfile = None
 		if os.path.exists(inbase + '.dict.dz'):
 			self.dicfile = dictzip.DictzipFile(inbase + '.dict.dz', 'rb')
 		elif os.path.exists(inbase + '.dict'):
@@ -100,15 +155,19 @@ class StarDictReader:
 		else:
 			raise Exception('Position file not found for ' + inbase)
 		self.name = bookname
-		self.wordcount = wordcount # size of posfile / 4
+		self.wordcount = wordcount + synwordcount # size of posfile / 4
+		self.maxsynidx = wordcount
 		self.cursor = 0
 		self.cmpfunc = cmpfunc or _default_cmp_func
 		self.cachesize = cachesize
+		self.syncachesize = cachesize * 1
 		self.bufsize = bufsize
 		# cache items are (index, word, position) pair
 		self._cachekeys = []
 		self._cache = {}
 		self._cachepos = {}
+		# syn cache items are (index, syncount) pair
+		self._cachesyn = []
 
 	def __del__(self):
 		self.idxfile.close()
@@ -122,26 +181,98 @@ class StarDictReader:
 			return self._cache[index]
 		self.posfile.seek(index * 4)
 		pos = struct.unpack('<L', self.posfile.read(4))[0]
-		self.idxfile.seek(pos)
-		buf = self.idxfile.read(self.bufsize)
-		p = buf.find('\0')
-		if p < 0 or len(buf)-p <= 8:
-			buf2 = self.idxfile.read(self.bufsize)
-			while buf2:
-				buf += buf2
-				p = buf.find('\0')
-				if p >= 0 and len(buf)-p > 8:
-					break
+		if pos < 0x80000000L:
+			self.idxfile.seek(pos)
+			buf = self.idxfile.read(self.bufsize)
+			p = buf.find('\0')
+			if p < 0 or len(buf)-p <= 8:
 				buf2 = self.idxfile.read(self.bufsize)
-		assert p >= 0
-		self._cachekeys.append(index)
-		self._cache[index] = buf[:p]
-		self._cachepos[index] = struct.unpack('!2L', buf[p+1:p+9])
+				while buf2:
+					buf += buf2
+					p = buf.find('\0')
+					if p >= 0 and len(buf)-p > 8:
+						break
+					buf2 = self.idxfile.read(self.bufsize)
+			assert p >= 0
+			self._cachekeys.append(index)
+			self._cache[index] = buf[:p]
+			self._cachepos[index] = struct.unpack('!2L', buf[p+1:p+9])
+		else: # synonym
+			pos &= 0x7FFFffffL
+			self.synfile.seek(pos)
+			buf = self.synfile.read(self.bufsize)
+			p = buf.find('\0')
+			if p < 0 or len(buf)-p <= 4:
+				buf2 = self.synfile.read(self.bufsize)
+				while buf2:
+					buf += buf2
+					p = buf.find('\0')
+					if p >= 0 and len(buf)-p > 4:
+						break
+					buf2 = self.synfile.read(self.bufsize)
+			assert p >= 0
+			self._cachekeys.append(index)
+			self._cache[index] = buf[:p]
+			self._cachepos[index] = struct.unpack('!L', buf[p+1:p+5])
 		if len(self._cachekeys) > self.cachesize:
 			del self._cache[self._cachekeys[0]]
 			del self._cachepos[self._cachekeys[0]]
 			del self._cachekeys[0]
 		return self._cache[index]
+
+	def _cached_synidx_to_cursor(self, synidx):
+		# index:   0 1 2 3 4 5 6 7 8 9 A B C D E F
+		# pos&MSB: 0 0 0 1 0 0 1 0 0 0 1 1 0 0 1 0
+		# syncnt:  0 0 0 1 1 1 2 2 2 2 3 4 4 4 5 5
+		# idxidx:  0 1 2 2 3 4 4 5 6 7 7 7 8 9 9 A
+		assert 0 <= synidx < self.maxsynidx
+		cur = 0
+		cnt = 0
+		dir = 1
+		for idx, syncnt in self._cachesyn:
+			idxidx = idx - syncnt
+			if idxidx < synidx:
+				cur = idx + 1
+				cnt = syncnt
+				dir = 1
+			elif idxidx == synidx:
+				cur = idx
+				cnt = syncnt
+				dir = -1
+				return cur # _cachesyn doesn't store pos&MSB !=0
+			else:
+				break
+		if dir < 0:
+			while cur - cnt == synidx:
+				self.posfile.seek(cur * 4)
+				pos = struct.unpack('<L', self.posfile.read(4))[0]
+				cur -= 1
+				if pos >= 0x80000000L:
+					cnt -= 1
+		self.posfile.seek(cur * 4)
+		while cur - cnt < synidx:
+			pos = struct.unpack('<L', self.posfile.read(4))[0]
+			cur += 1
+			if pos >= 0x80000000L:
+				cnt += 1
+		i = 0
+		for i in xrange(len(self._cachesyn)):
+			if self._cachesyn[i][0] >= cur:
+				break
+		if i < len(self._cachesyn) and self._cachesyn[i][0] < cur:
+			i += 1
+		self._cachesyn.insert(i, (cur, cnt))
+		k = i
+		if len(self._cachesyn) > self.syncachesize:
+			mindiff = sys.maxint
+			mini = -1
+			for i in xrange(len(self._cachesyn)-1):
+				if i+1 != k and self._cachesyn[i+1][0] - self._cachesyn[i][0] < mindiff:
+					mindiff = self._cachesyn[i+1][0] - self._cachesyn[i][0]
+					mini = i
+			assert mini >= 0
+			del self._cachesyn[mini+1]
+		return cur
 
 	def _cursor_to_first(self):
 		word = self._cached_get_word(self.cursor)
@@ -215,7 +346,18 @@ class StarDictReader:
 				break
 		return result
 
+	def derefsyncursor(self, cursor):
+		word = self._cached_get_word(cursor)
+		if len(self._cachepos[cursor]) == 2:
+			return cursor
+		else: # synonym
+			return self._cached_synidx_to_cursor(self._cachepos[cursor][0])
+
+	def readword(self, cursor):
+		return self._cached_get_word(cursor)
+
 	def readmean(self, cursor):
+		cursor = self.derefsyncursor(cursor)
 		word = self._cached_get_word(cursor)
 		pos, length = self._cachepos[cursor]
 		self.dicfile.seek(pos)
@@ -264,8 +406,9 @@ def writetoconsole(ustr, newline=True):
 
 def showhelp():
 	print "Simple Stardict Reader"
-	print "Usage: %s [-l] somedict.ifo [more .ifo]" % (os.path.basename(sys.argv[0]), )
+	print "Usage: %s [-l] [-b] somedict.ifo [more .ifo]" % (os.path.basename(sys.argv[0]), )
 	print "   -l: use Latin-1 for lowercase sorting"
+	print "   -b: build auxiliary files only"
 
 if len(sys.argv) == 1 or (sys.argv[1] == '-l' and len(sys.argv) < 3):
 	showhelp()
@@ -276,6 +419,12 @@ elif sys.argv[1] == '-l':
 else:
 	latinsort = False
 	flist = sys.argv[1:]
+
+if flist[0] == '-b':
+	buildonly = True
+	flist = flist[1:]
+else:
+	buildonly = False
 
 if latinsort:
 	lower = lambda s: unicode(s, 'latin-1').lower().encode('latin-1')
@@ -296,11 +445,15 @@ starttime = time.time()
 dictpool = []
 for ifoname in flist:
 	inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
-	if not os.path.exists(inbase + '.pos') or os.stat(inbase + '.pos')[6] != getpossize(wordcount, synwordcount):
+	if not os.path.exists(inbase + '.pos') or os.stat(inbase + '.pos')[6] != getpossize(wordcount, synwordcount
+		) or os.stat(inbase + '.pos')[-2] < os.stat(inbase + '.ifo')[-2]:
 		buildpos(inbase, idxfilesize, wordcount, synwordcount)
 	dictpool.append(StarDictReader(ifoname, cmpfunc=cmpfunc))
 endtime = time.time()
 debug and warn_msg('Loading time: %g seconds' % (endtime - starttime,))
+
+if buildonly:
+	sys.exit(0)
 
 def touni(str):
 	return unicode(str, 'utf-8')
@@ -309,7 +462,9 @@ def selectwords(result, i):
 	if not 0 <= i < len(result):
 		warn_msg('Wrong selection %d' % (i,))
 		return
-	writetoconsole(u'[%d]. %s (%s)' % (i, touni(result[i][1]), touni(result[i][2].name)))
+	cursor = result[i][2].derefsyncursor(result[i][3])
+	writetoconsole(u'[%d]. %s (%s' % (i, touni(result[i][1]), touni(result[i][2].name)) +
+	(cursor == result[i][3] and u')' or u') => %s' % (touni(result[i][2].readword(cursor)))))
 	writetoconsole(touni(result[i][2].readmean(result[i][3])))
 
 def showselwords(result):
