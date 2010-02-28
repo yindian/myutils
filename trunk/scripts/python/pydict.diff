@@ -1,0 +1,96 @@
+--- pydict.py.orig	Wed Sep 19 20:20:40 2007
++++ pydict.py	Sun Feb 28 12:10:10 2010
+@@ -36,6 +36,54 @@
+   brws = r'BrowserNG.exe'
+   e32.start_exe(brws, ' "4 %s"' % url, 0)
+ 
++tonemarkset = u'sfrxj'
++compoundset = u'aeoudw'
++tonetransform = {
++  u'a':      u'\u00e1\u00e0\u1ea3\u00e3\u1ea1',
++  u'\u0103': u'\u1eaf\u1eb1\u1eb3\u1eb5\u1eb7',
++  u'\u00e2': u'\u1ea5\u1ea7\u1ea9\u1eab\u1ead',
++  u'e':      u'\u00e9\u00e8\u1ebb\u1ebd\u1eb9',
++  u'\u00ea': u'\u1ebf\u1ec1\u1ec3\u1ec5\u1ec7',
++  u'i':      u'\u00ed\u00ec\u1ec9\u0129\u1ecb',
++  u'o':      u'\u00f3\u00f2\u1ecf\u00f5\u1ecd',
++  u'\u00f4': u'\u1ed1\u1ed3\u1ed5\u1ed7\u1ed9',
++  u'\u01a1': u'\u1edb\u1edd\u1edf\u1ee1\u1ee3',
++  u'u':      u'\u00fa\u00f9\u1ee7\u0169\u1ee5',
++  u'\u01b0': u'\u1ee9\u1eeb\u1eed\u1eef\u1ef1',
++  u'y':      u'\u00fd\u1ef3\u1ef7\u1ef9\u1ef5'
++}
++compoundtrasform = {
++  u'aa': u'\u00e2',
++  u'aw': u'\u0103',
++  u'ee': u'\u00ea',
++  u'oo': u'\u00f4',
++  u'ow': u'\u01a1',
++  u'uw': u'\u01b0',
++  u'dd': u'\u0111'
++}
++loweralphas = u'abcdefghijklmnopqrstuvwxyz\u00e2\u0103\u00ea\u00f4\u01a1\u01b0\u0111\u00e1\u00e0\u1ea3\u00e3\u1ea1\u1eaf\u1eb1\u1eb3\u1eb5\u1eb7\u1ea5\u1ea7\u1ea9\u1eab\u1ead\u00e9\u00e8\u1ebb\u1ebd\u1eb9\u1ebf\u1ec1\u1ec3\u1ec5\u1ec7\u00ed\u00ec\u1ec9\u0129\u1ecb\u00f3\u00f2\u1ecf\u00f5\u1ecd\u1ed1\u1ed3\u1ed5\u1ed7\u1ed9\u1edb\u1edd\u1edf\u1ee1\u1ee3\u00fa\u00f9\u1ee7\u0169\u1ee5\u1ee9\u1eeb\u1eed\u1eef\u1ef1\u00fd\u1ef3\u1ef7\u1ef9\u1ef5'
++upperalphas = u'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c2\u0102\u00ca\u00d4\u01a0\u01af\u0110\u00c1\u00c0\u1ea2\u00c3\u1ea0\u1eae\u1eb0\u1eb2\u1eb4\u1eb6\u1ea4\u1ea6\u1ea8\u1eaa\u1eac\u00c9\u00c8\u1eba\u1ebc\u1eb8\u1ebe\u1ec0\u1ec2\u1ec4\u1ec6\u00cd\u00cc\u1ec8\u0128\u1eca\u00d3\u00d2\u1ece\u00d5\u1ecc\u1ed0\u1ed2\u1ed4\u1ed6\u1ed8\u1eda\u1edc\u1ede\u1ee0\u1ee2\u00da\u00d9\u1ee6\u0168\u1ee4\u1ee8\u1eea\u1eec\u1eee\u1ef0\u00dd\u1ef2\u1ef6\u1ef8\u1ef4'
++lower2upper = dict(zip(loweralphas, upperalphas))
++def telex2uni(str):
++  if len(str) <= 1:
++    return str
++  result = [str[0]]
++  for i in range(1, len(str)):
++    ch = str[i].lower()
++    if ch in tonemarkset and tonetransform.has_key(result[-1].lower()):
++      if tonetransform.has_key(result[-1]): # lower case
++        result[-1] = tonetransform[result[-1]][tonemarkset.index(ch)]
++      else: # upper case
++        result[-1] = lower2upper[tonetransform[result[-1].lower()][tonemarkset.index(ch)]]
++    elif ch in compoundset and compoundtrasform.has_key(result[-1].lower() + ch):
++      if compoundtrasform.has_key(result[-1] + ch): # lower case
++        result[-1] = compoundtrasform[result[-1] + ch]
++      else:
++        result[-1] = lower2upper[compoundtrasform[result[-1].lower() + ch]]
++    else:
++      result.append(str[i])
++  return u''.join(result)
++
+ class DictSettings(object):
+   def __init__(self, raw=None):
+     self.lastpos = 0
+@@ -200,6 +248,7 @@
+     
+     appuifw.app.menu = [
+       (u'Search',            self.search),
++      (u'Search TELEX',      self.searchtelex),
+       (u'View',              self.select),
+       (u'History',           self.selectHistory),
+       (u'Select Dictionary', self.openDict),
+@@ -295,6 +344,30 @@
+     word = appuifw.query(u"Find", "text", unicode(word))
+     if not word:
+       return
++    self.dictset.search = word
++    st, _len, idx = self.dict.findIndex(word.encode("utf-8"))
++    self.dictbuf.goto(idx)
++    self.reload()
++    if st: # exact match
++      self.select()
++    
++  def searchtelex(self, word=""):
++    if keypress and word:
++      key = word
++      def press():
++        del self.timer
++        self.timer = None
++        keypress.simulate_key_mod(key, key, EModifierPureKeycode)
++      self.timer = e32.Ao_timer()
++      self.timer.after(0.1, press)
++    if type(word) not in [unicode, str]:
++      word = ""
++    if not word and self.dictset.search:
++      word = self.dictset.search
++    word = appuifw.query(u"Find", "text", unicode(word))
++    if not word:
++      return
++    word = telex2uni(word)
+     self.dictset.search = word
+     st, _len, idx = self.dict.findIndex(word.encode("utf-8"))
+     self.dictbuf.goto(idx)
