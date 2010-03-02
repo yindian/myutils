@@ -1,6 +1,47 @@
 --- imv.c.bak	Wed Jan 27 23:37:50 2010
-+++ imv.c	Thu Jan 28 00:16:58 2010
-@@ -704,7 +704,7 @@
++++ imv.c	Tue Mar 02 20:40:02 2010
+@@ -343,8 +343,8 @@
+ 
+ static unsigned char alpha_background[2][3] =
+ {
+-   { 200,40,200 },
+-   { 150,30,150 },
++   { 255,255,255 },
++   { 255,255,255 },
+ };
+ 
+ // given raw decoded data from stbi_load, make it into a proper Image (e.g. creating a
+@@ -665,6 +665,7 @@
+    "CTRL-I: launch new viewer instance\n"
+ ;
+ 
++void stb_from_utf8_multi(stb__wchar *out, char *in, int max_out);
+ // draw the help text semi-prettily
+ // originally this was to try to avoid having to darken the image
+ // that it's rendered over, but I couldn't make that work, and with
+@@ -673,6 +674,8 @@
+ void draw_nice(HDC hdc, char *text, RECT *rect, uint flags)
+ {
+    int i,j;
++   static stb__wchar wbuffer[1024];
++   stb_from_utf8_multi(wbuffer, text, 1024);
+    SetTextColor(hdc, RGB(80,80,80));
+    for (i=2; i >= 1; i -= 1)
+    for (j=2; j >= 1; j -= 1)
+@@ -681,10 +684,10 @@
+       RECT r = { rect->left+i, rect->top+j, rect->right+i, rect->bottom + j };
+       if (i == 1 && j == 1)
+          SetTextColor(hdc, RGB(0,0,0));
+-      DrawText(hdc, text, -1, &r, flags);
++      DrawTextW(hdc, wbuffer, -1, &r, flags);
+    }
+    SetTextColor(hdc, RGB(255,255,255));
+-   DrawText(hdc, text, -1, rect, flags);
++   DrawTextW(hdc, wbuffer, -1, rect, flags);
+ }
+ 
+ // cached error message for most recent image
+@@ -704,7 +707,7 @@
  }
  
  HFONT label_font;
@@ -9,7 +50,40 @@
  
  // build the font for the filename label
  void build_label_font(void)
-@@ -2360,6 +2360,7 @@
+@@ -771,6 +774,7 @@
+       RECT z;
+       HFONT old = NULL;
+       char buffer[1024];
++      stb__wchar wbuffer[1024];
+       char *name = cur_filename ? cur_filename : "(none)";
+       if (fileinfo) {
+          if (recursive)
+@@ -779,13 +783,14 @@
+             sprintf(buffer, "%s ( %d / %d )", name, cur_loc+1, stb_arr_len(fileinfo));
+          name = buffer;
+       }
++      stb_from_utf8_multi(wbuffer, name, 1024);
+ 
+       if (label_font) old = SelectObject(hdc, label_font);
+ 
+       // get rect around label so we can draw it ourselves, because
+       // the DrawText() one is poorly sized
+ 
+-      GetTextExtentPoint32(hdc, name, strlen(name), &size);
++      GetTextExtentPoint32W(hdc, wbuffer, wcslen(wbuffer), &size);
+       z.left = rect.left+1;
+       z.bottom = rect.bottom+1;
+       z.top = z.bottom - size.cy - 4;
+@@ -794,7 +799,7 @@
+       FillRect(hdc, &z, b);
+       z.bottom -= 2; // extra padding on bottom because it's at edge of window
+       SetTextColor(hdc, RGB(255,255,255));
+-      DrawText(hdc, name, -1, &z, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
++      DrawTextW(hdc, wbuffer, -1, &z, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+       if (old) SelectObject(hdc, old);
+    }
+ 
+@@ -2360,6 +2365,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -17,7 +91,36 @@
                 break;
              }
  
-@@ -2484,6 +2485,51 @@
+@@ -2384,15 +2390,26 @@
+                  | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
+          code += wParam;
+          switch (code) {
+-            case VK_RIGHT:
+             case VK_NUMPAD6:
+                advance(1);
+                break;
+-            case VK_LEFT:
+             case VK_NUMPAD4:
+                advance(-1);
+                break;
+ 
++            case VK_LEFT:
++            case VK_RIGHT:
++            case VK_UP:
++            case VK_DOWN: {
++                RECT rect;
++                int deltax, deltay, step = 20;
++                deltax = (code == VK_LEFT) ? -step : (code == VK_RIGHT) ? step : 0;
++                deltay = (code == VK_UP) ? step : (code == VK_DOWN) ? -step : 0;
++                GetWindowRect(win, &rect);
++                MoveWindow(win, rect.left + deltax, rect.top + deltay, rect.right - rect.left, rect.bottom - rect.top, TRUE);
++                break;
++            }
++
+             case VK_F1:
+             case 'H':
+             case 'H' | MY_SHIFT:
+@@ -2484,6 +2501,50 @@
                 init_filelist();
                 advance(0);
                 break;
@@ -29,7 +132,7 @@
 +                int frac = 4;
 +                int adv;
 +                int n;
-+                char buffer[512], buffer2[256], **subdir;
++                char buffer[512], **subdir;
 +
 +                if (code == ('B' | MY_ALT))
 +                    adv = -1;
@@ -44,10 +147,9 @@
 +                    if (buffer[strlen(buffer)-1] == '/')
 +                        buffer[strlen(buffer)-1] = 0;
 +                    stb_splitpath(path_to_file, buffer, STB_PATH);
-+                    stb_splitpath(buffer2, buffer, STB_FILE);
 +                    subdir = stb_readdir_subdirs(path_to_file);
 +                    for (n = stb_arr_len(subdir)-1; n >= 0; --n)
-+                        if (!strcmp(subdir[n], buffer2))
++                        if (!strcmp(subdir[n], buffer))
 +                            break;
 +                    n += adv;
 +                    if (n < 0)
