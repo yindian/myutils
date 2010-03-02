@@ -75,6 +75,16 @@ def pinyinuntone(str):
 		result.append(c)
 	return u''.join(result) + (tone and `tone` or u'')
 
+def uniord(str):
+	assert str
+	if len(str) == 1:
+		return ord(str)
+	else:
+		assert len(str) == 2
+		assert 0xD800 <= ord(str[0]) < 0xDC00
+		assert 0xDC00 <= ord(str[1]) < 0xE000
+		return ((ord(str[0]) - 0xD800) << 10) + (ord(str[1]) - 0xDC00) + 0x10000
+
 assert __name__ == '__main__'
 
 if len(sys.argv) != 2:
@@ -121,7 +131,7 @@ while True:
 			strokeorder = strokeorder[0]
 			unicodepoint = reunicpoint.findall(sects[0])
 			assert unicodepoint
-			assert int(unicodepoint[0], 16) == ord(word)
+			assert int(unicodepoint[0], 16) == uniord(word)
 			if len(sects) > 1 and sects[1].startswith(u'基本解释'):
 				mean = pinyinnotes.sub(u'', sects[1][sects[1].index(u'\n')+1:]).replace(u'\n\n', u'\n')
 				basic = pinyinnotes.sub(u'', sects[0][sects[0].index(u'\n')+1:]).replace(u'\n\n', u'\n').splitlines()
