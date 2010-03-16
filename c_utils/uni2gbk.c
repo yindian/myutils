@@ -1,0 +1,581 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<assert.h>
+#ifdef __WIN32__
+#include<windows.h>
+#endif
+
+typedef unsigned short code_t;
+typedef code_t codepair_t[2];
+
+static codepair_t uni_normalize[];
+static int uni_normalize_len;
+
+static const char trailingBytesForUTF8[];
+
+static FILE* inpf;
+static FILE* outf;
+
+typedef void (*print_func)();
+
+void print_tofu() { fputs("¡õ", outf); }
+void print_geta() { fputs("¡þ", outf); }
+
+code_t uni2gbk(int unicode)
+{
+#ifdef __WIN32__
+    int len;
+    char result[4] = {0};
+    WCHAR buf[1] = {unicode};
+
+    len = WideCharToMultiByte(CP_ACP,0,buf,1,NULL,0,NULL,FALSE);
+    if (!len)
+        return 0;
+
+    WideCharToMultiByte(CP_ACP,0,buf,1, result,len, NULL,FALSE);
+    if (len == 2)
+        return ((int)((unsigned char)result[0])<<8) | (unsigned char)result[1];
+    else if (len == 1 && (result[0] < 0 || unicode < 0x80))
+        return (unsigned char)result[0];
+    else
+        return 0;
+    return 0;
+#else
+    abort();
+#endif
+}
+
+int normalize(int unicode, int *outch)
+{
+    int lo, mid, hi;
+    lo = 0;
+    hi = uni_normalize_len;
+    while (lo < hi-1)
+    {
+        mid = (lo + hi) >> 1;
+        if (uni_normalize[mid][0] == unicode)
+        {
+            lo = mid;
+            break;
+        }
+        else if (uni_normalize[mid][0] < unicode)
+            lo = mid+1;
+        else
+            hi = mid;
+    }
+    assert(hi == uni_normalize_len || uni_normalize[hi][0] > unicode);
+    if (uni_normalize[lo][0] == unicode)
+    {
+        if (outch)
+            *outch = uni_normalize[lo][1];
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    int ch, bufch;
+    int len, state;
+    print_func print_replacement = print_tofu;
+
+    state = 0; /* 0: ASCII, 1: UTF-8 */
+    bufch = 0;
+    inpf = stdin;
+    outf = stdout;
+
+    if (argc > 1)
+    {
+        inpf = fopen(argv[1], "r");
+        if (!inpf)
+            return 1;
+    }
+
+    while ((ch = fgetc(inpf)) != EOF)
+    {
+        if (state)
+        {
+            if ((ch & 0xC0) == 0x80)
+                bufch = (bufch << 6) | (ch & 0x3F);
+            else
+            {
+                print_replacement();
+                state = bufch = len = 0;
+                ungetc(ch, inpf);
+                continue;
+            }
+            if (!--len)
+            {
+                bufch = uni2gbk(ch = bufch);
+                if (!bufch)
+                {
+                    if (normalize(ch, &bufch))
+                        bufch = uni2gbk(bufch);
+                    else
+                    {
+                        print_replacement();
+                        state = bufch = len = 0;
+                        continue;
+                    }
+                }
+                if (bufch >> 8)
+                {
+                    fputc(bufch >> 8, outf);
+                    fputc(bufch & 0xFF, outf);
+                }
+                else
+                    fputc(bufch, outf);
+                state = bufch = len = 0;
+            }
+        }
+        else if (ch < 0x80)
+            fputc(ch, outf);
+        else
+        {
+            len = trailingBytesForUTF8[ch];
+            if (!len)
+            {
+                print_replacement();
+                continue;
+            }
+            bufch = ((1<<(6-len))-1) & ch;
+            state = 1;
+        }
+    }
+
+    return 0;
+}
+
+#define PAIR(_x, _y, _z) {_x, _y}
+/* G: GB2312 & GB18030, B: BIG5-Eten, J: JIS X 0208, S: MS Shift-JIS (CP932) */
+static codepair_t uni_normalize[] = {
+    PAIR(0x00A2, 0xFFE0, J),
+    PAIR(0x00A3, 0xFFE1, J),
+    PAIR(0x00AC, 0xFFE2, J),
+    PAIR(0x00AF, 0x02C9, B),
+    PAIR(0x00B4, 0xFF07, J),
+    PAIR(0x02C6, 0xFF3E, B),
+    PAIR(0x02CD, 0xFF3F, B),
+    PAIR(0x2022, 0x00B7, G),
+    PAIR(0x2027, 0x00B7, B),
+    PAIR(0x21D2, 0x2192, J),
+    /*PAIR(0x21D4, 0x003C, J),*/    /*<>*/
+    PAIR(0x2207, 0x25BD, J),
+    PAIR(0x2212, 0xFF0D, J),
+    /*PAIR(0x226A, 0x003C, J),*/    /*<<*/
+    /*PAIR(0x226B, 0x003E, J),*/    /*>>*/
+    PAIR(0x2574, 0xFF3F, B),
+    PAIR(0x25EF, 0x3007, J),
+    PAIR(0x266D, 0xFF42, J),
+    PAIR(0x266F, 0xFF03, J),
+    PAIR(0x273D, 0xFF0A, B),
+    PAIR(0x2E80, 0x51AB, B),
+    PAIR(0x2E81, 0xE815, G),
+    PAIR(0x2E84, 0xE819, G),
+    PAIR(0x2E86, 0x5182, B),
+    PAIR(0x2E87, 0x51E0, B),
+    PAIR(0x2E88, 0xE81C, G),
+    PAIR(0x2E8A, 0x535C, B),
+    PAIR(0x2E8B, 0xE81D, G),
+    PAIR(0x2E8C, 0xE822, G),
+    PAIR(0x2E8D, 0x30C4, B),
+    PAIR(0x2E95, 0x5F50, B),
+    PAIR(0x2E97, 0xE823, G),
+    PAIR(0x2E9C, 0x5183, B),
+    PAIR(0x2E9D, 0x6708, B),
+    PAIR(0x2EA5, 0x722B, B),
+    PAIR(0x2EA7, 0xE830, G),
+    PAIR(0x2EAA, 0xE833, G),
+    PAIR(0x2EAC, 0x793B, B),
+    PAIR(0x2EAE, 0xE836, G),
+    PAIR(0x2EB3, 0xE838, G),
+    PAIR(0x2EB6, 0xE839, G),
+    PAIR(0x2EB7, 0xE83A, G),
+    PAIR(0x2EBB, 0xE83E, G),
+    PAIR(0x2EBC, 0x6708, B),
+    PAIR(0x2EBE, 0x8279, B),
+    PAIR(0x2EC6, 0x89D2, B),
+    PAIR(0x2ECA, 0xE848, G),
+    PAIR(0x2ECC, 0x8FB6, B),
+    PAIR(0x2ECD, 0x8FB6, B),
+    PAIR(0x2ECF, 0x961D, B),
+    PAIR(0x2ED6, 0x961D, B),
+    PAIR(0x2ED7, 0x96E8, B),
+    PAIR(0x2EDE, 0x98DF, B),
+    PAIR(0x2EE3, 0x9AA8, B),
+    PAIR(0x2F00, 0x4E00, B),
+    PAIR(0x2F01, 0x4E28, B),
+    PAIR(0x2F02, 0x4E36, B),
+    PAIR(0x2F03, 0x4E3F, B),
+    PAIR(0x2F04, 0x4E59, B),
+    PAIR(0x2F05, 0x4E85, B),
+    PAIR(0x2F06, 0x4E8C, B),
+    PAIR(0x2F07, 0x4EA0, B),
+    PAIR(0x2F08, 0x4EBA, B),
+    PAIR(0x2F09, 0x513F, B),
+    PAIR(0x2F0A, 0x5165, B),
+    PAIR(0x2F0B, 0x516B, B),
+    PAIR(0x2F0C, 0x5182, B),
+    PAIR(0x2F0D, 0x5196, B),
+    PAIR(0x2F0E, 0x51AB, B),
+    PAIR(0x2F0F, 0x51E0, B),
+    PAIR(0x2F10, 0x51F5, B),
+    PAIR(0x2F11, 0x5200, B),
+    PAIR(0x2F12, 0x529B, B),
+    PAIR(0x2F13, 0x52F9, B),
+    PAIR(0x2F14, 0x5315, B),
+    PAIR(0x2F15, 0x531A, B),
+    PAIR(0x2F16, 0x5338, B),
+    PAIR(0x2F17, 0x5341, B),
+    PAIR(0x2F18, 0x535C, B),
+    PAIR(0x2F19, 0x5369, B),
+    PAIR(0x2F1A, 0x5382, B),
+    PAIR(0x2F1B, 0x53B6, B),
+    PAIR(0x2F1C, 0x53C8, B),
+    PAIR(0x2F1D, 0x53E3, B),
+    PAIR(0x2F1E, 0x56D7, B),
+    PAIR(0x2F1F, 0x571F, B),
+    PAIR(0x2F20, 0x58EB, B),
+    PAIR(0x2F21, 0x5902, B),
+    PAIR(0x2F22, 0x590A, B),
+    PAIR(0x2F23, 0x5915, B),
+    PAIR(0x2F24, 0x5927, B),
+    PAIR(0x2F25, 0x5973, B),
+    PAIR(0x2F26, 0x5B50, B),
+    PAIR(0x2F27, 0x5B80, B),
+    PAIR(0x2F28, 0x5BF8, B),
+    PAIR(0x2F29, 0x5C0F, B),
+    PAIR(0x2F2A, 0x5C22, B),
+    PAIR(0x2F2B, 0x5C38, B),
+    PAIR(0x2F2C, 0x5C6E, B),
+    PAIR(0x2F2D, 0x5C71, B),
+    PAIR(0x2F2E, 0x5DDB, B),
+    PAIR(0x2F2F, 0x5DE5, B),
+    PAIR(0x2F30, 0x5DF1, B),
+    PAIR(0x2F31, 0x5DFE, B),
+    PAIR(0x2F32, 0x5E72, B),
+    PAIR(0x2F33, 0x5E7A, B),
+    PAIR(0x2F34, 0x5E7F, B),
+    PAIR(0x2F35, 0x5EF4, B),
+    PAIR(0x2F36, 0x5EFE, B),
+    PAIR(0x2F37, 0x5F0B, B),
+    PAIR(0x2F38, 0x5F13, B),
+    PAIR(0x2F39, 0x5F50, B),
+    PAIR(0x2F3A, 0x5F61, B),
+    PAIR(0x2F3B, 0x5F73, B),
+    PAIR(0x2F3C, 0x5FC3, B),
+    PAIR(0x2F3D, 0x6208, B),
+    PAIR(0x2F3E, 0x6236, B),
+    PAIR(0x2F3F, 0x624B, B),
+    PAIR(0x2F40, 0x652F, B),
+    PAIR(0x2F41, 0x6534, B),
+    PAIR(0x2F42, 0x6587, B),
+    PAIR(0x2F43, 0x6597, B),
+    PAIR(0x2F44, 0x65A4, B),
+    PAIR(0x2F45, 0x65B9, B),
+    PAIR(0x2F46, 0x65E0, B),
+    PAIR(0x2F47, 0x65E5, B),
+    PAIR(0x2F48, 0x66F0, B),
+    PAIR(0x2F49, 0x6708, B),
+    PAIR(0x2F4A, 0x6728, B),
+    PAIR(0x2F4B, 0x6B20, B),
+    PAIR(0x2F4C, 0x6B62, B),
+    PAIR(0x2F4D, 0x6B79, B),
+    PAIR(0x2F4E, 0x6BB3, B),
+    PAIR(0x2F4F, 0x6BCB, B),
+    PAIR(0x2F50, 0x6BD4, B),
+    PAIR(0x2F51, 0x6BDB, B),
+    PAIR(0x2F52, 0x6C0F, B),
+    PAIR(0x2F53, 0x6C14, B),
+    PAIR(0x2F54, 0x6C34, B),
+    PAIR(0x2F55, 0x706B, B),
+    PAIR(0x2F56, 0x722A, B),
+    PAIR(0x2F57, 0x7236, B),
+    PAIR(0x2F58, 0x723B, B),
+    PAIR(0x2F59, 0x723F, B),
+    PAIR(0x2F5A, 0x7247, B),
+    PAIR(0x2F5B, 0x7259, B),
+    PAIR(0x2F5C, 0x725B, B),
+    PAIR(0x2F5D, 0x72AC, B),
+    PAIR(0x2F5E, 0x7384, B),
+    PAIR(0x2F5F, 0x7389, B),
+    PAIR(0x2F60, 0x74DC, B),
+    PAIR(0x2F61, 0x74E6, B),
+    PAIR(0x2F62, 0x7518, B),
+    PAIR(0x2F63, 0x751F, B),
+    PAIR(0x2F64, 0x7528, B),
+    PAIR(0x2F65, 0x7530, B),
+    PAIR(0x2F66, 0x758B, B),
+    PAIR(0x2F67, 0x7592, B),
+    PAIR(0x2F68, 0x7676, B),
+    PAIR(0x2F69, 0x767D, B),
+    PAIR(0x2F6A, 0x76AE, B),
+    PAIR(0x2F6B, 0x76BF, B),
+    PAIR(0x2F6C, 0x76EE, B),
+    PAIR(0x2F6D, 0x77DB, B),
+    PAIR(0x2F6E, 0x77E2, B),
+    PAIR(0x2F6F, 0x77F3, B),
+    PAIR(0x2F70, 0x793A, B),
+    PAIR(0x2F71, 0x79B8, B),
+    PAIR(0x2F72, 0x79BE, B),
+    PAIR(0x2F73, 0x7A74, B),
+    PAIR(0x2F74, 0x7ACB, B),
+    PAIR(0x2F75, 0x7AF9, B),
+    PAIR(0x2F76, 0x7C73, B),
+    PAIR(0x2F77, 0x7CF8, B),
+    PAIR(0x2F78, 0x7F36, B),
+    PAIR(0x2F79, 0x7F51, B),
+    PAIR(0x2F7A, 0x7F8A, B),
+    PAIR(0x2F7B, 0x7FBD, B),
+    PAIR(0x2F7C, 0x8001, B),
+    PAIR(0x2F7D, 0x800C, B),
+    PAIR(0x2F7E, 0x8012, B),
+    PAIR(0x2F7F, 0x8033, B),
+    PAIR(0x2F80, 0x807F, B),
+    PAIR(0x2F81, 0x8089, B),
+    PAIR(0x2F82, 0x81E3, B),
+    PAIR(0x2F83, 0x81EA, B),
+    PAIR(0x2F84, 0x81F3, B),
+    PAIR(0x2F85, 0x81FC, B),
+    PAIR(0x2F86, 0x820C, B),
+    PAIR(0x2F87, 0x821B, B),
+    PAIR(0x2F88, 0x821F, B),
+    PAIR(0x2F89, 0x826E, B),
+    PAIR(0x2F8A, 0x8272, B),
+    PAIR(0x2F8B, 0x8278, B),
+    PAIR(0x2F8C, 0x864D, B),
+    PAIR(0x2F8D, 0x866B, B),
+    PAIR(0x2F8E, 0x8840, B),
+    PAIR(0x2F8F, 0x884C, B),
+    PAIR(0x2F90, 0x8863, B),
+    PAIR(0x2F91, 0x897E, B),
+    PAIR(0x2F92, 0x898B, B),
+    PAIR(0x2F93, 0x89D2, B),
+    PAIR(0x2F94, 0x8A00, B),
+    PAIR(0x2F95, 0x8C37, B),
+    PAIR(0x2F96, 0x8C46, B),
+    PAIR(0x2F97, 0x8C55, B),
+    PAIR(0x2F98, 0x8C78, B),
+    PAIR(0x2F99, 0x8C9D, B),
+    PAIR(0x2F9A, 0x8D64, B),
+    PAIR(0x2F9B, 0x8D70, B),
+    PAIR(0x2F9C, 0x8DB3, B),
+    PAIR(0x2F9D, 0x8EAB, B),
+    PAIR(0x2F9E, 0x8ECA, B),
+    PAIR(0x2F9F, 0x8F9B, B),
+    PAIR(0x2FA0, 0x8FB0, B),
+    PAIR(0x2FA1, 0x8FB5, B),
+    PAIR(0x2FA2, 0x9091, B),
+    PAIR(0x2FA3, 0x9149, B),
+    PAIR(0x2FA4, 0x91C6, B),
+    PAIR(0x2FA5, 0x91CC, B),
+    PAIR(0x2FA6, 0x91D1, B),
+    PAIR(0x2FA7, 0x9577, B),
+    PAIR(0x2FA8, 0x9580, B),
+    PAIR(0x2FA9, 0x961C, B),
+    PAIR(0x2FAA, 0x96B6, B),
+    PAIR(0x2FAB, 0x96B9, B),
+    PAIR(0x2FAC, 0x96E8, B),
+    PAIR(0x2FAD, 0x9752, B),
+    PAIR(0x2FAE, 0x975E, B),
+    PAIR(0x2FAF, 0x9762, B),
+    PAIR(0x2FB0, 0x9769, B),
+    PAIR(0x2FB1, 0x97CB, B),
+    PAIR(0x2FB2, 0x97ED, B),
+    PAIR(0x2FB3, 0x97F3, B),
+    PAIR(0x2FB4, 0x9801, B),
+    PAIR(0x2FB5, 0x98A8, B),
+    PAIR(0x2FB6, 0x98DB, B),
+    PAIR(0x2FB7, 0x98DF, B),
+    PAIR(0x2FB8, 0x9996, B),
+    PAIR(0x2FB9, 0x9999, B),
+    PAIR(0x2FBA, 0x99AC, B),
+    PAIR(0x2FBB, 0x9AA8, B),
+    PAIR(0x2FBC, 0x9AD8, B),
+    PAIR(0x2FBD, 0x9ADF, B),
+    PAIR(0x2FBE, 0x9B25, B),
+    PAIR(0x2FBF, 0x9B2F, B),
+    PAIR(0x2FC0, 0x9B32, B),
+    PAIR(0x2FC1, 0x9B3C, B),
+    PAIR(0x2FC2, 0x9B5A, B),
+    PAIR(0x2FC3, 0x9CE5, B),
+    PAIR(0x2FC4, 0x9E75, B),
+    PAIR(0x2FC5, 0x9E7F, B),
+    PAIR(0x2FC6, 0x9EA5, B),
+    PAIR(0x2FC7, 0x9EBB, B),
+    PAIR(0x2FC8, 0x9EC3, B),
+    PAIR(0x2FC9, 0x9ECD, B),
+    PAIR(0x2FCA, 0x9ED1, B),
+    PAIR(0x2FCB, 0x9EF9, B),
+    PAIR(0x2FCC, 0x9EFD, B),
+    PAIR(0x2FCD, 0x9F0E, B),
+    PAIR(0x2FCE, 0x9F13, B),
+    PAIR(0x2FCF, 0x9F20, B),
+    PAIR(0x2FD0, 0x9F3B, B),
+    PAIR(0x2FD1, 0x9F4A, B),
+    PAIR(0x2FD2, 0x9F52, B),
+    PAIR(0x2FD3, 0x9F8D, B),
+    PAIR(0x2FD4, 0x9F9C, B),
+    PAIR(0x2FD5, 0x9FA0, B),
+    PAIR(0x301C, 0xFF5E, J),
+    PAIR(0x301F, 0x301E, S),
+    PAIR(0x3038, 0x5341, B),
+    PAIR(0x3039, 0x5344, B),
+    PAIR(0x303A, 0x5345, B),
+    PAIR(0x30FB, 0x00B7, G),
+    PAIR(0x3232, 0x6709, S),
+    PAIR(0x3239, 0x4EE3, S),
+    PAIR(0x32A4, 0x4E0A, S),
+    PAIR(0x32A5, 0x4E2D, S),
+    PAIR(0x32A6, 0x4E0B, S),
+    PAIR(0x32A7, 0x5DE6, S),
+    PAIR(0x32A8, 0x53F3, S),
+    /*PAIR(0x33CD, 0x004B, S),*/    /*KK*/
+    PAIR(0x3447, 0xE81B, G),
+    PAIR(0x3473, 0xE81A, G),
+    PAIR(0x359E, 0xE81F, G),
+    PAIR(0x360E, 0xE821, G),
+    PAIR(0x361A, 0xE820, G),
+    PAIR(0x3918, 0xE825, G),
+    PAIR(0x396E, 0xE824, G),
+    PAIR(0x39CF, 0xE827, G),
+    PAIR(0x39D0, 0xE82A, G),
+    PAIR(0x39DF, 0xE828, G),
+    PAIR(0x3A73, 0xE829, G),
+    PAIR(0x3B4E, 0xE82D, G),
+    PAIR(0x3C6E, 0xE82E, G),
+    PAIR(0x3CE0, 0xE82F, G),
+    PAIR(0x4056, 0xE834, G),
+    PAIR(0x415F, 0xE835, G),
+    PAIR(0x4337, 0xE837, G),
+    PAIR(0x43AC, 0xE83D, G),
+    PAIR(0x43B1, 0xE83C, G),
+    PAIR(0x43DD, 0xE83F, G),
+    PAIR(0x44D6, 0xE840, G),
+    PAIR(0x464C, 0xE842, G),
+    PAIR(0x4661, 0xE841, G),
+    PAIR(0x4723, 0xE844, G),
+    PAIR(0x4729, 0xE845, G),
+    PAIR(0x477C, 0xE846, G),
+    PAIR(0x478D, 0xE847, G),
+    PAIR(0x4947, 0xE849, G),
+    PAIR(0x497A, 0xE84A, G),
+    PAIR(0x497D, 0xE84B, G),
+    PAIR(0x4982, 0xE84C, G),
+    PAIR(0x4983, 0xE84D, G),
+    PAIR(0x4985, 0xE84E, G),
+    PAIR(0x4986, 0xE84F, G),
+    PAIR(0x499B, 0xE851, G),
+    PAIR(0x499F, 0xE850, G),
+    PAIR(0x49B6, 0xE853, G),
+    PAIR(0x49B7, 0xE852, G),
+    PAIR(0x4C77, 0xE85A, G),
+    PAIR(0x4C9F, 0xE857, G),
+    PAIR(0x4CA0, 0xE858, G),
+    PAIR(0x4CA1, 0xE859, G),
+    PAIR(0x4CA2, 0xE85B, G),
+    PAIR(0x4CA3, 0xE856, G),
+    PAIR(0x4D13, 0xE85C, G),
+    PAIR(0x4D14, 0xE85D, G),
+    PAIR(0x4D15, 0xE85E, G),
+    PAIR(0x4D16, 0xE85F, G),
+    PAIR(0x4D17, 0xE860, G),
+    PAIR(0x4D18, 0xE861, G),
+    PAIR(0x4D19, 0xE862, G),
+    PAIR(0x4DAE, 0xE863, G),
+    PAIR(0xF929, 0x6717, S),
+    PAIR(0xF9DC, 0x9686, S),
+    PAIR(0xFA10, 0x585A, S),
+    PAIR(0xFA12, 0x6674, S),
+    PAIR(0xFA15, 0x7199, S),
+    PAIR(0xFA16, 0x732A, S),
+    PAIR(0xFA17, 0x76CA, S),
+    PAIR(0xFA19, 0x795E, S),
+    PAIR(0xFA1A, 0x7965, S),
+    PAIR(0xFA1B, 0x798F, S),
+    PAIR(0xFA1C, 0x9756, S),
+    PAIR(0xFA1D, 0x7CBE, S),
+    PAIR(0xFA1E, 0x7FBD, S),
+    PAIR(0xFA22, 0x8AF8, S),
+    PAIR(0xFA25, 0x9038, S),
+    PAIR(0xFA26, 0x90FD, S),
+    PAIR(0xFA2A, 0x98EF, S),
+    PAIR(0xFA2B, 0x98FC, S),
+    PAIR(0xFA2C, 0x9928, S),
+    PAIR(0xFA2D, 0x9DB4, S),
+    PAIR(0xFF61, 0x3002, S),
+    PAIR(0xFF62, 0x300C, S),
+    PAIR(0xFF63, 0x300D, S),
+    PAIR(0xFF64, 0x3001, S),
+    PAIR(0xFF65, 0x00B7, S),
+    PAIR(0xFF66, 0x30F2, S),
+    PAIR(0xFF67, 0x30A1, S),
+    PAIR(0xFF68, 0x30A3, S),
+    PAIR(0xFF69, 0x30A5, S),
+    PAIR(0xFF6A, 0x30A7, S),
+    PAIR(0xFF6B, 0x30A9, S),
+    PAIR(0xFF6C, 0x30E3, S),
+    PAIR(0xFF6D, 0x30E5, S),
+    PAIR(0xFF6E, 0x30E7, S),
+    PAIR(0xFF6F, 0x30C3, S),
+    PAIR(0xFF70, 0x30FC, S),
+    PAIR(0xFF71, 0x30A2, S),
+    PAIR(0xFF72, 0x30A4, S),
+    PAIR(0xFF73, 0x30A6, S),
+    PAIR(0xFF74, 0x30A8, S),
+    PAIR(0xFF75, 0x30AA, S),
+    PAIR(0xFF76, 0x30AB, S),
+    PAIR(0xFF77, 0x30AD, S),
+    PAIR(0xFF78, 0x30AF, S),
+    PAIR(0xFF79, 0x30B1, S),
+    PAIR(0xFF7A, 0x30B3, S),
+    PAIR(0xFF7B, 0x30B5, S),
+    PAIR(0xFF7C, 0x30B7, S),
+    PAIR(0xFF7D, 0x30B9, S),
+    PAIR(0xFF7E, 0x30BB, S),
+    PAIR(0xFF7F, 0x30BD, S),
+    PAIR(0xFF80, 0x30BF, S),
+    PAIR(0xFF81, 0x30C1, S),
+    PAIR(0xFF82, 0x30C4, S),
+    PAIR(0xFF83, 0x30C6, S),
+    PAIR(0xFF84, 0x30C8, S),
+    PAIR(0xFF85, 0x30CA, S),
+    PAIR(0xFF86, 0x30CB, S),
+    PAIR(0xFF87, 0x30CC, S),
+    PAIR(0xFF88, 0x30CD, S),
+    PAIR(0xFF89, 0x30CE, S),
+    PAIR(0xFF8A, 0x30CF, S),
+    PAIR(0xFF8B, 0x30D2, S),
+    PAIR(0xFF8C, 0x30D5, S),
+    PAIR(0xFF8D, 0x30D8, S),
+    PAIR(0xFF8E, 0x30DB, S),
+    PAIR(0xFF8F, 0x30DE, S),
+    PAIR(0xFF90, 0x30DF, S),
+    PAIR(0xFF91, 0x30E0, S),
+    PAIR(0xFF92, 0x30E1, S),
+    PAIR(0xFF93, 0x30E2, S),
+    PAIR(0xFF94, 0x30E4, S),
+    PAIR(0xFF95, 0x30E6, S),
+    PAIR(0xFF96, 0x30E8, S),
+    PAIR(0xFF97, 0x30E9, S),
+    PAIR(0xFF98, 0x30EA, S),
+    PAIR(0xFF99, 0x30EB, S),
+    PAIR(0xFF9A, 0x30EC, S),
+    PAIR(0xFF9B, 0x30ED, S),
+    PAIR(0xFF9C, 0x30EF, S),
+    PAIR(0xFF9D, 0x30F3, S),
+    PAIR(0xFF9E, 0x309B, S),
+    PAIR(0xFF9F, 0x309C, S),
+};
+static int uni_normalize_len = sizeof(uni_normalize) / sizeof(codepair_t);
+
+static const char trailingBytesForUTF8[256] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
+};
