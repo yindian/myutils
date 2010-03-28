@@ -4,9 +4,11 @@
 #	2010.02.17.	First version without synonym nor wildcard support
 #	2010.02.18.	Second version with synonym support
 #			Build trie for wildcard support
+#	2010.03.28.	Serialize trie and query wildcard (10%)
 import sys, os, re, string, struct, types
 import gzip, dictzip, cStringIO
 import pdb, pprint, time
+import traceback
 
 def warn_msg(str, newline=True):
 	sys.stdout.flush()
@@ -127,13 +129,75 @@ def buildtrie(cursorarray, idxmatches, synmatches, reversedword, path, low, high
 
 def serializetrie(node, path=''):
 	# one node costs 4*4 bytes plus reverse sorted list
+	#   node value char, control byte, 16-bit sub node count,                // 1st 4 bytes
+	#   exact match count, high boundary index (low boundary is implied),    // next 8 bytes
+	#   reversed sort list offset (starting from beginning of file)          // last 4 bytes
+
 	#print `path`.rjust(len(path)*4), node[1]
+	noderesult = [[node[0] or '\0', 0, 0, node[1][1] - node[1][0], node[1][2], path]]
+	revlists = [node[-1]]
 	for n in node[2]:
-		serializetrie(n, path+n[0])
-	return ''
+		subnodes, subrevlists = serializetrie(n, path+n[0])
+		noderesult.extend(subnodes)
+		revlists.extend(subrevlists)
+	if len(noderesult) > 0x10000:
+		raise Exception('Too many (%d) sub nodes for %s' % (len(noderesult)-1, path))
+	noderesult[0][2] = len(noderesult) - 1
+	if path:
+		return noderesult, revlists
+	else:
+		assert node[0] is None
+		assert len(noderesult) == len(revlists)
+		result = []
+		offset = len(noderesult) * 16
+		i = 0
+		for value, flag, subcnt, matcnt, highidx, tmp in noderesult:
+			result.append(struct.pack('<cBHLLL', value, flag, subcnt, matcnt, highidx, offset))
+			offset += len(revlists[i]) * 4
+			i += 1
+		for rev in revlists:
+			result.append(struct.pack('<' + 'L'*len(rev), *rev))
+		result = ''.join(result)
+		assert len(result) == offset
+		return result
 
 def getpossize(wordcount, synwordcount):
 	return (wordcount + synwordcount) * 4
+
+def checkwcdfile(wcdfname, wordcount, synwordcount):
+	try:
+		f = open(wcdfname, 'rb')
+		buf = f.read(16)
+		value, flag, subcnt, matcnt, highidx, offset = struct.unpack('<cBHLLL', buf)
+		assert highidx == wordcount + synwordcount
+		k = offset
+		lowidx = 0
+		# find last node
+		while subcnt:
+			p = highidx
+			# first child
+			buf = f.read(16)
+			value, flag, subcnt, matcnt, highidx, offset = struct.unpack('<cBHLLL', buf)
+			while highidx < p:
+				lowidx = highidx
+				# next child
+				f.seek(subcnt * 16, 1)
+				buf = f.read(16)
+				value, flag, subcnt, matcnt, highidx, offset = struct.unpack('<cBHLLL', buf)
+		assert f.tell() == k
+		f.seek(offset)
+		buf = f.read((highidx - lowidx) * 4)
+		assert len(buf) == (highidx - lowidx) * 4
+		k = f.tell()
+		f.seek(0, 2)
+		assert f.tell() == k
+		f.close()
+	except Exception, e:
+		print >> sys.stderr, 'Invalid %s: %s' % (wcdfname, `e`)
+		traceback.print_exc()
+		f.close()
+		return False
+	return True
 
 def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
 	global starttime
@@ -224,14 +288,14 @@ def buildposwcd(base, idxfilesize, wordcount, synwordcount, cmpfunc, lwrfunc):
 	info_msg('Building wildcard tier...\t%.4gs' % (time.time() - starttime,))
 	root = buildtrie(cursorarray, idxmatches, synmatches, reversedword, '', 0, len(cursorarray)) # totally ignore case
 	info_msg('Writing %s.wcd...\t%.4gs' % (base, time.time() - starttime))
-	f = open(base + '.pos', 'wb')
+	f = open(base + '.wcd', 'wb')
 	f.write(serializetrie(root))
 	f.close()
 	info_msg('Done building .wcd\t\t%.4gs' % (time.time() - starttime,))
 	del idxmatches
 	del synmatches
 
-class StarDictReader:
+class StarDictReaderBase:
 	def __init__(self, ifoname, cmpfunc=None, cachesize=10, bufsize=200):
 		inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
 		assert 0 < idxfilesize <= 0x80000000L
@@ -479,6 +543,113 @@ class StarDictReader:
 		self.dicfile.seek(pos)
 		return self.dicfile.read(length)
 
+	def getcursor(self):
+		return self.cursor
+
+def haswildcard(key):
+	return key.find('*') >= 0 or key.find('?') >= 0
+
+def _matchquestionmark(word, pattern):
+	if len(word) != len(pattern):
+		return False
+	for i in xrange(len(word)):
+		if pattern[i] != u'?' and not word[i] == pattern[i]:
+			return False
+	return True
+
+def _findbyquestionmark(word, pattern, start=0):#, end=-1):
+	#if end < 0:
+	#	end += len(word)
+	if len(word) < len(pattern):
+		return -1
+	elif len(word) == len(pattern):
+		if _matchquestionmark(word, pattern):
+			return 0
+		else:
+			return -1
+	ar = pattern.split(u'?')
+	for k in xrange(start, len(word) - len(pattern) + 1):
+		i = k
+		match = True
+		for snip in ar:
+			if snip and word[i:i+len(snip)] != snip:
+				match = False
+				break
+			i += len(snip) + 1
+		if match:
+			return k
+	return -1
+
+def matchwildcard(word, pattern, lwrfunc=string.lower):
+	#assert type(pattern) == types.UnicodeType
+	if type(word) != types.UnicodeType:
+		word = word.decode('utf-8')
+	if type(pattern) != types.UnicodeType:
+		pattern = pattern.decode('utf-8')
+	word = lwrfunc(word)
+	pattern = lwrfunc(pattern)
+	if pattern.find(u'*') < 0:
+		return _matchquestionmark(word, pattern)
+	ar = pattern.split(u'*')
+	if ar[0] and not _matchquestionmark(word[:len(ar[0])], ar[0]):
+		return False
+	elif ar[-1] and not _matchquestionmark(word[-len(ar[-1]):], ar[-1]):
+		_matchquestionmark(word[-len(ar[-1]):], ar[-1])
+		return False
+	p = len(ar[0])
+	for i in xrange(1, len(ar)):
+		if ar[i] == u'': continue
+		q = word.find(ar[i], p)
+		if q < 0:
+			if ar[i].find(u'?') >= 0:
+				q = _findbyquestionmark(word, ar[i], p)
+			if q < 0:
+				return False
+		p = q + len(ar[i])
+	return True
+
+class StarDictReader(StarDictReaderBase):
+	def __init__(self, ifoname, cmpfunc=None, cachesize=10, bufsize=200):
+		StarDictReaderBase.__init__(self, ifoname, cmpfunc=cmpfunc, cachesize=cachesize, bufsize=bufsize)
+		self.lastqry = None
+		self.lastwild = False
+		self.wildcursor = 0
+
+	def locate(self, key):
+		if type(key) == types.IntType:
+			if not self.lastwild:
+				return StarDictReaderBase.locate(self, key)
+			else:
+				pass
+		else:
+			if not haswildcard(key):
+				self.lastwild = False
+				self.lastqry = key.decode('utf-8')
+				return StarDictReaderBase.locate(self, key)
+			self.lastwild = True
+			self.lastqry = key.decode('utf-8')
+
+	def readcursorword(self, advance=1):
+		return StarDictReaderBase.readcursorword(self, advance)
+
+	def readcursorwords(self, count=10):
+		return StarDictReaderBase.readcursorwords(self, count)
+
+	def derefsyncursor(self, cursor):
+		return StarDictReaderBase.derefsyncursor(self, cursor)
+
+	def readword(self, cursor):
+		return StarDictReaderBase.readword(self, cursor)
+
+	def readmean(self, cursor):
+		return StarDictReaderBase.readmean(self, cursor)
+
+	def getcursor(self):
+		if not self.lastwild:
+			return StarDictReaderBase.getcursor(self)
+		else:
+			return self.wildcursor
+
 assert __name__ == '__main__'
 
 ioenc = sys.getfilesystemencoding()
@@ -530,6 +701,7 @@ for ifoname in flist:
 	inbase, bookname, idxfilesize, wordcount, synwordcount = parseifo(ifoname)
 	if not os.path.exists(inbase + '.pos') or os.stat(inbase + '.pos')[6] != getpossize(wordcount, synwordcount
 		) or os.stat(inbase + '.pos')[-2] < os.stat(inbase + '.ifo')[-2] or not os.path.exists(inbase + '.wcd'
+		) or not checkwcdfile(inbase + '.wcd', wordcount, synwordcount
 		) or os.stat(inbase + '.wcd')[6] == 0 or os.stat(inbase + '.wcd')[-2] < os.stat(inbase + '.ifo')[-2]:
 		buildposwcd(inbase, idxfilesize, wordcount, synwordcount, cmpfunc=cmpfunc, lwrfunc=lower)
 	dictpool.append(StarDictReader(ifoname, cmpfunc=cmpfunc))
@@ -643,11 +815,11 @@ def backwardresult(dictpool):
 def backwardcursortoend(dictpool, result):
 	if not result: return
 	for tmp, word, d, cursor in result:
-		if d.cursor < cursor:
+		if d.getcursor() < cursor:
 			d.locate(cursor)
 	for d in dictpool:
 		try:
-			d.locate(d.cursor + 1)
+			d.locate(d.getcursor() + 1)
 		except:
 			pass
 	result[-1][2].locate(result[-1][3])
@@ -655,11 +827,11 @@ def backwardcursortoend(dictpool, result):
 def forwardcursortostart(dictpool, result):
 	if not result: return
 	for tmp, word, d, cursor in result:
-		if d.cursor > cursor:
+		if d.getcursor() > cursor:
 			d.locate(cursor)
 	for d in dictpool:
 		try:
-			d.locate(d.cursor - 1)
+			d.locate(d.getcursor() - 1)
 		except:
 			pass
 	result[0][2].locate(result[0][3])
