@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<malloc.h>
 #include<assert.h>
 #undef __WIN32__
 #ifdef __WIN32__
@@ -126,6 +127,8 @@ int main(int argc, char *argv[])
 {
     int ch, bufch;
     int len;
+#define OBUFSIZE 16384
+    char * stdobuf;
     print_func print_replacement = print_tofu;
 
     assert(890 == symbolmaplen);
@@ -135,6 +138,9 @@ int main(int argc, char *argv[])
     inpf = stdin;
     outf = stdout;
 
+    stdobuf = malloc(OBUFSIZE);
+    setvbuf(outf, stdobuf, stdobuf != NULL ? _IOFBF : _IONBF, OBUFSIZE);
+
     if (argc > 1)
     {
         inpf = fopen(argv[1], "r");
@@ -142,7 +148,7 @@ int main(int argc, char *argv[])
             return 1;
     }
 
-    while ((ch = fgetc(inpf)) != EOF)
+    while ((ch = getc(inpf)) != EOF)
     {
         if (len)
         {
@@ -168,15 +174,15 @@ int main(int argc, char *argv[])
                 }
                 if (bufch >> 8)
                 {
-                    fputc(bufch >> 8, outf);
-                    fputc(bufch & 0xFF, outf);
+                    putc(bufch >> 8, outf);
+                    putc(bufch & 0xFF, outf);
                 }
                 else
-                    fputc(bufch, outf);
+                    putc(bufch, outf);
             }
         }
         else if (ch < 0x80)
-            fputc(ch, outf);
+            putc(ch, outf);
         else
         {
             len = trailingBytesForUTF8[ch];
@@ -188,6 +194,9 @@ int main(int argc, char *argv[])
             bufch = ((1<<(6-len))-1) & ch;
         }
     }
+    if (len)
+        print_replacement();
+    fflush(outf);
 
     return 0;
 }
