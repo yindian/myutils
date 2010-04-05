@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     int ch;
     wchar_gbk wc_gbk, wc_gb;
     char * s;
-#define OBUFSIZE 16384
+#define OBUFSIZE 4096
     char * stdobuf;
 
     stdobuf = malloc(OBUFSIZE);
@@ -77,6 +77,8 @@ int main(int argc, char** argv)
         else /* 对ASCII字符,直接输出 */
         {
             putchar(ch);
+            if (ch == '\\n')
+                fflush(stdout);
             ch = getc(stdin);
         }
     }
