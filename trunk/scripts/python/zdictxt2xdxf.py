@@ -156,9 +156,11 @@ for line in f:
 					result.append('<c c="%s">' %
 							(color,))
 			elif s.startswith('HYPERLINK='):
+				p = s.find('\1//')
 				result.append('<iref>')
 				result.append(s[10:p])
 				result.append('</iref>')
+				p += 1
 			elif s.startswith('LEFTINDENT='):
 				indent = int(s[11:p])
 				if result[-1].endswith('\n'):
