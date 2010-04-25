@@ -54,7 +54,13 @@ def cdataconv(str):
 			assert cdatamarkupmap.has_key(s[0])
 			assert s[1] == '{'
 		except:
-			pdb.set_trace()
+			try:
+				p = s.index(';')
+				result.append('&')
+				result.append(s)
+				continue
+			except:
+				pdb.set_trace()
 		try:
 			p = s.index('}')
 		except:
@@ -223,15 +229,18 @@ ampunquote=lambda s:s.replace('&quot;', '"').replace('&apos;', "'").replace(
 assert __name__ == '__main__'
 
 if len(sys.argv) < 2:
-	print "Usage: %s [-t] filename.DIC.inf"
+	print "Usage: %s [-d] [-t] filename.DIC.inf"
 	sys.exit(0)
 
 argv = sys.argv[1:]
+dumpfile = False
+tabfileout = False
+if argv[0] == '-d':
+	dumpfile = True
+	del argv[0]
 if argv[0] == '-t':
 	tabfileout = True
 	del argv[0]
-else:
-	tabfileout = False
 infile = argv[0]
 
 def utf8write(str, outf=sys.stdout):
@@ -244,7 +253,7 @@ f = codecs.open(os.path.splitext(infile)[0] + '.txt', 'rb', 'utf-16le')
 assert f.read(1) == u'\ufeff'
 zipf = zipfile.ZipFile(os.path.splitext(infile)[0] + '.zip', 'r')
 
-if tabfileout:
+if dumpfile:
 	for line in f:
 		word, fname = line.rstrip().split(u'\t', 1)
 		mean = zipf.read(fname).decode('utf-16le')
@@ -254,7 +263,8 @@ if tabfileout:
 		utf8writeln('%s\t%s' % (word, mean.replace(u'\\n', u'\\\\n'
 			).replace(u'\n', u'\\n')))
 else:
-	utf8writeln('''\
+	if not tabfileout:
+		utf8writeln('''\
 <?xml version="1.0" encoding="UTF-8" ?>
 <xdxf lang_from="ENG" lang_to="ENG" format="visual">''')
 	g = codecs.open(os.path.splitext(infile)[0] + '.inf', 'rb', 'utf-16le')
@@ -262,14 +272,16 @@ else:
 	dom = parseString(g.read().rstrip(u'\0').encode('utf-8')).childNodes[0]
 	g.close()
 	itemcount, name, description = getdictinfo(dom)
-	utf8writeln('<full_name>%s</full_name>' % (ampquote(name),))
-	utf8writeln('<description>%s</description>' % (ampquote(description),))
+	if not tabfileout:
+		utf8writeln('<full_name>%s</full_name>' % (ampquote(name),))
+		utf8writeln('<description>%s</description>' % (ampquote(description),))
 	wordcount = 0
 	fixcdata = re.compile(ur'(<!\[CDATA\[[^\]]*\])>')
 	fixcdata2 = re.compile(ur'<!\[([^C][^\[]*\]\]>)')
 	fixcdata3 = re.compile(ur'<!\[CDATA([^\[])')
 	fixcdata4 = re.compile(ur'<([^>]*)>(<!\[CDATA\[[^\]]*)(\n\s*<[A-Z])')
 	fixopentag = re.compile(ur'\n([^<>]*>)')
+	xmltag = re.compile(ur'<[^>]*>')
 	for line in f:
 		wordcount += 1
 		word, fname = line.rstrip().split(u'\t', 1)
@@ -300,15 +312,29 @@ else:
 						mean.encode('gbk', 'replace')
 				raise
 		mean = ck2article(dom)
+		if tabfileout:
+			if mean.startswith(u'<k>%s</k>' % (cdataconv(word),)):
+				pass
+			else:
+				assert mean.startswith(u'<k>')
+				word = mean[3:mean.index(u'</k>', 3)] + u'|' +\
+						word
+			word = ampunquote(xmltag.sub('', word))
+			utf8writeln(u'%s\t%s' % (word, mean))
+			continue
 		try:
-			assert mean.startswith(u'<k>%s</k>' % (word,))
+			assert mean.startswith(u'<k>%s</k>' %(cdataconv(word),))
 		except:
-			print >> sys.stderr, 'Warning: Different key phrase'
-			print >> sys.stderr, u'<k>%s</k>' % (word,)
-			print >> sys.stderr, mean[:mean.find(u'\n')]
-		utf8writeln(u'<ar>%s</ar>' % (mean,))
+		#	print >> sys.stderr, 'Warning: Different key phrase'
+		#	print >> sys.stderr, u'<k>%s</k>' % (cdataconv(word),)
+		#	print >> sys.stderr, mean[:mean.find(u'\n')]
+		#utf8writeln(u'<ar>%s</ar>' % (mean,))
+			utf8writeln(u'<ar><k>%s</k>\n%s</ar>' % (cdataconv(
+				word), mean,))
+		else:
+			utf8writeln(u'<ar>%s</ar>' % (mean,))
 	assert itemcount == wordcount
-
-utf8writeln('</xdxf>')
+	if not tabfileout:
+		utf8writeln('</xdxf>')
 zipf.close()
 f.close()
