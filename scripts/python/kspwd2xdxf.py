@@ -320,6 +320,7 @@ else:
 				word = mean[3:mean.index(u'</k>', 3)] + u'|' +\
 						word
 			word = ampunquote(xmltag.sub('', word))
+			mean = mean.replace('\\n', '\\\\n').replace('\n', '\\n')
 			utf8writeln(u'%s\t%s' % (word, mean))
 			continue
 		try:
