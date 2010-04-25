@@ -160,6 +160,10 @@ def ck2article(dom):
 				result.append(dic_fmt[dom.tagName] % (data,))
 			else:
 				result.append(data)
+			if dom.tagName == 'CB':
+				if not result[-1].startswith('<tr>'):
+					assert not result[-1].endswith('</tr>')
+					result[-1] = '<tr>%s</tr>'%(result[-1],)
 			if dom.tagName not in ['PY', 'TB', 'RP', 'CB']:
 				result.append('\n')
 		elif node.nodeType == node.ELEMENT_NODE:
