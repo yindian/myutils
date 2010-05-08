@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys, string
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
+import pdb
 
 stopcodestr = '=== stop-code?:'
 wordcode = 0x1f41
 itemcode = 0x1f09
 keycode  = 0x0160
 begcode = 0x0002
+m1 = 0x0005
+m2 = 0x0004
 endcode = 0x0001
 
 def gettitle(lines, state):
-	assert state == begcode
-	assert len(lines) == 2
-	assert lines[1] == ''
+	try:
+		assert state == begcode or state == m2
+		assert len(lines) == 2
+		assert lines[1] == ''
+	except:
+		pdb.set_trace()
 	return lines[0].strip()
 
 def output_entry(word, origtitle, *mean):
@@ -53,7 +54,7 @@ if __name__ == '__main__':
 				state = code2
 				chgflag = True
 			elif code1 == itemcode:
-				assert code2 in (begcode, endcode)
+				assert code2 in (begcode, m1, m2, endcode)
 				state = code2
 				chgflag = True
 			else:
@@ -65,8 +66,8 @@ if __name__ == '__main__':
 					assert result is not None
 					finaldic.append(result)
 					result = None
-				elif laststate == keycode and (state == begcode\
-						or state == endcode):
+				elif laststate == keycode and state in (begcode
+						, m1, m2, endcode):
 					assert result is None
 					result = [gettitle(titleline, state)]
 					if titleline[-1] == '':
@@ -77,7 +78,7 @@ if __name__ == '__main__':
 				elif laststate == keycode:
 					raise 'Invalid state %04x after %04x' %(
 							state, laststate)
-				elif state in (begcode,): pass
+				elif state in (begcode, m1, m2): pass
 				elif state == endcode: pass
 				else:
 					raise 'Unknown state %04x after %04x' %(
@@ -85,6 +86,8 @@ if __name__ == '__main__':
 			else:
 				if lastline is not None and state != keycode:
 					result.append(lastline)
+			if line.strip() and state in (begcode, m1, m2):
+				line = ' ' * state + line
 			if line.endswith('\r\n'):
 				lastline = line[:-2]
 			else:
