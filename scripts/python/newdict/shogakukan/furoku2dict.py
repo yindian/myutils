@@ -17,17 +17,84 @@ def firstmatch(ar, f, start=0, end=0):
 def recorddictitem(word, mean):
 	print '%s\t%s' % (word, mean.replace('\\n','\\\\n').replace('\n','\\n'))
 
+infwbracket = re.compile(r'［(.*?)］')
+inbracket = re.compile(r'\[(.*?)\]')
 xmltag = re.compile(r'<.*?>')
 oneitem = re.compile(r"<a href='(.*?)'>(.*?)</a>")
 hasfontsize2 = lambda s:s.find("<font size='+2'>") >= 0
 hasfontsize1 = lambda s:s.find("<font size='+1'>") >= 0
 
+_supsubmap = {
+		'p': {
+			'0': '⁰',
+			'1': '¹',
+			'2': '²',
+			'3': '³',
+			'4': '⁴',
+			'5': '⁵',
+			'6': '⁶',
+			'7': '⁷',
+			'8': '⁸',
+			'9': '⁹',
+			'+': '⁺',
+			'-': '⁻',
+			'=': '⁼',
+			'(': '⁽',
+			')': '⁾',
+			'n': 'ⁿ',
+			'i': 'ⁱ',
+			u'･': '˙',
+			'r': '^r',
+			},
+		'b': {
+			'0': '₀',
+			'1': '₁',
+			'2': '₂',
+			'3': '₃',
+			'4': '₄',
+			'5': '₅',
+			'6': '₆',
+			'7': '₇',
+			'8': '₈',
+			'9': '₉',
+			'+': '₊',
+			'-': '₋',
+			'=': '₌',
+			'(': '₍',
+			')': '₎',
+			'e': 'ₑ',
+			},
+		}
+
+def replacesupsub(str, supsubmap=_supsubmap):
+	ar = str.split('<su')
+	result = [ar[0]]
+	for s in ar[1:]:
+		if not s or s[0] not in 'pb':
+			result.append(s)
+			continue
+		assert s[1] == '>'
+		p = s.index('</su' + s[:2])
+		d = supsubmap[s[0]]
+		for c in xmltag.sub('', s[2:p]).decode('utf-8'):
+			if 0xFF10<= ord(c) <=0xFF19:
+				c = chr(ord(c) - 0xFF10 + 0x30)
+			result.append(d[c])
+		result.append(s[p+6:])
+	return ''.join(result);
+
 def kakomishori(section, lines, start, end):
+	index = []
 	for i in xrange(start, end):
 		m = oneitem.search(lines[i])
 		assert m
 		fname = m.group(1)
 		title = xmltag.sub('', m.group(2))
+		try:
+			title = inbracket.findall(title)[0]
+		except:
+			pass
+		index.append(title)
 		f = open(fname, 'r')
 		flines = f.readlines()
 		f.close()
@@ -38,8 +105,13 @@ def kakomishori(section, lines, start, end):
 		except:
 			print >> sys.stderr, fname, title
 			raise
-		recorddictitem(title, section +
-				xmltag.sub('', ''.join(flines[p:-1])))
+		try:
+			recorddictitem(title, section +
+				xmltag.sub('', ''.join(map(replacesupsub,
+					flines[p:-1]))))
+		except:
+			print >> sys.stderr, (u'%s: %s' % (section.decode('utf-8'), title.decode('utf-8'))).encode('gbk', 'replace')
+			raise
 		p = firstmatch(flines, hasfontsize1, p+1)
 		while p > 0:
 			paragraph = xmltag.sub('', flines[p]).strip()
@@ -47,9 +119,10 @@ def kakomishori(section, lines, start, end):
 			q = firstmatch(flines, hasfontsize1, p+1)
 			for line in flines[p:q]:
 				assert line.endswith('<br>\n')
+				line = replacesupsub(line)
 				line = xmltag.sub('', line).decode('utf-8')
 				line = line.lstrip(u'　 \t')
-				if line and line[0] in u'★¶':
+				if line and line[0] in u'★¶☆':
 					k = line.find(u'/')
 					try:
 						assert k > 0
@@ -62,15 +135,20 @@ def kakomishori(section, lines, start, end):
 						'%s%s - %s' % (section,
 							title, paragraph))
 			p = q
-
-inbracket = re.compile(r'\[(.*?)\]')
+	try:
+		section = infwbracket.findall(section)[0]
+	except:
+		pass
+	recorddictitem(section, '\n'.join(index))
 
 def doushishori(section, lines, start, end):
+	index = []
 	for i in xrange(start, end):
 		m = oneitem.search(lines[i])
 		assert m
 		fname = m.group(1)
 		title = xmltag.sub('', m.group(2))
+		index.append(title)
 		f = open(fname, 'r')
 		flines = f.readlines()
 		f.close()
@@ -83,8 +161,14 @@ def doushishori(section, lines, start, end):
 			raise
 		recorddictitem('|'.join(inbracket.findall(title)[0].split(
 			'　')), xmltag.sub('', ''.join(flines[p:-1])) + section)
+	try:
+		section = infwbracket.findall(section)[0]
+	except:
+		pass
+	recorddictitem(section, '\n'.join(index))
 
 def hokanoshori(section, lines, start, end):
+	index = []
 	for i in xrange(start, end):
 		m = oneitem.search(lines[i])
 		assert m
@@ -101,6 +185,9 @@ def hokanoshori(section, lines, start, end):
 			print >> sys.stderr, fname, title
 			raise
 		if flines[p].find('<span') < 0:
+			index.append(title)
+			recorddictitem(title, xmltag.sub(
+				'', ''.join(flines[p+1:-1])) + section)
 			for line in flines[p+1:-1]:
 				if line.startswith('《'):
 					assert line.endswith('行》<br>\n')
@@ -121,8 +208,15 @@ def hokanoshori(section, lines, start, end):
 						'', line[p:]) + '［%s - %s］'
 					% (section, title))
 		else:
-			recorddictitem(inbracket.findall(title)[0], xmltag.sub(
+			title = inbracket.findall(title)[0]
+			index.append(title)
+			recorddictitem(title, xmltag.sub(
 				'', ''.join(flines[p:-1])) + section)
+	try:
+		section = infwbracket.findall(section)[0]
+	except:
+		pass
+	recorddictitem(section, '\n'.join(index))
 
 
 assert __name__ == '__main__'
@@ -138,6 +232,7 @@ f.close()
 hastable = lambda s: s.find('<table>') >= 0
 hasclosediv = lambda s: s.find('</div>') >= 0
 anchorname = re.compile(r"<a name='(.*?)'>")
+index = []
 p = firstmatch(lines, hastable)
 while p >= 0:
 	assert lines[p].find('<div') >= 0
@@ -149,4 +244,10 @@ while p >= 0:
 		doushishori(section, lines, p+1, q)
 	else:
 		hokanoshori(section, lines, p+1, q)
+	try:
+		section = infwbracket.findall(section)[0]
+	except:
+		pass
+	index.append(section);
 	p = firstmatch(lines, hastable, q);
+recorddictitem(' ', '\n'.join(index))
