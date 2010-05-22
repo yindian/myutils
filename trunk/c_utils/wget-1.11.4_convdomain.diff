@@ -1,6 +1,6 @@
 diff -ur orig\wget-1.11.4\src\init.c wget-1.11.4\src\init.c
 --- orig\wget-1.11.4\src\init.c	Sun Apr 27 12:48:24 2008
-+++ wget-1.11.4\src\init.c	Fri Apr 03 21:30:16 2009
++++ wget-1.11.4\src\init.c	Sat May 22 10:55:24 2010
 @@ -134,6 +134,9 @@
    { "connecttimeout",   &opt.connect_timeout,   cmd_time },
    { "contentdisposition", &opt.content_disposition, cmd_boolean },
@@ -11,9 +11,19 @@ diff -ur orig\wget-1.11.4\src\init.c wget-1.11.4\src\init.c
    { "convertlinks",     &opt.convert_links,     cmd_boolean },
    { "cookies",          &opt.cookies,           cmd_boolean },
    { "cutdirs",          &opt.cut_dirs,          cmd_number },
+@@ -240,6 +243,9 @@
+   { "timeout",          NULL,                   cmd_spec_timeout },
+   { "timestamping",     &opt.timestamping,      cmd_boolean },
+   { "tries",            &opt.ntry,              cmd_number_inf },
++#ifdef _WIN32_WINNT
++  { "unicode",          &opt.unicode_fname,     cmd_boolean },
++#endif
+   { "useproxy",         &opt.use_proxy,         cmd_boolean },
+   { "user",             &opt.user,              cmd_string },
+   { "useragent",        NULL,                   cmd_spec_useragent },
 diff -ur orig\wget-1.11.4\src\main.c wget-1.11.4\src\main.c
 --- orig\wget-1.11.4\src\main.c	Mon Jun 30 09:22:54 2008
-+++ wget-1.11.4\src\main.c	Fri Apr 03 22:27:08 2009
++++ wget-1.11.4\src\main.c	Sat May 22 12:48:34 2010
 @@ -147,6 +147,9 @@
      { "clobber", 0, OPT__CLOBBER, NULL, optional_argument },
      { "connect-timeout", 0, OPT_VALUE, "connecttimeout", -1 },
@@ -24,7 +34,28 @@ diff -ur orig\wget-1.11.4\src\main.c wget-1.11.4\src\main.c
      { "convert-links", 'k', OPT_BOOLEAN, "convertlinks", -1 },
      { "content-disposition", 0, OPT_BOOLEAN, "contentdisposition", -1 },
      { "cookies", 0, OPT_BOOLEAN, "cookies", -1 },
-@@ -616,6 +619,10 @@
+@@ -240,6 +243,9 @@
+     { "timeout", 'T', OPT_VALUE, "timeout", -1 },
+     { "timestamping", 'N', OPT_BOOLEAN, "timestamping", -1 },
+     { "tries", 't', OPT_VALUE, "tries", -1 },
++#ifdef _WIN32_WINNT
++    { "unicode", 'u', OPT_BOOLEAN, "unicode", -1 },
++#endif
+     { "user", 0, OPT_VALUE, "user", -1 },
+     { "user-agent", 'U', OPT_VALUE, "useragent", -1 },
+     { "verbose", 'v', OPT_BOOLEAN, "verbose", -1 },
+@@ -474,6 +480,10 @@
+        --user=USER               set both ftp and http user to USER.\n"),
+     N_("\
+        --password=PASS           set both ftp and http password to PASS.\n"),
++#ifdef _WIN32_WINNT
++    N_("\
++  -u,  --unicode                 use Unicode filenames for UTF-8 URLs.\n"),
++#endif
+     "\n",
+ 
+     N_("\
+@@ -616,6 +626,10 @@
    -D,  --domains=LIST              comma-separated list of accepted domains.\n"),
      N_("\
         --exclude-domains=LIST      comma-separated list of rejected domains.\n"),
@@ -35,9 +66,245 @@ diff -ur orig\wget-1.11.4\src\main.c wget-1.11.4\src\main.c
      N_("\
         --follow-ftp                follow FTP links from HTML documents.\n"),
      N_("\
+diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
+--- orig\wget-1.11.4\src\mswindows.c	Sun Apr 27 12:48:24 2008
++++ wget-1.11.4\src\mswindows.c	Sat May 22 12:51:50 2010
+@@ -731,3 +731,194 @@
+   return (const char *) dst;
+ }
+ #endif
++
++#ifdef _WIN32_WINNT
++/* UTF-8 to wchar conversion, a slightly modified version of stb */
++static wchar_t *_from_utf8(wchar_t *buffer, const char *str, int n)
++{
++   unsigned long c;
++   int i=0;
++   --n;
++   while (*str) {
++      if (i >= n)
++         return NULL;
++      if (!(*str & 0x80))
++         buffer[i++] = *str++;
++      else if ((*str & 0xe0) == 0xc0) {
++         c = (*str++ & 0x1f) << 6;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         buffer[i++] = c + (*str++ & 0x3f);
++      } else if ((*str & 0xf0) == 0xe0) {
++         c = (*str++ & 0x0f) << 12;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         c += (*str++ & 0x3f) << 6;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         buffer[i++] = c + (*str++ & 0x3f);
++      } else if ((*str & 0xf8) == 0xf0) {
++         c = (*str++ & 0x07) << 18;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         c += (*str++ & 0x3f) << 12;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         c += (*str++ & 0x3f) << 6;
++         if ((*str & 0xc0) != 0x80) return NULL;
++         c += (*str++ & 0x3f);
++         // surrogate pair values are invalid
++         if ((c & 0xFFFFF800) == 0xD800) return NULL;
++         if (c >= 0x10000) {
++            c -= 0x10000;
++            if (i + 2 > n) return NULL;
++            buffer[i++] = 0xD800 | (0x3ff & (c >> 10));
++            buffer[i++] = 0xDC00 | (0x3ff & (c      ));
++         }
++      } else
++         return NULL;
++   }
++   buffer[i] = 0;
++   return buffer;
++}
++static wchar_t *__from_utf8(const char *str)
++{
++   static wchar_t buffer[4096];
++   return _from_utf8(buffer, str, 4096);
++}
++static wchar_t *__from_utf8_dup(const char *str)
++{
++   wchar_t *buffer;
++   int len = (strlen(str) + 1);
++   buffer = (wchar_t *) xmalloc(len * 2);
++   if (!buffer)
++     return NULL;
++   return _from_utf8(buffer, str, len);
++}
++
++/* We judge opt.unicode_fname, and if it is true, convert file names to wchar
++ * and use the Unicode versions */
++
++/* Define a macro that creates a function definition that wraps FUN into
++   a function that sets errno the way the rest of the code expects. */
++
++#ifdef WRAP
++#undef WRAP
++#endif
++#define WRAP(fun, type, decl, fname, ...) type wrapped_##fun decl {  \
++  if (!opt.unicode_fname)                                            \
++    return fun(fname, __VA_ARGS__);                                  \
++  else {                                                             \
++    wchar_t *wfname;                                                 \
++    wfname = __from_utf8(fname);                                     \
++    if (wfname) {                                                    \
++      return _w##fun(wfname, __VA_ARGS__);                           \
++    } else {                                                         \
++      type ret;                                                      \
++      wfname = __from_utf8_dup(fname);                               \
++      if (!wfname) abort();                                          \
++      ret = _w##fun(wfname, __VA_ARGS__);                            \
++      xfree(wfname);                                                 \
++      return ret;                                                    \
++    }                                                                \
++  }                                                                  \
++}
++#define WRAP0(fun, type, decl, fname) type wrapped_##fun decl {  \
++  if (!opt.unicode_fname)                                        \
++    return fun(fname);                                           \
++  else {                                                         \
++    wchar_t *wfname;                                             \
++    wfname = __from_utf8(fname);                                 \
++    if (wfname) {                                                \
++      return _w##fun(wfname);                                    \
++    } else {                                                     \
++      type ret;                                                  \
++      wfname = __from_utf8_dup(fname);                           \
++      if (!wfname) abort();                                      \
++      ret = _w##fun(wfname);                                     \
++      xfree(wfname);                                             \
++      return ret;                                                \
++    }                                                            \
++  }                                                              \
++}
++#define WRAP2(fun, type, decl, fname, fname2) type wrapped_##fun decl {  \
++  if (!opt.unicode_fname)                                            \
++    return fun(fname, fname2);                                       \
++  else {                                                             \
++    wchar_t *wfname, *wfname2;                                       \
++    wfname = __from_utf8(fname);                                     \
++    wfname2 = __from_utf8(fname2);                                   \
++    if (wfname && wfname2) {                                         \
++      return _w##fun(wfname, wfname2);                               \
++    } else {                                                         \
++      type ret;                                                      \
++      wfname = __from_utf8_dup(fname);                               \
++      wfname2 = __from_utf8_dup(fname2);                             \
++      if (!wfname || !wfname2) abort();                              \
++      ret = _w##fun(wfname, wfname2);                                \
++      xfree(wfname);                                                 \
++      xfree(wfname2);                                                \
++      return ret;                                                    \
++    }                                                                \
++  }                                                                  \
++}
++
++#ifdef HAVE_ACCESS
++#undef access
++WRAP (access, int, (const char* name, int flag), name, flag)
++#endif
++
++#undef chmod
++#undef open
++#undef rename
++#undef unlink
++#undef mkdir
++#undef stat
++#undef fopen
++
++WRAP (chmod,  int, (const char* name, int mode), name, mode)
++WRAP2(rename, int, (const char* name, const char* name2), name, name2)
++WRAP0(unlink, int, (const char* name), name)
++WRAP0(mkdir,  int, (const char* name), name)
++WRAP2(fopen,  FILE *, (const char* name, const char* mode), name, mode)
++
++int wrapped_open (const char* name, int mode, ...)
++{
++  int ret;
++  va_list local_argv;
++
++  va_start(local_argv, mode);
++
++  if (!opt.unicode_fname)
++    ret = open(name, mode, local_argv);
++  else {
++    wchar_t *wfname;
++    wfname = __from_utf8(name);
++    if (wfname) {
++      ret = _wopen(wfname, mode, local_argv);
++    } else {
++      wfname = __from_utf8_dup(name);
++      if (!wfname) abort();
++      ret = _wopen(wfname, mode, local_argv);
++      xfree(wfname);
++    }
++  }
++  va_end(local_argv);
++  return ret;
++}
++
++int wrapped_stat (const char* name, struct_stat* s)
++{
++  if (!opt.unicode_fname)
++    return _stati64(name, s);
++  else {
++    wchar_t *wfname;
++    wfname = __from_utf8(name);
++    if (wfname) {
++      return _wstati64(wfname, s);
++    } else {
++      int ret;
++      wfname = __from_utf8_dup(name);
++      if (!wfname) abort();
++      ret = _wstati64(wfname, s);
++      xfree(wfname);
++      return ret;
++    }
++  }
++}
++#endif
+diff -ur orig\wget-1.11.4\src\mswindows.h wget-1.11.4\src\mswindows.h
+--- orig\wget-1.11.4\src\mswindows.h	Sun Apr 27 12:48:24 2008
++++ wget-1.11.4\src\mswindows.h	Sat May 22 12:44:02 2010
+@@ -211,4 +211,34 @@
+ char *ws_mypath (void);
+ void windows_main (char **);
+ 
++#ifdef _WIN32_WINNT
++/* Unicode version of file operations. */
++#include <stdio.h>
++#ifdef HAVE_ACCESS
++#define access  wrapped_access
++int wrapped_access (const char*, int);
++#endif
++#define chmod   wrapped_chmod
++#define open    wrapped_open
++#define rename  wrapped_rename
++#define unlink  wrapped_unlink
++#ifdef mkdir
++#undef mkdir
++#endif
++#define mkdir(a, b)   wrapped_mkdir(a)
++#ifdef stat
++#undef stat
++#endif
++#define stat(f, b)    wrapped_stat(f, b)
++#define fopen   wrapped_fopen
++
++int   wrapped_chmod (const char*, int);
++int   wrapped_open (const char*, int, ...);
++int   wrapped_rename (const char*, const char*);
++int   wrapped_unlink (const char*);
++int   wrapped_mkdir (const char*);
++int   wrapped_stat (const char*, struct_stat*);
++FILE* wrapped_fopen (const char*, const char*);
++#endif
++
+ #endif /* MSWINDOWS_H */
 diff -ur orig\wget-1.11.4\src\options.h wget-1.11.4\src\options.h
 --- orig\wget-1.11.4\src\options.h	Sun Apr 27 12:48:24 2008
-+++ wget-1.11.4\src\options.h	Fri Apr 03 21:29:56 2009
++++ wget-1.11.4\src\options.h	Sat May 22 10:54:22 2010
 @@ -71,6 +71,9 @@
  
    char **domains;		/* See host.c */
@@ -48,9 +315,19 @@ diff -ur orig\wget-1.11.4\src\options.h wget-1.11.4\src\options.h
    bool dns_cache;		/* whether we cache DNS lookups. */
  
    char **follow_tags;           /* List of HTML tags to recursively follow. */
+@@ -236,6 +239,9 @@
+   bool content_disposition;	/* Honor HTTP Content-Disposition header. */
+   bool auth_without_challenge;  /* Issue Basic authentication creds without
+                                    waiting for a challenge. */
++#ifdef _WIN32_WINNT
++  bool unicode_fname;
++#endif
+ };
+ 
+ extern struct options opt;
 diff -ur orig\wget-1.11.4\src\url.c wget-1.11.4\src\url.c
 --- orig\wget-1.11.4\src\url.c	Sun Apr 27 18:20:14 2008
-+++ wget-1.11.4\src\url.c	Fri Apr 03 22:21:44 2009
++++ wget-1.11.4\src\url.c	Sat May 22 13:12:50 2010
 @@ -845,6 +845,32 @@
        host_modified = true;
      }
@@ -84,4 +361,13 @@ diff -ur orig\wget-1.11.4\src\url.c wget-1.11.4\src\url.c
    if (params_b)
      u->params = strdupdelim (params_b, params_e);
    if (query_b)
+@@ -1308,7 +1334,7 @@
+     mask = filechr_not_unix;
+   else
+     mask = filechr_not_windows;
+-  if (opt.restrict_files_ctrl)
++  if (opt.restrict_files_ctrl && !opt.unicode_fname)
+     mask |= filechr_control;
+ 
+   /* Copy [b, e) to PATHEL and URL-unescape it. */
 
