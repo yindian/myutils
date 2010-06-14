@@ -50,6 +50,7 @@ def substitlegaiji(str):
 		except KeyError:
 			result1.append(c)
 			result2.append(c)
+			continue
 		if dest[0] == u'{':
 			p = dest.find(u'|')
 			if p < 0:
@@ -84,7 +85,7 @@ for line in sys.stdin:
 	line = unicode(line[:-1], 'utf-8')
 	word, mean = line.split(u'\t')
 	try:
-		word = subsgaiji(word)
+		word = substitlegaiji(word)
 	except:
 		print >> sys.stderr, word.encode('gbk', 'replace')
 		raise
