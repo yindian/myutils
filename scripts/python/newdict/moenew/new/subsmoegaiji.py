@@ -89,8 +89,8 @@ for line in sys.stdin:
 	except:
 		print >> sys.stderr, word.encode('gbk', 'replace')
 		raise
-	means = mean.split(u'\\n')
-	for i in range(len(means)):
-		means[i] = fwalpha2hw(subsgaiji(means[i]))
-	mean = u'\\n'.join(means)
+	#means = mean.split(u'\\n')
+	#for i in range(len(means)):
+	#	means[i] = fwalpha2hw(subsgaiji(means[i]))
+	#mean = u'\\n'.join(means)
 	print (word + u'\t' + mean).encode('utf-8')

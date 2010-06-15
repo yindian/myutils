@@ -3,6 +3,38 @@
 import sys, unicodedata
 import pdb, traceback
 
+def hw2fw(str):
+	return str
+	str = str.replace('\\n', '\n').replace('\\\n', '\\\\n')
+	str = str.decode('sjis')
+	result = []
+	ar = str.split('&#')
+	for c in ar[0]:
+		if 0x41 <= ord(c) <= 0x5A or 0x61 <= ord(c) <= 0x7A:
+			result.append(unichr(ord(c) + 0xFEE0))
+		else:
+			result.append(c)
+	for s in ar[1:]:
+		p = s.index(';')
+		result.append('&#')
+		result.append(s[:p+1])
+		for c in s[p+1:]:
+			if 0x41 <= ord(c) <= 0x5A or 0x61 <= ord(c) <= 0x7A:
+				result.append(unichr(ord(c) + 0xFEE0))
+			else:
+				result.append(c)
+	str = u''.join(result).encode('sjis')
+	return str.replace('\\n', '\\\n').replace('\n', '\\n')
+
+def fw2hw(str):
+	result = []
+	for c in str:
+		if 0xFF21 <= ord(c) <= 0xFF3A or 0xFF41 <= ord(c) <= 0xFF5A:
+			result.append(unichr(ord(c) - 0xFF00 + 0x20))
+		else:
+			result.append(c)
+	return u''.join(result)
+
 def htmlquote(str):
 	return str.replace('&', '&amp;').replace('&amp;#', '&#').replace(
 			'<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'
@@ -45,20 +77,21 @@ u'\uEC22': u'o',
 u'\uEC23': u'u',
 		}
 def unhat(str, hatmap=_hatmap):
-	ar = str.split('&#x')
-	result = [ar[0].decode('sjis')]
+	str = str.decode('sjis')
+	ar = fw2hw(str).split('&#x')
+	result = [ar[0]]
 	for s in ar[1:]:
 		p = s.index(';')
 		result.append(unichr(int(s[:p], 16)))
 		if hatmap.has_key(result[-1]):
 			result[-1] = hatmap[result[-1]]
-		result.append(s[p+1:].decode('sjis'))
+		result.append(s[p+1:])
 	str = u''.join(result).replace(u'\u3000', u' ')
 	if str.find(u'(') > 0:
 		assert str[str.find(u'('):].startswith(u'(變)')
 		str = str[:str.index(u'(')]
 	elif str.find(u'（') > 0:
-		assert str[str.find(u'（')+2:].startswith(u'音）')
+		#assert str[str.find(u'（')+2:].startswith(u'音）')
 		str = str[:str.index(u'（')]
 	return str.strip().encode('ascii').replace(' ', '')
 
@@ -77,7 +110,16 @@ for line in open(sys.argv[1]):#sys.stdin:
 	lineno += 1
 	word, mean = line[:-1].split('\t', 1)
 	pinyin = ''
-	ar = htmlquote(mean).split('\\n')
+	ar = htmlquote(hw2fw(mean)).split('\\n')
+	for i in xrange(len(ar)):
+		if ar[i].startswith('[?'):
+			try:
+				assert ar[i][2] == 'g'
+			except:
+				print >> sys.stderr, word.decode('sjis')
+				raise
+			assert ar[i].endswith(']')
+			ar[i] = '<img src="%s" class="inline">' % (ar[i][3:-1],)
 	if len(ar) > 3 and ar[3].startswith('通用'):
 		pinyin = ar[3][ar[3].index(':')+1:]
 		try:
