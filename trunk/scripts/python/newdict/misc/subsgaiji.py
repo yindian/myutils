@@ -23,7 +23,7 @@ def ansi2uni(line, fileenc):
 	result = []
 	result.append(unicode(line[0], fileenc).encode('utf-8'))
 	for s in line[1:]:
-		assert s[0] in 'nwgc/'
+		assert s[0] in 'nwgcu/'
 		result.append('<?')
 		if s[0] in 'nwg':
 			pos = s.find('>')
@@ -31,6 +31,8 @@ def ansi2uni(line, fileenc):
 			result.append(unicode(s[pos+1:], 
 				fileenc).encode('utf-8'))
 		elif s[0] == 'c':
+			result.append(s)
+		elif s[0] == 'u':
 			result.append(s)
 		else:
 			result.append(unicode(s, fileenc).encode('utf-8'))
@@ -43,7 +45,6 @@ gbenc = 'gb2312'
 if __name__ == '__main__':
 	if len(sys.argv) != 3:
 		print "Usage: %s filename gaijimap" % (sys.argv[0])
-		print "This version is specialized for Shogakukan Zhongri"
 		sys.exit(0)
 	f = open(sys.argv[2], 'r')
 	alldic = {}
@@ -72,7 +73,7 @@ if __name__ == '__main__':
 			what = (line[2],)
 		elif len(line) > 4:
 			what = (None, unicode(' '.join(line[4:]), gaijifileenc
-				).encode('utf-8'))
+				).strip().encode('utf-8'))
 		else:
 			what = (None, '')
 			#print >> sys.stderr, 'Cannot substitute', line
@@ -144,6 +145,19 @@ if __name__ == '__main__':
 					npos += 2
 				assert line[npos:npos+5] == '<?/c>'
 				subs = ''.join(subs)
+				line = line.replace(line[pos:npos+5], subs)
+			elif (line[pos+2:pos+4] == 'u>'):
+				npos = line.find('<?', pos+4)
+				assert line[npos:npos+5] == '<?/u>'
+				subs = []
+				for c in line[pos+4:npos].decode('utf-8'):
+					if ord(c) >= 0x80:
+						assert 0xFF10 <= ord(c)
+						assert ord(c) <= 0xFF26
+						subs.append(chr(ord(c)-0xfee0))
+					else:
+						subs.append(c)
+				subs = char2utf8(int(''.join(subs), 16))
 				line = line.replace(line[pos:npos+5], subs)
 			else:
 				raise
