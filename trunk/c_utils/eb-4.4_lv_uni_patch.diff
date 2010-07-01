@@ -1,0 +1,320 @@
+diff -ur orig/eb-4.4/eb/defs.h eb-4.4/eb/defs.h
+--- orig/eb-4.4/eb/defs.h	Wed Dec 12 15:54:52 2007
++++ eb-4.4/eb/defs.h	Thu Jul  1 22:21:10 2010
+@@ -175,7 +175,7 @@
+ /*
+  * The number of text hooks.
+  */
+-#define EB_NUMBER_OF_HOOKS		49
++#define EB_NUMBER_OF_HOOKS		55
+ 
+ /*
+  * The number of search contexts required by a book.
+diff -ur orig/eb-4.4/eb/ebnet.c eb-4.4/eb/ebnet.c
+--- orig/eb-4.4/eb/ebnet.c	Sat Feb 28 21:39:28 2009
++++ eb-4.4/eb/ebnet.c	Sun Mar 15 10:03:24 2009
+@@ -30,10 +30,10 @@
+ #include "config.h"
+ #endif
+ 
+-#include "build-pre.h"
+-
+ #include <sys/socket.h>
+ #include <sys/time.h>
++
++#include "build-pre.h"
+ 
+ #include "eb.h"
+ #include "error.h"
+diff -ur orig/eb-4.4/eb/getaddrinfo.c eb-4.4/eb/getaddrinfo.c
+--- orig/eb-4.4/eb/getaddrinfo.c	Wed Dec 12 15:54:52 2007
++++ eb-4.4/eb/getaddrinfo.c	Sun Mar 15 10:07:10 2009
+@@ -91,11 +91,11 @@
+ #include <libintl.h>
+ #endif
+ 
++#include "getaddrinfo.h"
++
+ #if !defined(H_ERRNO_DECLARED) && !defined(WINSOCK)
+ extern int h_errno;
+ #endif
+-
+-#include "getaddrinfo.h"
+ 
+ #ifdef ENABLE_NLS
+ #define _(string) gettext(string)
+diff -ur orig/eb-4.4/eb/getaddrinfo.h eb-4.4/eb/getaddrinfo.h
+--- orig/eb-4.4/eb/getaddrinfo.h	Wed Dec 12 15:54:52 2007
++++ eb-4.4/eb/getaddrinfo.h	Sun Mar 15 10:06:16 2009
+@@ -141,6 +141,10 @@
+ #define getnameinfo ebnet_getnameinfo
+ #endif
+ 
++#if defined (_WINSOCK_H) || defined (_WINSOCK2_H) /* needed for LPSOCKADDR */
++#define WINSOCK
++#endif
++
+ /********************************************************************/
+ /*
+  * Error codes.
+diff -ur orig/eb-4.4/eb/hook.c eb-4.4/eb/hook.c
+--- orig/eb-4.4/eb/hook.c	Wed Dec 12 15:54:52 2007
++++ eb-4.4/eb/hook.c	Thu Jul  1 22:16:44 2010
+@@ -77,6 +77,16 @@
+ 	= eb_hook_wide_character_text;
+     hookset->hooks[EB_HOOK_NEWLINE].function
+ 	= eb_hook_newline;
++    hookset->hooks[EB_HOOK_GB2312].function
++	= eb_hook_gb2312_text;
++    hookset->hooks[ZTEN_HOOK_BEGIN_DDCH10_GAIJI].function
++	= eb_hook_begin_ebxa_c;
++    hookset->hooks[ZTEN_HOOK_END_DDCH10_GAIJI].function
++	= eb_hook_end_ebxa_c;
++    hookset->hooks[LV_HOOK_BEGIN_UNICODE].function
++	= eb_hook_begin_lv_unicode;
++    hookset->hooks[LV_HOOK_END_UNICODE].function
++	= eb_hook_end_lv_unicode;
+ 
+     LOG(("out: eb_initialize_hookset()"));
+ }
+@@ -264,7 +274,10 @@
+     if (appendix == NULL
+ 	|| eb_narrow_alt_character_text(appendix, (int)argv[0], alt_text)
+ 	!= EB_SUCCESS) {
+-	eb_write_text_string(book, "<?>");
++    eb_write_text_string(book, "<?n=");
++    sprintf(alt_text, "%04x", (int)argv[0]);
++    eb_write_text_string(book, alt_text);
++    eb_write_text_string(book, ">");
+     } else {
+ 	eb_write_text_string(book, alt_text);
+     }
+@@ -286,7 +299,10 @@
+     if (appendix == NULL
+ 	|| eb_wide_alt_character_text(appendix, (int)argv[0], alt_text)
+ 	!= EB_SUCCESS) {
+-	eb_write_text_string(book, "<?>");
++    eb_write_text_string(book, "<?w=");
++    sprintf(alt_text, "%04x", (int)argv[0]);
++    eb_write_text_string(book, alt_text);
++    eb_write_text_string(book, ">");
+     } else {
+ 	eb_write_text_string(book, alt_text);
+     }
+@@ -303,6 +319,78 @@
+     EB_Hook_Code code, int argc, const unsigned int *argv)
+ {
+     eb_write_text_byte1(book, '\n');
++
++    return EB_SUCCESS;
++}
++
++/*
++ * Hook for GB2312 character.
++ */
++EB_Error_Code
++eb_hook_gb2312_text(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv)
++{
++    char alt_text[EB_MAX_ALTERNATION_TEXT_LENGTH + 1];
++
++    eb_write_text_string(book, "<?g=");
++    sprintf(alt_text, "%04x", (int)argv[0]);
++    eb_write_text_string(book, alt_text);
++    eb_write_text_string(book, ",");
++    eb_write_text_byte2(book, argv[0] >> 8, argv[0] & 0xff);
++    eb_write_text_string(book, ">");
++
++    return EB_SUCCESS;
++}
++
++/*
++ * Hook for EBXA-C begin
++ */
++EB_Error_Code
++eb_hook_begin_ebxa_c(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv)
++{
++    eb_write_text_string(book, "<?c>");
++
++    return EB_SUCCESS;
++}
++
++/*
++ * Hook for EBXA-C end
++ */
++EB_Error_Code
++eb_hook_end_ebxa_c(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv)
++{
++    eb_write_text_string(book, "<?/c>");
++
++    return EB_SUCCESS;
++}
++
++/*
++ * Hook for LV-KJG unicode begin
++ */
++EB_Error_Code
++eb_hook_begin_lv_unicode(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv)
++{
++    eb_write_text_string(book, "<?u>");
++
++    return EB_SUCCESS;
++}
++
++/*
++ * Hook for LV-KJG unicode end
++ */
++EB_Error_Code
++eb_hook_end_lv_unicode(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv)
++{
++    eb_write_text_string(book, "<?/u>");
+ 
+     return EB_SUCCESS;
+ }
+diff -ur orig/eb-4.4/eb/readtext.c eb-4.4/eb/readtext.c
+--- orig/eb-4.4/eb/readtext.c	Wed Jan  7 17:09:30 2009
++++ eb-4.4/eb/readtext.c	Thu Jul  1 22:18:26 2010
+@@ -539,6 +539,9 @@
+     return error_code;
+ }
+ 
++static int eb_bcd1(const unsigned char *s) {
++  return (((*s) >> 4) & 0x0f) * 10+ ((*s) & 0x0f);
++}
+ 
+ /*
+  * Get text or heading.
+@@ -753,6 +756,17 @@
+ 		hook = hookset->hooks + EB_HOOK_NEWLINE;
+ 		break;
+ 
++        case 0x0b: case 0x0c: 
++        {
++            in_step=2;
++            if (c2==0x0b) {
++                hook = hookset->hooks + LV_HOOK_BEGIN_UNICODE;
++            } else {
++                hook = hookset->hooks + LV_HOOK_END_UNICODE;
++            }
++            break;
++        }
++
+ 	    case 0x0e:
+ 		/* beginning of superscript */
+ 		in_step = 2;
+@@ -794,7 +808,17 @@
+ 		context->skip_code = 0x15;
+ 		break;
+ 
+-	    case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
++        case 0x1c: case 0x1d: 
++        if (book->character_code == EB_CHARCODE_JISX0208_GB2312) {
++            in_step=2;
++            if (c2==0x1c) {
++                hook = hookset->hooks + ZTEN_HOOK_BEGIN_DDCH10_GAIJI;
++            } else {
++                hook = hookset->hooks + ZTEN_HOOK_END_DDCH10_GAIJI;
++            }
++            break;
++        }
++	    case 0x1a: case 0x1b: case 0x1e: case 0x1f:
+ 		/* emphasis; described in JIS X 4081-1996 */
+ 		in_step = 4;
+ 		if (cache_rest_length < in_step) {
+@@ -817,6 +841,15 @@
+ 		hook = hookset->hooks + EB_HOOK_BEGIN_MONO_GRAPHIC;
+ 		break;
+ 
++#if 1
++	    case 0x33:
++		/* beginning of reference to EBXA sound */
++		in_step = 2;
++		argc = 1;
++		hook = hookset->hooks + ZTEN_HOOK_BEGIN_EBXA_SOUND;
++		break;
++#endif
++
+ 	    case 0x39:
+ 		/* beginning of MPEG movie */
+ 		in_step = 46;
+@@ -1034,6 +1067,14 @@
+ 		    error_code = EB_ERR_UNEXP_TEXT;
+ 		    goto failed;
+ 		}
++#if 1
++		argc=3;
++		argv[1]=(eb_bcd1(cache_p+4)*60+eb_bcd1(cache_p+5))*75
++		  +eb_bcd1(cache_p+6)-1;
++		argv[2]=(eb_bcd1(cache_p+7)*60+eb_bcd1(cache_p+8))*75
++		  +eb_bcd1(cache_p+9)-1;
++		hook = hookset->hooks + ZTEN_HOOK_END_EBXA_SOUND;
++#endif
+ 		break;
+ 
+ 	    case 0x59:
+diff -ur orig/eb-4.4/eb/text.h eb-4.4/eb/text.h
+--- orig/eb-4.4/eb/text.h	Wed Dec 12 15:54:52 2007
++++ eb-4.4/eb/text.h	Thu Jul  1 22:14:52 2010
+@@ -105,6 +105,14 @@
+ #define EB_HOOK_BEGIN_CLICKABLE_AREA    47
+ #define EB_HOOK_END_CLICKABLE_AREA      48
+ 
++#define ZTEN_HOOK_BEGIN_EBXA_SOUND      49
++#define ZTEN_HOOK_END_EBXA_SOUND        50
++#define ZTEN_HOOK_BEGIN_DDCH10_GAIJI    51
++#define ZTEN_HOOK_END_DDCH10_GAIJI      52
++
++#define LV_HOOK_BEGIN_UNICODE           53
++#define LV_HOOK_END_UNICODE             54
++
+ /*
+  * Function declarations.
+  */
+@@ -126,6 +134,21 @@
+     EB_Appendix *appendix, void *container, EB_Hook_Code hook_code, int argc,
+     const unsigned int *argv);
+ EB_Error_Code eb_hook_newline(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv);
++EB_Error_Code eb_hook_gb2312_text(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv);
++EB_Error_Code eb_hook_begin_ebxa_c(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv);
++EB_Error_Code eb_hook_end_ebxa_c(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv);
++EB_Error_Code eb_hook_begin_lv_unicode(EB_Book *book, EB_Appendix *appendix,
++    void *container, EB_Hook_Code hook_code, int argc,
++    const unsigned int *argv);
++EB_Error_Code eb_hook_end_lv_unicode(EB_Book *book, EB_Appendix *appendix,
+     void *container, EB_Hook_Code hook_code, int argc,
+     const unsigned int *argv);
+ EB_Error_Code eb_hook_empty(EB_Book *book, EB_Appendix *appendix,
+diff -ur orig/eb-4.4/libebutils/getopt.c eb-4.4/libebutils/getopt.c
+--- orig/eb-4.4/libebutils/getopt.c	Wed Dec 12 15:54:52 2007
++++ eb-4.4/libebutils/getopt.c	Sun Mar 15 10:13:20 2009
+@@ -342,7 +342,6 @@
+ 	}
+ 	return retval;
+ }
+-#endif
+ 
+ /*
+  * getopt_long --
+@@ -478,3 +477,4 @@
+ 	}
+ 	return retval;
+ }
++#endif
+
