@@ -21,7 +21,9 @@ print """\
 
 phpua = lambda s: ''.join([(0x30 <= ord(c) < 0x60 or 0x7B <= ord(c) < 0x7F)
 	and '&#x%04X;' % (ord(c) + 0xE000,) or c for c in s])
+quote = lambda s: s.replace('>', '&gt;')
 wordlist = []
+reflist = []
 for line in f:
 	word, mean = line.rstrip().split('\t', 1)
 	syn = word.split(', ')
@@ -55,10 +57,12 @@ for line in f:
 				print '<key type="•\‹L">%s</key>' % (s,)
 	print '<dd>'
 	ar = mean.split('<')
-	result = [ar[0]]
+	result = [quote(ar[0])]
 	stack = []
 	i = 1
 	phonetic = False
+	lastref = None
+	lastrefpos = -1
 	for s in ar[1:]:
 		try:
 			p = s.index('>')
@@ -67,8 +71,39 @@ for line in f:
 				del stack[-1]
 				if s.startswith('/font'):
 					phonetic = False
+				elif s[1:p] == 'a':
+					assert lastref is not None
+					if i+1 < len(ar) and ar[i+1].startswith(
+							'sup'):
+						pass
+					else:
+						#assert lastref in wordlist
+						reflist.append((lastref, word))
+						result.insert(lastrefpos,
+								'<a href="#%s">'
+								% (lastref,))
+						result.append('</a>')
+						lastref = None
+						lastrefpos = -1
 				elif s[1:p] in ('i', 'b', 'sup'):
 					result.append('<%s>' % (s[:p],))
+					if s[1:p] == 'sup' and lastref:
+						try:
+							ss = int(result[-2])
+						except:
+							print >> sys.stderr, word, lastref, result[-2]
+							q= result[-2].index(',')
+							ss = int(result[-2][:q])
+						#assert lastref+`ss` in wordlist
+						reflist.append((lastref+`ss`,
+							word))
+						result.insert(lastrefpos,
+								'<a href="#%s">'
+								% (lastref+
+									`ss`,))
+						result.append('</a>')
+						lastref = None
+						lastrefpos = -1
 			else:
 				stack.append(s[:p])
 				if s.startswith('font'):
@@ -84,6 +119,13 @@ for line in f:
 					del stack[-1]
 					result.append('&#x%04X;' % (ord(s[7])
 						+ 0xE000, ))
+				elif s.startswith('a '):
+					q = s.index('bword://') + 8
+					lastref = s[q:p-1]
+					if lastref[-1] == ' ' and s[-1] != ' ':
+						s += ' '
+					lastref = lastref.rstrip()
+					lastrefpos = len(result)
 			s = s[p+1:]
 			if phonetic:
 				br = s.split('&')
@@ -96,10 +138,10 @@ for line in f:
 					else:
 						res.append(phpua(t))
 				s = ''.join(res)
-			result.append(s.decode('utf-8').encode('sjis',
+			result.append(quote(s).decode('utf-8').encode('sjis',
 					'xmlcharrefreplace'))
 		except:
-			print >> sys.stderr, word, sup, i, s, stack
+			print >> sys.stderr, word, sup, i, s, stack, lastref
 			raise
 		i += 1
 	mean = ''.join(result)
@@ -108,3 +150,12 @@ for line in f:
 	print '</dl>'
 
 f.close()
+print """\
+</body>
+</html>"""
+
+for ref, word in reflist:
+	try:
+		assert ref in wordlist
+	except:
+		print ref, word
