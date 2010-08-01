@@ -19,6 +19,8 @@ print """\
 </head>
 <body>"""
 
+phpua = lambda s: ''.join([(0x30 <= ord(c) < 0x60 or 0x7B <= ord(c) < 0x7F)
+	and '&#x%04X;' % (ord(c) + 0xE000,) or c for c in s])
 wordlist = []
 for line in f:
 	word, mean = line.rstrip().split('\t', 1)
@@ -47,7 +49,61 @@ for line in f:
 	wordlist.append(uniqword)
 	print '<dl>\n<dt id="%s">%s</dt>' % (uniqword, sup and '%s<sup>%s</sup>'
 			% (word, `sup`) or word)
+	if len(syn) > 1:
+		for s in syn[1:]:
+			if s.lower() != syn[0].lower():
+				print '<key type="•\‹L">%s</key>' % (s,)
 	print '<dd>'
+	ar = mean.split('<')
+	result = [ar[0]]
+	stack = []
+	i = 1
+	phonetic = False
+	for s in ar[1:]:
+		try:
+			p = s.index('>')
+			if s.startswith('/'):
+				assert stack[-1].startswith(s[1:p])
+				del stack[-1]
+				if s.startswith('/font'):
+					phonetic = False
+				elif s[1:p] in ('i', 'b', 'sup'):
+					result.append('<%s>' % (s[:p],))
+			else:
+				stack.append(s[:p])
+				if s.startswith('font'):
+					#assert ar[i+1].startswith('/font>')
+					phonetic = True
+				elif s[:p] in ('i', 'b', 'sup'):
+					result.append('<%s>' % (s[:p],))
+				elif s[:p] == 'br':
+					del stack[-1]
+					result.append('<br>')
+				elif s.startswith('SYMFONT'):
+					assert p == 8
+					del stack[-1]
+					result.append('&#x%04X;' % (ord(s[7])
+						+ 0xE000, ))
+			s = s[p+1:]
+			if phonetic:
+				br = s.split('&')
+				res = [phpua(br[0])]
+				for t in br[1:]:
+					p = t.find(';')
+					if p > 0:
+						res.append(t[:p+1])
+						res.append(phpua(t[p+1:]))
+					else:
+						res.append(phpua(t))
+				s = ''.join(res)
+			result.append(s.decode('utf-8').encode('sjis',
+					'xmlcharrefreplace'))
+		except:
+			print >> sys.stderr, word, sup, i, s, stack
+			raise
+		i += 1
+	mean = ''.join(result)
+	print mean
 	print '</dd>'
 	print '</dl>'
 
