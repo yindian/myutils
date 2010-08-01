@@ -24,6 +24,41 @@ phpua = lambda s: ''.join([(0x30 <= ord(c) < 0x60 or 0x7B <= ord(c) < 0x7F)
 quote = lambda s: s.replace('>', '&gt;')
 wordlist = []
 reflist = []
+refmap = {
+		'swimming': 'swim',
+		'etc': 'et cetera',
+		'uncalled': 'uncalled-for',
+		'draughts': 'draught',
+		'eau': 'eau-de-Cologne',
+		'doing': 'do2',
+		'boxing': 'box2',
+		'anti-clockwise': 'anticlockwise',
+		'haute': 'haute couture',
+		'cul': 'cul-de-sac',
+		'facto': 'de facto',
+		'Domesday': 'Domesday Book',
+		'Julian': 'Julian calendar',
+		'haem': 'haem(o)-',
+		'Rt': 'Rt Hon.',
+		'Lords': 'lord',
+		'Heaviside': 'Heaviside layer',
+		'Gordian': 'Gordian knot',
+		'Litt': 'DLitt.',
+		'madame': 'Madame.',
+		'East': 'east.',
+		'knick': 'knick-knack',
+		'tenpin': 'tenpin bowling',
+		'Fallopian': 'Fallopian tube',
+		'palae': 'palae(o)-',
+		'Parthian': 'Parthian shot',
+		'paed': 'paed(o)-',
+		'carbolic': 'carbolic acid',
+		'bubonic': 'bubonic plague',
+		'self-raising': 'self-raising flour',
+		'wester': 'sou\'wester',
+		'-': 'upset',
+		'deser': 'deserve',
+		}
 for line in f:
 	word, mean = line.rstrip().split('\t', 1)
 	syn = word.split(', ')
@@ -33,11 +68,12 @@ for line in f:
 		sup = int(mean[5:p])
 		mean = mean[p+6:].lstrip()
 	if sup == 0:
-		if syn[-1] == syn[0].lower():
+		if syn[-1] == syn[0].lower() or syn[0].replace('(','').replace(
+				')', '') == syn[-1]:
 			uniqword = syn[-1]
 		else:
 			uniqword = syn[0]
-		if mean.find('<i>abbr ') >= 0:
+		if mean.find('<i>abbr ', 0, 100) >= 0:
 			uniqword += '.'
 		elif mean.find('<i>pref ') >= 0 and uniqword in wordlist:
 			uniqword += '-'
@@ -49,6 +85,28 @@ for line in f:
 		print >> sys.stderr, word, sup
 		raise
 	wordlist.append(uniqword)
+f.close()
+f = open(sys.argv[1], 'rb')
+for line in f:
+	word, mean = line.rstrip().split('\t', 1)
+	syn = word.split(', ')
+	sup = 0
+	if mean.startswith('<sup>'):
+		p = mean.index('</sup>', 5)
+		sup = int(mean[5:p])
+		mean = mean[p+6:].lstrip()
+	if sup == 0:
+		if syn[-1] == syn[0].lower() or syn[0].replace('(','').replace(
+				')', '') == syn[-1]:
+			uniqword = syn[-1]
+		else:
+			uniqword = syn[0]
+		if mean.find('<i>abbr ', 0, 100) >= 0:
+			uniqword += '.'
+		elif mean.find('<i>pref ') >= 0 and uniqword in wordlist:
+			uniqword += '-'
+	else:
+		uniqword = syn[0] + `sup`
 	print '<dl>\n<dt id="%s">%s</dt>' % (uniqword, sup and '%s<sup>%s</sup>'
 			% (word, `sup`) or word)
 	if len(syn) > 1:
@@ -74,10 +132,27 @@ for line in f:
 				elif s[1:p] == 'a':
 					assert lastref is not None
 					if i+1 < len(ar) and ar[i+1].startswith(
-							'sup'):
+							'sup') and p+2>len(s):
 						pass
 					else:
-						#assert lastref in wordlist
+						if lastref not in wordlist:
+							if lastref.lower() in wordlist:
+								lastref = lastref.lower()
+							elif lastref+'1' in wordlist:
+								lastref += '1'
+							elif lastref.lower()+'1' in wordlist:
+								lastref = lastref.lower()+'1'
+							elif lastref+'.' in wordlist:
+								lastref += '.'
+							elif lastref+'-' in wordlist:
+								lastref += '-'
+							elif '-'+lastref in wordlist:
+								lastref = '-'+lastref
+							if lastref.title() in wordlist:
+								lastref = lastref.title()
+							elif refmap.has_key(lastref):
+								lastref = refmap[lastref]
+						assert lastref in wordlist
 						reflist.append((lastref, word))
 						result.insert(lastrefpos,
 								'<a href="#%s">'
@@ -94,13 +169,17 @@ for line in f:
 							print >> sys.stderr, word, lastref, result[-2]
 							q= result[-2].index(',')
 							ss = int(result[-2][:q])
-						#assert lastref+`ss` in wordlist
-						reflist.append((lastref+`ss`,
+						if lastref+`ss` in wordlist:
+							lastref += `ss`
+						elif lastref.replace('-','')+`ss` in wordlist:
+							lastref = lastref.replace('-','')+`ss`
+						else:
+							assert lastref in wordlist
+						reflist.append((lastref,
 							word))
 						result.insert(lastrefpos,
 								'<a href="#%s">'
-								% (lastref+
-									`ss`,))
+								% (lastref,))
 						result.append('</a>')
 						lastref = None
 						lastrefpos = -1
@@ -158,4 +237,4 @@ for ref, word in reflist:
 	try:
 		assert ref in wordlist
 	except:
-		print ref, word
+		print >> sys.stderr, ref, word
