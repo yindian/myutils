@@ -3,6 +3,81 @@
 import sys, os.path, re
 import pdb, traceback
 
+def reformat(mean):
+	#return mean
+	lines = mean.split('<br>')
+	result = []
+	lastitem = 0
+	num = None
+	for line in lines:
+		ar = line.split('<b>')
+		result.append(ar[0])
+		lasts = ar[0]
+		for s in ar[1:]:
+			p = s.index('</b>')
+			newline = False
+			if p<4 or s[0]in'~&#`,' or s[:p].rstrip()[-1].isdigit():
+				if p < 4:
+					t = s[:p].strip()
+				else:
+					t = s[:p].rstrip().split()[-1]
+				try:
+					if t.isdigit() and t != '45':
+						num = int(t)
+						if word == 'perk' and num == 3:
+							lastitem = 2
+						assert num<=1 or num==lastitem+1
+						if num > 0:
+							lastitem = num
+							newline = True
+					elif len(t) == 1:
+						if t.isalpha():
+							if s[0] == '~':
+								pass
+							elif 'a' <= t < 'm'and((
+								s[p+4] == ')'
+								)):
+								newline = True
+							#elif t.isupper():
+							#	assert t in ((
+							#		'ACDEF'
+							#		'GIJKL'
+							#		'MNSOR'
+							#		'WY'
+							#		))
+							#else:
+							#	assert t in ((
+							#		'msprv'
+							#		'xy'
+							#		))
+						else:
+							assert t in '=~().%+'
+				except:
+					print >> sys.stderr, lastitem,(
+							num), t, lasts,'|',s
+					raise
+			if newline:
+				if s[p+4:p+5] == ')' and lasts.endswith('('):
+					try:
+						assert result[-1].endswith('(')
+					except:
+						print >> sys.stderr, s
+						print >> sys.stderr, lasts
+						print >> sys.stderr, result[-1]
+						print >> sys.stderr, result
+						raise
+					result[-1] = result[-1][:-1]
+					result.append('<br>(<b>')
+					result.append(s)
+				else:
+					result.append('<br><b>')
+					result.append(s)
+			else:
+				result.append('<b>')
+				result.append(s)
+			lasts = s
+	return ''.join(result)
+
 assert __name__ == '__main__'
 
 if len(sys.argv) != 3:
@@ -110,9 +185,8 @@ for line in f:
 	print '<dl>\n<dt id="%s">%s</dt>' % (uniqword, sup and '%s<sup>%s</sup>'
 			% (word, `sup`) or word)
 	if len(syn) > 1:
-		for s in syn[1:]:
-			if s.lower() != syn[0].lower():
-				print '<key type="表記">%s</key>' % (s,)
+		for s in syn:
+			print '<key type="表記">%s</key>' % (s,)
 	print '<dd>'
 	ar = mean.split('<')
 	result = [quote(ar[0])]
@@ -215,6 +289,7 @@ for line in f:
 						res.append(t[:p+1])
 						res.append(phpua(t[p+1:]))
 					else:
+						res.append('&amp;')
 						res.append(phpua(t))
 				s = ''.join(res)
 			result.append(quote(s).decode('utf-8').encode('sjis',
@@ -224,6 +299,11 @@ for line in f:
 			raise
 		i += 1
 	mean = ''.join(result)
+	try:
+		mean = reformat(mean)
+	except:
+		print >> sys.stderr, word, sup
+		raise
 	print mean
 	print '</dd>'
 	print '</dl>'
