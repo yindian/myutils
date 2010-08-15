@@ -6,13 +6,14 @@ import pdb, traceback
 def reformat(mean):
 	#return mean
 	lines = mean.split('<br>')
-	result = []
+	result = ['<p>']
 	lastitem = 0
 	num = None
 	for line in lines:
 		ar = line.split('<b>')
 		result.append(ar[0])
 		lasts = ar[0]
+		lastnum = False
 		for s in ar[1:]:
 			p = s.index('</b>')
 			newline = False
@@ -30,6 +31,7 @@ def reformat(mean):
 						if num > 0:
 							lastitem = num
 							newline = True
+							lastnum = True
 					elif len(t) == 1:
 						if t.isalpha():
 							if s[0] == '~':
@@ -37,7 +39,8 @@ def reformat(mean):
 							elif 'a' <= t < 'm'and((
 								s[p+4] == ')'
 								)):
-								newline = True
+								if not lastnum:
+									newline = True
 							#elif t.isupper():
 							#	assert t in ((
 							#		'ACDEF'
@@ -52,10 +55,13 @@ def reformat(mean):
 							#		))
 						else:
 							assert t in '=~().%+'
+						lastnum = False
 				except:
 					print >> sys.stderr, lastitem,(
 							num), t, lasts,'|',s
 					raise
+			else:
+				lastnum = False
 			if newline:
 				if s[p+4:p+5] == ')' and lasts.endswith('('):
 					try:
@@ -67,16 +73,33 @@ def reformat(mean):
 						print >> sys.stderr, result
 						raise
 					result[-1] = result[-1][:-1]
-					result.append('<br>(<b>')
+					result.append('</p>\n<p>(<b>')
 					result.append(s)
 				else:
-					result.append('<br><b>')
-					result.append(s)
+					p -= 1
+					while p > 0 and s[p].isspace():
+						p -= 1
+					while p > 0 and not s[p].isspace():
+						p -= 1
+					if p == 0 or not s[:p].strip():
+						result.append('</p>\n<p><b>')
+						result.append(s)
+					else:
+						result.append('<b>')
+						result.append(s[:p])
+						result.append('</b></p>\n<p><b>')
+						result.append(s[p:])
 			else:
-				result.append('<b>')
-				result.append(s)
+				p = s.index('</b>')
+				result.append('<dfn>')
+				result.append(s[:p])
+				result.append('</dfn>')
+				result.append(s[p+4:])
 			lasts = s
-	return ''.join(result)
+		result.append('</p>\n<p>')
+	result.append('</p>')
+	mean = ''.join(result)
+	return mean
 
 assert __name__ == '__main__'
 
