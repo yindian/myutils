@@ -1,5 +1,5 @@
 --- imv.c.bak	Wed Jan 27 23:37:50 2010
-+++ imv.c	Wed Aug 18 20:21:20 2010
++++ imv.c	Wed Aug 18 20:54:56 2010
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -113,15 +113,6 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
-@@ -1308,7 +1336,7 @@
-    else
-       image_files = stb_readdir_files_mask(path_to_file, open_filter + 12);
- 
--   if (image_files == NULL) { error("Error: couldn't read directory."); exit(0); }
-+   if (image_files == NULL) {error("Error: couldn't read directory."); exit(0); }
-    qsort(image_files, stb_arr_len(image_files), sizeof(*image_files), StringCompareSort);
- 
-    // given the array of filenames, build an equivalent fileinfo array
 @@ -2360,6 +2388,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
@@ -130,7 +121,7 @@
                 break;
              }
  
-@@ -2384,15 +2413,26 @@
+@@ -2384,15 +2413,53 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -143,6 +134,33 @@
                 advance(-1);
                 break;
  
++            case VK_HOME:
++            case VK_PRIOR:
++            case VK_NEXT:
++            case VK_END:
++               {
++                RECT rect;
++                int deltax, deltay;
++                int cx, cy;
++                cx = GetSystemMetrics(SM_CXSCREEN);
++                cy = GetSystemMetrics(SM_CYSCREEN);
++                deltax = (code == VK_END) ? -cx : (code == VK_HOME) ? cx : 0;
++                deltay = (code == VK_PRIOR) ? cy : (code == VK_NEXT) ? -cy : 0;
++                GetWindowRect(win, &rect);
++                if (rect.left + deltax >= cx - FRAME ||
++                    rect.top  + deltay >= cy - FRAME ||
++                    rect.right + deltax <= FRAME ||
++                    rect.bottom + deltay <= FRAME ) {
++                    if (code == VK_HOME || code == VK_PRIOR)
++                        advance(-1);
++                    else
++                        advance(1);
++                }
++                else
++                    MoveWindow(win, rect.left + deltax, rect.top + deltay, rect.right - rect.left, rect.bottom - rect.top, TRUE);
++               }
++               break;
++
 +            case VK_LEFT:
 +            case VK_RIGHT:
 +            case VK_UP:
@@ -159,7 +177,7 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2484,6 +2524,55 @@
+@@ -2484,6 +2551,55 @@
                 init_filelist();
                 advance(0);
                 break;
