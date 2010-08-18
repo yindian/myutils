@@ -1,5 +1,5 @@
 --- imv.c.bak	Wed Jan 27 23:37:50 2010
-+++ imv.c	Tue Mar 02 20:40:02 2010
++++ imv.c	Wed Aug 18 20:21:20 2010
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -83,7 +83,46 @@
        if (old) SelectObject(hdc, old);
     }
  
-@@ -2360,6 +2365,7 @@
+@@ -1290,6 +1295,29 @@
+ 
+ char *open_filter = "Image Files\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.hdr;*.spk\0";
+ 
++int has_img_file(const char *path, const char *subdir)
++{
++   char **image_files; // stb_arr (dynamic array type) of filenames
++   static char fullpath[4096];
++   int i;
++
++   sprintf(fullpath, "%s/%s", path, subdir);
++
++   if (recursive)
++      image_files = stb_readdir_recursive(fullpath, open_filter + 12);
++   else
++      image_files = stb_readdir_files_mask(fullpath, open_filter + 12);
++
++   if (image_files == NULL)
++      return FALSE;
++
++   for (i=0; i < stb_arr_len(image_files); ++i)
++      free(image_files[i]); // allocated by stb_readdir
++   stb_arr_free(image_files); 
++
++   return TRUE;
++}
++
+ // build a filelist for the current directory
+ void init_filelist(void)
+ {
+@@ -1308,7 +1336,7 @@
+    else
+       image_files = stb_readdir_files_mask(path_to_file, open_filter + 12);
+ 
+-   if (image_files == NULL) { error("Error: couldn't read directory."); exit(0); }
++   if (image_files == NULL) {error("Error: couldn't read directory."); exit(0); }
+    qsort(image_files, stb_arr_len(image_files), sizeof(*image_files), StringCompareSort);
+ 
+    // given the array of filenames, build an equivalent fileinfo array
+@@ -2360,6 +2388,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -91,7 +130,7 @@
                 break;
              }
  
-@@ -2384,15 +2390,26 @@
+@@ -2384,15 +2413,26 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -120,7 +159,7 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2484,6 +2501,50 @@
+@@ -2484,6 +2524,55 @@
                 init_filelist();
                 advance(0);
                 break;
@@ -148,17 +187,22 @@
 +                        buffer[strlen(buffer)-1] = 0;
 +                    stb_splitpath(path_to_file, buffer, STB_PATH);
 +                    subdir = stb_readdir_subdirs(path_to_file);
++                    if (subdir) {
 +                    for (n = stb_arr_len(subdir)-1; n >= 0; --n)
 +                        if (!strcmp(subdir[n], buffer))
 +                            break;
++                    do {
 +                    n += adv;
 +                    if (n < 0)
 +                        n += stb_arr_len(subdir);
 +                    else if (n >= stb_arr_len(subdir))
 +                        n -= stb_arr_len(subdir);
++                    } while (!has_img_file(path_to_file, subdir[n]));
 +                    strcpy(path_to_file, subdir[n]);
 +                    stb_readdir_free(subdir);
++                    }
 +                    init_filelist();
++                    cur_loc = 0;
 +                    advance(stb_arr_len(fileinfo) * stat / frac);
 +                } else {
 +                    if (fileinfo == NULL)
