@@ -8,6 +8,8 @@ Usage:
 
 @author Yusdi Santoso
 @date 13/07/2007
+
+yindian modified for decryption support on 2010/09/25
 """
 import struct
 import os, os.path
@@ -53,7 +55,7 @@ class Dbase:
             idx += 1
         return result
 
-    def open(self, db_name):
+    def open(self, db_name, memodecrypt=None, maxrec=0):
         filesize = os.path.getsize(db_name)
         if filesize <= 68:
             raise IOError, 'The file is not large enough to be a dbf file'
@@ -71,6 +73,7 @@ class Dbase:
             self.fmemo = open(self.memo_file, 'rb')
             self.memo_data = self.fmemo.read()
             self.memo_header = self._assign_ids(struct.unpack('>6x1H', self.memo_data[:8]), ['Block size'])
+	    self.memo_decrypt = memodecrypt
             block_size = self.memo_header['Block size']
             if not block_size:
                 block_size = 512
@@ -81,6 +84,8 @@ class Dbase:
         #Start reading data file
         data = self.fdb.read(32)
         self.header = self._assign_ids(struct.unpack('<B 3B L 2H 20x', data), ['id', 'Year', 'Month', 'Day', '# of Records', 'Header Size', 'Record Size'])
+	if maxrec > 0 and self.header['# of Records'] > maxrec:
+		self.header['# of Records'] = maxrec
         self.header['id'] = hex(self.header['id'])
 
         self.num_records = self.header['# of Records']
@@ -146,8 +151,8 @@ class Dbase:
                     c_data = self._reverse_endian(c_data)
                     if c_data:
                         record[f_name] = self.read_memo(c_data-1).strip()
-                else:
-                    record[f_name] = c_data.strip()
+                #else:
+                #    record[f_name] = c_data.strip()
         return record
 
     def read_memo_record(self, num, in_length):
@@ -168,22 +173,18 @@ class Dbase:
         return self.fmemo.read(in_length)    
     
     def read_memo(self, num):
-        result = ''
-        buffer = self.read_memo_record(num, -1)
-        if len(buffer)<=0:
+        offset = self.memo_header_len + num * self.memo_block_size
+        buffer = self.memo_data[offset:offset+8]
+        if len(buffer)<8:
             return ''
         length = struct.unpack('>L', buffer[4:4+4])[0] + 8
 
-        block_size = self.memo_block_size
-        if length < block_size:
-            return buffer[8:length]
-        rest_length = length - block_size
-        rest_data = self.read_memo_record(num+1, rest_length)
-        if len(rest_data)<=0:
-            return ''
-        return buffer[8:] + rest_data
+        buffer = self.memo_data[offset+8:offset+length]
+        if self.memo_decrypt is not None:
+            buffer = self.memo_decrypt(buffer)
+        return buffer
 
-def readDbf(filename):
+def readDbf(filename, memodecrypt=None, maxrec=0):
     """
     Read the DBF file specified by the filename and 
     return the records as a list of dictionary.
@@ -191,7 +192,7 @@ def readDbf(filename):
     @return List of rows
     """
     db = Dbase()
-    db.open(filename)
+    db.open(filename, memodecrypt=memodecrypt, maxrec=maxrec)
     num = db.get_numrecords()
     rec = []
     for i in range(0, num):
