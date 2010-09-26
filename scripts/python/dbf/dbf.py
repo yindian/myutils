@@ -10,6 +10,7 @@ Usage:
 @date 13/07/2007
 
 yindian modified for decryption support on 2010/09/25
+                 for field type unpack  on 2010/09/26 (not thoroughly tested)
 """
 import struct
 import os, os.path
@@ -185,13 +186,13 @@ class Dbase:
                 f_leng = field['Field Length']
                 f_prec = field['Field Precision']
                 c_data = record[f_name]
-                if f_type == 'N':
+                if f_type == 'N':                       # Number
                     assert f_leng <= 18
                     if f_prec == 0:
                         record[f_name] = int(c_data)
                     else:
                         record[f_name] = float(c_data)
-                elif f_type == 'L':
+                elif f_type == 'L':                     # Logical
                     assert f_leng == 1
                     if c_data in 'YyTt':
                         record[f_name] = True
@@ -200,29 +201,29 @@ class Dbase:
                     else:
                         assert c_data == '?'
                         record[f_name] = None
-                elif f_type == 'D':
+                elif f_type == 'D':                     # Date in YYYYMMDD
                     assert f_leng == 8
                     record[f_name] = (int(c_data[:4]), int(c_data[4:6]),
                             int(c_data[6:]))
-                elif f_type == 'F':
+                elif f_type == 'F':                     # Floating point
                     assert f_leng == 20
                     record[f_name] = float(c_data)
-                elif f_type == 'I' or f_type == '+':
+                elif f_type == 'I' or f_type == '+':    # Integer, Autoincrement
                     assert f_leng == 4
                     record[f_name] = struct.unpack('<l', c_data)[0]
-                elif f_type == 'V' or f_type == 'X':
+                elif f_type == 'V' or f_type == 'X':    # Varchar
                     len = ord(c_data[-1])
                     if len < f_leng and c_data[len:-1].strip() == '':
                         record[f_name] = c_data[:len]
-                elif f_type == '@' or f_type == 'T':
+                elif f_type == '@' or f_type == 'T':    # Timestamp, DateTime
                     assert f_leng == 8
                     date = struct.unpack('<l', c_data[:4])[0]
                     time = struct.unpack('<l', c_data[4:])[0]
                     record[f_name] = self._timestamp_to_ymdhms(date, time)
-                elif f_type == 'O':
+                elif f_type == 'O':                     # Double
                     assert f_leng == 8
                     record[f_name] = struct.unpack('d', c_data)[0]
-                elif f_type == 'Y':
+                elif f_type == 'Y':                     # Currency
                     assert f_leng == 8
                     record[f_name] = struct.unpack('<q', c_data)[0] / 10000.
 
@@ -272,6 +273,7 @@ def readDbf(filename, unpackfields=False, memodecrypt=None, maxrec=0):
         record = db.get_record_with_names(i)
         rec.append(record)    
     db.close()
+    del db
     return  rec
 
 if __name__=='__main__':
