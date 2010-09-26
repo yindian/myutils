@@ -46,6 +46,25 @@ class Dbase:
         val = struct.unpack('>L', val)
         return val[0]
 
+    def _timestamp_to_ymdhms(self, julianday, milliseconds):
+        x2 = julianday - 1721120 #1721119.5
+        c2 = int((4*x2 + 3)/146097.)
+        x1 = x2 - int(146097*c2/4.)
+        c1 = int((100*x1 + 99)/36525.)
+        x0 = x1 - int(36525*c1/100.)
+        j  = 100*c2 + c1
+        m  = int((5*x0 + 461)/153.)
+        d  = x0 - int((153*m - 457)/5.) + 1
+        if m > 12:
+            m -= 12
+            j += 1
+        hr = int(milliseconds / 3600000)
+        milliseconds -= hr * 3600000
+        mn = int(milliseconds / 60000)
+        milliseconds -= mn * 60000
+        sc = int(milliseconds / 1000)
+        return (j, m, d, hr, mn, sc)
+
     def _assign_ids(self, lst, ids):
         result = {}
         idx = 0
@@ -55,7 +74,7 @@ class Dbase:
             idx += 1
         return result
 
-    def open(self, db_name, memodecrypt=None, maxrec=0):
+    def open(self, db_name, unpackfields=False, memodecrypt=None, maxrec=0):
         filesize = os.path.getsize(db_name)
         if filesize <= 68:
             raise IOError, 'The file is not large enough to be a dbf file'
@@ -73,7 +92,7 @@ class Dbase:
             self.fmemo = open(self.memo_file, 'rb')
             self.memo_data = self.fmemo.read()
             self.memo_header = self._assign_ids(struct.unpack('>6x1H', self.memo_data[:8]), ['Block size'])
-	    self.memo_decrypt = memodecrypt
+            self.memo_decrypt = memodecrypt
             block_size = self.memo_header['Block size']
             if not block_size:
                 block_size = 512
@@ -84,13 +103,14 @@ class Dbase:
         #Start reading data file
         data = self.fdb.read(32)
         self.header = self._assign_ids(struct.unpack('<B 3B L 2H 20x', data), ['id', 'Year', 'Month', 'Day', '# of Records', 'Header Size', 'Record Size'])
-	if maxrec > 0 and self.header['# of Records'] > maxrec:
-		self.header['# of Records'] = maxrec
+        if maxrec > 0 and self.header['# of Records'] > maxrec:
+            self.header['# of Records'] = maxrec
         self.header['id'] = hex(self.header['id'])
 
         self.num_records = self.header['# of Records']
         data = self.fdb.read(self.header['Header Size']-34)
         self.fields = {}
+        self.fields_unpack = unpackfields
         x = 0
         header_pattern = '<11s c 4x B B 14x'
         ids = ['Field Name', 'Field Type', 'Field Length', 'Field Precision']
@@ -148,11 +168,64 @@ class Dbase:
                 c_data = record[f_name]
 
                 if f_type=='M' or f_type=='G' or f_type=='B' or f_type=='P':
-                    c_data = self._reverse_endian(c_data)
+                    try:
+                        c_data = self._reverse_endian(c_data)
+                    except:
+                        c_data = int(c_data)
                     if c_data:
                         record[f_name] = self.read_memo(c_data-1).strip()
                 #else:
                 #    record[f_name] = c_data.strip()
+        if self.fields_unpack:
+            # Caution: not-tested code. no warranty at all
+            for key in self.fields:
+                field = self.fields[key]
+                f_type = field['Field Type']
+                f_name = field['Field Name']
+                f_leng = field['Field Length']
+                f_prec = field['Field Precision']
+                c_data = record[f_name]
+                if f_type == 'N':
+                    assert f_leng <= 18
+                    if f_prec == 0:
+                        record[f_name] = int(c_data)
+                    else:
+                        record[f_name] = float(c_data)
+                elif f_type == 'L':
+                    assert f_leng == 1
+                    if c_data in 'YyTt':
+                        record[f_name] = True
+                    elif c_data in 'NnFf':
+                        record[f_name] = False
+                    else:
+                        assert c_data == '?'
+                        record[f_name] = None
+                elif f_type == 'D':
+                    assert f_leng == 8
+                    record[f_name] = (int(c_data[:4]), int(c_data[4:6]),
+                            int(c_data[6:]))
+                elif f_type == 'F':
+                    assert f_leng == 20
+                    record[f_name] = float(c_data)
+                elif f_type == 'I' or f_type == '+':
+                    assert f_leng == 4
+                    record[f_name] = struct.unpack('<l', c_data)[0]
+                elif f_type == 'V' or f_type == 'X':
+                    len = ord(c_data[-1])
+                    if len < f_leng and c_data[len:-1].strip() == '':
+                        record[f_name] = c_data[:len]
+                elif f_type == '@' or f_type == 'T':
+                    assert f_leng == 8
+                    date = struct.unpack('<l', c_data[:4])[0]
+                    time = struct.unpack('<l', c_data[4:])[0]
+                    record[f_name] = self._timestamp_to_ymdhms(date, time)
+                elif f_type == 'O':
+                    assert f_leng == 8
+                    record[f_name] = struct.unpack('d', c_data)[0]
+                elif f_type == 'Y':
+                    assert f_leng == 8
+                    record[f_name] = struct.unpack('<q', c_data)[0] / 10000.
+
         return record
 
     def read_memo_record(self, num, in_length):
@@ -184,7 +257,7 @@ class Dbase:
             buffer = self.memo_decrypt(buffer)
         return buffer
 
-def readDbf(filename, memodecrypt=None, maxrec=0):
+def readDbf(filename, unpackfields=False, memodecrypt=None, maxrec=0):
     """
     Read the DBF file specified by the filename and 
     return the records as a list of dictionary.
@@ -192,7 +265,7 @@ def readDbf(filename, memodecrypt=None, maxrec=0):
     @return List of rows
     """
     db = Dbase()
-    db.open(filename, memodecrypt=memodecrypt, maxrec=maxrec)
+    db.open(filename, unpackfields=unpackfields, memodecrypt=memodecrypt, maxrec=maxrec)
     num = db.get_numrecords()
     rec = []
     for i in range(0, num):
