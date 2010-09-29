@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: sjis -*-
 import sys, os, re
+import pdb
 
 pat = re.compile(r'<dt>Åy(.*)Åz</dt>')
+pat2 = re.compile(r'<key type="(.*?)">(.*?)</key>')
 
 def charref2uni(str):
 	ar = str.split('&#');
@@ -31,4 +33,10 @@ for line in f:
 		s = charref2uni(ar[0])
 		if s != ar[0]:
 			print '<key type="ï\ãL">%s</key>' % (s,)
+	ar = pat2.findall(line)
+	if ar:
+		for t, k in ar:
+			s = charref2uni(k)
+			if s != k:
+				print '<key type="%s">%s</key>' % (t, s)
 f.close()
