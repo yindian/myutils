@@ -3,6 +3,10 @@
 import sys, os.path, re
 import unicodedata
 import pdb
+try:
+	from simptradwordmap import jfmap
+except:
+	jfmap = {}
 
 def charref2ustr(str):
 	ar = str.decode('sjis').split('&#');
@@ -183,6 +187,14 @@ def gettitlepronun(line):
 	return title, pronun
 
 def printtitle(title):
+	if title:
+		s = jfmap.get(title[0], title[0])
+		if s not in title:
+			title.append(s)
+	if title and 0x3040 < ord(title[0][0]) < 0x3100:
+		s = title[0]
+		print '<key type="かな">%s</key>' % (gaiji(s),)
+		return
 	for s in title:
 		print '<key type="表記">%s</key>' % (gaiji(s),)
 		if gaiji(s) != gaijialt(s):
@@ -233,8 +245,9 @@ for line in f:
 		line = fixentity(line)
 		print line + '</DT>'
 		printtitle(title)
-		print '<key type="表記">%s</key>' % (pronun,)
-		print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
+		if pronun:
+			print '<key type="表記">%s</key>' % (pronun,)
+		#print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
 		print '<DD>'
 		state = 2
 	elif state == 2:
@@ -246,8 +259,9 @@ for line in f:
 			line = fixentity(line)
 			print line + '</DT>'
 			printtitle(title)
-			print '<key type="表記">%s</key>' % (pronun,)
-			print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
+			if pronun:
+				print '<key type="表記">%s</key>' % (pronun,)
+			#print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
 			print '<DD>'
 		elif line.startswith('</DD>') or line.startswith('</DL>'):
 			print '</DD>'
@@ -313,7 +327,8 @@ for line in f:
 					if p < 0:
 						break
 					p += 1
-				if p < len(t):
+				if p < len(t) and len(charref2ustr(
+					xmltag.sub('', t[:p]))) > 32:
 					if ord(t[p]) >= 0x80 and \
 						(not 0xA1 <= ord(t[p]) <= 0xDF):
 						p += 2
@@ -325,8 +340,7 @@ for line in f:
 						p += 1
 					t = t[:p] + '<indent val=2>' + t[p:]
 				else:
-					print >> sys.stderr, 'Errrr'
-					pdb.set_trace()
+					pass
 
 				print '%s%s<indent val=1><br>' % (lp, t,)
 			elif s == 'example':
