@@ -200,6 +200,32 @@ def printtitle(title):
 		if gaiji(s) != gaijialt(s):
 			print '<key type="表記">%s</key>'%(gaijialt(s),)
 
+annexpat = re.compile(ur'([0-9A-Za-z.．（）-]*<SPAN lang=zh>.*</SPAN>)([^<>]*)')
+
+def flushdd(line):
+	ar = line.split('；')
+	result = []
+	for s in ar:
+		s = charref2ustr(s)
+		m = annexpat.match(s)
+		if m:
+			word = xmltag.sub('', m.group(1))
+			pronun = m.group(2).strip()
+			result.append((word, pronun))
+		else:
+			return
+	for word, pronun in result:
+		title = fixentity((u'%s %s' % (word, pronun)).encode(
+			'sjis', 'xmlcharrefreplace'))
+		print '<key type="表記" title="%s">%s</key>' % (
+				title, gaiji(word))
+		if gaiji(word) != gaijialt(word):
+			print '<key type="表記" title="%s">%s</key>' % (
+					title, gaijialt(word))
+		print '<key type="表記" title="%s">%s</key>' % (
+				title, pinyin2ascii(pronun))
+
+
 assert __name__ == '__main__'
 
 if len(sys.argv) != 2:
@@ -234,6 +260,8 @@ print """\
 
 f = open(sys.argv[1], 'r')
 state = 0
+ddcount = 0
+lastdd = None
 for line in f:
 	if state == 0:
 		if line.startswith('<DL>'):
@@ -250,8 +278,11 @@ for line in f:
 		#print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
 		print '<DD>'
 		state = 2
+		ddcount = 0
 	elif state == 2:
 		if line.startswith('<DT'):
+			if ddcount == 1:
+				flushdd(lastdd)
 			print '</DD>'
 			print '</DL>'
 			print '<DL>'
@@ -263,11 +294,17 @@ for line in f:
 				print '<key type="表記">%s</key>' % (pronun,)
 			#print >> sys.stderr, enc(' | '.join(title)), '|', enc(pronun)
 			print '<DD>'
+			ddcount = 0
 		elif line.startswith('</DD>') or line.startswith('</DL>'):
+			if ddcount == 1:
+				flushdd(lastdd)
 			print '</DD>'
 			print '</DL>'
 			break
 		elif line.startswith('<DD'):
+			ddcount += 1
+			p = line.index('>')
+			lastdd = line[p+1:].rstrip()
 			line = fixentity(line)
 			p = line.index('>')
 			s = line[4:p]
