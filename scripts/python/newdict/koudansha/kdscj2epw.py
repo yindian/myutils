@@ -389,7 +389,7 @@ for line in f:
 	elif state == 3:
 		line = fixentity(line)
 		s = line.rstrip()
-		if s.endswith('</DIV></DIV>'):
+		if s.endswith('</DIV></DIV>') or s.endswith('</TABLE></DIV>'):
 			#print s[:-12]
 			print '%s<br>' % (s,)
 			state = 2
