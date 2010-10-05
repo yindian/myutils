@@ -67,6 +67,14 @@ while not finished:
 		except:
 			traceback.print_exc()
 			pdb.set_trace()
+		q = p - 1
+		if q > 10: q = 10
+		try:
+			while lasthtml[-2-q:-2] != html[p-q:p]:
+				p += 1
+		except:
+			traceback.print_exc()
+			pdb.set_trace()
 		writelines(html[p+1:-1])
 		if p == len(html) - 1:
 			writelines(html[-1:])
