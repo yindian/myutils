@@ -1,0 +1,30 @@
+--- ebd2html.c.orig	Mon Jan 03 03:24:22 2005
++++ ebd2html.c	Sat Oct 09 11:25:10 2010
+@@ -1028,6 +1028,7 @@
+     word dpos;
+     byte *p, *q, *r, *linetop;
+     byte endtag[MAX_WORD], buf[MAX_DLINE], tmp[MAX_DLINE];
++    static char *closetag = NULL;
+ 
+     halfwidth = FALSE;
+     p = src;
+@@ -1185,10 +1186,19 @@
+ 		case 'E':
+ 		    switch (p[4]) {
+ 		    case '0':	/* 1FE0 xxxx ... 1FE1: ï∂éöèCè¸ */
++            if (p[10] == '3') {
++                q = addstr(q, "<b>");
++                closetag = "</b>";
++            } else
++                closetag = NULL;
+ 			p += 12;
+ 			break;
+ 		    default:
+ 			p += 6;
++            if (closetag) {
++                q = addstr(q, closetag);
++                closetag = NULL;
++            }
+ 			break;
+ 		    }
+ 		    break;
