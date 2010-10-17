@@ -49,16 +49,16 @@ def prebody():
 def postbody():
 	pass
 
-stripmark = lambda s: s.replace(u'\u25bd', u'').replace(u'\u25bc', u'')
+stripmark = lambda s: s.replace(u'\u25bd', u'').replace(u'\u25bc', u'').strip()
 htmlquote = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace(
 		'>', '&gt;').replace('\n', '').replace('\r', '')
 def unbracket(str):
 	p = str.find('(')
 	if p < 0: return str
 	q = str.index(')', p)
-	pre = str[:p]
-	mid = str[p+1:q]
-	post = str[q+1:]
+	pre = str[:p].rstrip()
+	mid = str[p+1:q].strip()
+	post = str[q+1:].lstrip()
 	return '%s%s|%s%s%s' % (pre, unbracket(post), pre, mid, unbracket(post))
 
 def flushitem(item):
@@ -82,12 +82,12 @@ def flushitem(item):
 			mean[0].append('</c>')
 		elif ctl == 0x0B00: #kanji
 			if len(mean) == 1:
-				mean[0].append('<c>[')
+				mean[0].append(u'<c>\u3010')
 				mean[0].append(htmlquote(str))
-				mean[0].append(']</c>')
+				mean[0].append(u'\u3011</c>')
 			else: # same as 1B00
 				if not pendingpos: pendingpos = u''
-				pendingpos += u'<c>[%s]</c>' % (htmlquote(str),)
+				pendingpos += u'<c>\u3010%s\u3011</c>' % (htmlquote(str),)
 		elif ctl == 0x0500 or ctl == 0x1500: #meaning item
 			if pendingpos:
 				mean.append([pendingpos + htmlquote(str)])
@@ -102,7 +102,7 @@ def flushitem(item):
 			pendingpos += u'<c>%s</c>' % (htmlquote(str),)
 		elif ctl == 0x1B00: #alt kanji
 			if not pendingpos: pendingpos = u''
-			pendingpos += u'<c>[%s]</c>' % (htmlquote(str),)
+			pendingpos += u'<c>\u3010%s\u3011</c>' % (htmlquote(str),)
 		elif ctl == 0x0A00: #example
 			if len(mean) == 1:
 				mean.append(pendingpos and [pendingpos] or [])
