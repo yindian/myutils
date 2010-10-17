@@ -52,6 +52,15 @@ def postbody():
 stripmark = lambda s: s.replace(u'\u25bd', u'').replace(u'\u25bc', u'')
 htmlquote = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace(
 		'>', '&gt;').replace('\n', '').replace('\r', '')
+def unbracket(str):
+	p = str.find('(')
+	if p < 0: return str
+	q = str.index(')', p)
+	pre = str[:p]
+	mid = str[p+1:q]
+	post = str[q+1:]
+	return '%s%s|%s%s%s' % (pre, unbracket(post), pre, mid, unbracket(post))
+
 def flushitem(item):
 	word = []
 	mean = [[]]
@@ -60,7 +69,7 @@ def flushitem(item):
 		if ctl in CTL_HEAD_SET:
 			word.append(str.replace(u'\u00b7', u''))
 		elif ctl in (0x0B00, 0x1B00): # kanji
-			word.extend(map(stripmark, str.split(u'\u00b7')))
+			word.extend(map(unbracket, map(stripmark, str.split(u'\u00b7'))))
 		if   ctl == 0x2100 or ctl == 0xA100: #heading
 			assert len(mean) == 1
 			mean[0].append('<big>')
