@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys, os.path, struct
+import sys, os.path, struct, re
 import pdb
 
 BEGINMAGIC = '\x00\x00\x00\x18\x04\x00'
@@ -20,7 +20,7 @@ ENDMAGIC   = '\x00\x00\x00\x00\x04\x00'
 # A100 len		sub heading, followed by len chars and null
 # 0400 len		idiom, followed by len chars
 # 0900 len		derivation, followed by len chars
-# 0700 len		reference, followed by len chars
+# 0700 len		antonym, followed by len chars
 # 1B00 len		alt kanji, followed by len chars. Cf 0B00
 # 1200 len		alt intonation, followed by len chars. Cf 0200
 CTL_IGN_SET  = (0x0300, 0x0000)
@@ -50,6 +50,7 @@ def postbody():
 	pass
 
 stripmark = lambda s: s.replace(u'\u25bd', u'').replace(u'\u25bc', u'').strip()
+supmark = lambda s: s.replace(u'\u25bd', u'<sup>\u25bd</sup>').replace(u'\u25bc', u'<sup>\u25bc</sup>')
 htmlquote = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace(
 		'>', '&gt;').replace('\n', '').replace('\r', '')
 def unbracket(str):
@@ -83,11 +84,11 @@ def flushitem(item):
 		elif ctl == 0x0B00: #kanji
 			if len(mean) == 1:
 				mean[0].append(u'<c>\u3010')
-				mean[0].append(htmlquote(str))
+				mean[0].append(supmark(htmlquote(str)))
 				mean[0].append(u'\u3011</c>')
 			else: # same as 1B00
 				if not pendingpos: pendingpos = u''
-				pendingpos += u'<c>\u3010%s\u3011</c>' % (htmlquote(str),)
+				pendingpos += u'<c>\u3010%s\u3011</c>' % (supmark(htmlquote(str)),)
 		elif ctl == 0x0500 or ctl == 0x1500: #meaning item
 			if pendingpos:
 				mean.append([pendingpos + htmlquote(str)])
@@ -102,20 +103,53 @@ def flushitem(item):
 			pendingpos += u'<c>%s</c>' % (htmlquote(str),)
 		elif ctl == 0x1B00: #alt kanji
 			if not pendingpos: pendingpos = u''
-			pendingpos += u'<c>\u3010%s\u3011</c>' % (htmlquote(str),)
+			pendingpos += u'<c>\u3010%s\u3011</c>' % (supmark(htmlquote(str)),)
 		elif ctl == 0x0A00: #example
 			if len(mean) == 1:
 				mean.append(pendingpos and [pendingpos] or [])
-			mean[-1].append(u'<ex>%s</ex>' % (htmlquote(str),))
+			ar = re.split(u'☆|△', str)
+			try:
+				if ar[0] and word[0] == u'むごい':
+					ar.insert(0, u'')
+				assert not ar[0]
+			except:
+				print >> sys.stderr, u'|'.join(word).encode(
+						'gbk', 'replace')
+				raise
+			if len(ar) == 2:
+				mean[-1].append(u'<ex>\u3000%s</ex>' % (htmlquote(str),))
+			else:
+				br = re.findall(u'☆|△', str)
+				try:
+					assert len(br) == len(ar) - 1
+				except:
+					if word[0] == u'むごい':
+						br.insert(0, u'')
+				for c, s in zip(br, ar[1:]):
+					mean[-1].append(u'<ex>\u3000%s%s</ex>' % (c, htmlquote(s),))
 		elif ctl == 0x0400: #idiom
 			if len(mean) == 1:
 				mean.append(pendingpos and [pendingpos] or [])
-			mean[-1].append(u'<b>慣用</b>: ' + htmlquote(str))
+			ar = re.split(u'△|◆|☆|◇', str)
+			try:
+				assert not ar[0]
+			except:
+				print >> sys.stderr, u'|'.join(word).encode(
+						'gbk', 'replace')
+				raise
+			if len(ar) == 2:
+				mean[-1].append(u'<b>慣用</b>: ' + htmlquote(str))
+			else:
+				mean[-1].append(u'<b>慣用</b>:')
+				br = re.findall(u'△|◆|☆|◇', str)
+				assert len(br) == len(ar) - 1
+				for c, s in zip(br, ar[1:]):
+					mean[-1].append(u'\u3000%s%s' % (c, htmlquote(s),))
 		elif ctl == 0x0600: #synonym
 			if len(mean) == 1:
 				mean.append(pendingpos and [pendingpos] or [])
 			mean[-1].append(u'<b>同義</b>: ' + htmlquote(str))
-		elif ctl == 0x0700: #reference
+		elif ctl == 0x0700: #antonym
 			try:
 				assert len(mean) > 1
 			except:
@@ -123,10 +157,63 @@ def flushitem(item):
 						'gbk', 'replace')
 				raise
 			assert len(mean) > 1
-			mean[-1].append(u'<b>參照</b>: ' + htmlquote(str))
+			mean[-1].append(u'<b>反義</b>: ' + htmlquote(str))
 		elif ctl == 0x0900: #derivation
 			assert len(mean) > 1
-			mean[-1].append(u'<b>派生</b>: ' + htmlquote(str))
+			if str.count(u'【') <= 1:
+				if str.count(u'。～') == 0:
+					mean[-1].append(u'<b>衍生</b>: ' + htmlquote(str))
+				else:
+					mean[-1].append(u'<b>衍生</b>:')
+					p = str.index(u'。～') + 1
+					mean[-1].append(u'\u3000%s' % (str[:p]))
+					while p < len(str):
+						q = str.find(u'。～', p)
+						if q < 0:
+							q = len(str)
+						else:
+							q += 1
+						mean[-1].append(u'\u3000%s' % (str[p:q],))
+						p = q
+			else:
+				mean[-1].append(u'<b>衍生</b>:')
+				ar = str.split(u'【')
+				for i in xrange(1, len(ar)):
+					p = ar[i-1].rindex(u'～')
+					if i == 1:
+						try:
+							assert p == 0
+						except:
+							print >> sys.stderr, u'|'.join(word).encode(
+									'gbk', 'replace')
+							q = p
+							while q > 0:
+								pp = ar[i-1].rfind(u'～', 0, q)
+								while pp > 0 and ar[i-1][pp:q].count('(') != ar[i-1][pp:q].count(')'):
+									pp = ar[i-1].rfind(u'～', 0, pp)
+								if pp < 0: pp = 0
+								mean[-1].append(u'\u3000%s' % (ar[i-1][pp:q],))
+								q = pp
+					if i == len(ar) - 1:
+						q = len(ar[i])
+					else:
+						q = ar[i].rindex(u'～')
+					if ar[i][:q].count(u'。～') > 0:
+						pp = q
+						q = ar[i].index(u'。～') + 1
+					else:
+						pp = -1
+					mean[-1].append(u'\u3000%s【%s' % (ar[i-1]
+						[p:], ar[i][:q]))
+					if pp > 0:
+						while q < pp:
+							p = ar[i].find(u'。～', q)
+							if p < 0:
+								p = pp
+							else:
+								p += 1
+							mean[-1].append(u'\u3000%s' % (ar[i][q:p],))
+							q = p
 	result = [u'|'.join(word), u'\t']
 	result.append(u''.join(mean[0]))
 	result.append(u'\\n')
