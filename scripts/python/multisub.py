@@ -1,22 +1,38 @@
 #!/usr/bin/env python
 import sys, os.path
 import getopt, glob, fileinput
+import types, time
+
+def trieaddstr(root, text, nodeinfo=''):
+	assert type(root) == types.DictType
+	assert type(text) == type(nodeinfo) == types.StringType
+	if not text:
+		return
+	node = root
+	for c in text:
+		if not node.has_key(c):
+			node[c] = {}
+		node = node[c]
+	node[None] = nodeinfo
+
+	
 
 assert __name__ == '__main__'
 
-opt, argv = getopt.getopt(sys.argv, 'd:h?')
+opt, argv = getopt.getopt(sys.argv[1:], 'd:h?v')
 opt = dict(opt)
-if opt.has_key('-h') or opt.has_key('-?') or len(argv) < 2:
+if opt.has_key('-h') or opt.has_key('-?') or len(argv) < 1:
 	print 'Linewise multiple string replacement filter'
 	print 'Usage: %s [-d delimiter] pattern_file src_file(s)' % (
-			os.path.basename(argv[0]),)
+			os.path.basename(sys.argv[0]),)
 	print 'Each line in pattern_file is a from-to pair, delimited by -> by default'
 	sys.exit(0)
 
 delimiter = opt.get('-d', '->')
+verbose = opt.has_key('-v')
 
 pats = []
-f = open(argv[1], 'r')
+f = open(argv[0], 'r')
 for line in f:
 	if line.endswith('\n'):
 		line = line[:-1]
@@ -49,7 +65,19 @@ for i in xrange(1, len(pats)):
 	else:
 		prefix = prefix[:l]
 
-if prefix and (maxlen - minlen) < 16:
+flist = []
+for fname in argv[1:]:
+	flist.extend(glob.glob(fname))
+if len(flist) == 0:
+	flist.append('-')
+outf = sys.stdout
+
+starttime = time.clock()
+
+if prefix and (maxlen - minlen) < 16 and sum(map(lambda a: a[0].count(prefix),
+	pats)) == len(pats): # split can't handle multiple occurrence of prefix
+	if verbose:
+		print >> sys.stderr, 'Using hash.'
 	# use hash
 	pfxlen = len(prefix)
 	minlen -= pfxlen
@@ -57,12 +85,8 @@ if prefix and (maxlen - minlen) < 16:
 	d = {}
 	for src, dst in pats:
 		d[src[pfxlen:]] = dst
-	flist = []
-	for fname in argv[2:]:
-		flist.extend(glob.glob(fname))
-	if len(flist) == 0:
-		flist.append('-')
-	outf = sys.stdout
+	bytes = 0
+	lineno = 0
 	for line in fileinput.input(flist):
 		ar = line.split(prefix)
 		result = [ar[0]]
@@ -83,7 +107,52 @@ if prefix and (maxlen - minlen) < 16:
 				result.append(d[ar[i][:j]])
 				result.append(ar[i][j:])
 		outf.writelines(result)
+		lineno += 1
+		bytes += len(line)
+		if verbose and lineno % 10000 == 0:
+			print >> sys.stderr, '\rBytes per second:', bytes / (time.clock() - starttime),
 else:
+	if verbose:
+		print >> sys.stderr, 'Using trie.'
 	# use trie
-	print >> sys.stderr, 'Trie method not yet implemented.'
-	sys.exit(1)
+	trie = {}
+	for src, dst in pats:
+		trieaddstr(trie, src, dst)
+	bytes = 0
+	lineno = 0
+	for line in fileinput.input(flist):
+		result = []
+		linelen = len(line)
+		i = 0 # current cursor
+		j = -1 # cursor at trie root entry
+		node = trie # current trie node, starting at root
+		while i < linelen:
+			c = line[i]
+			if node.has_key(c):
+				if j < 0:
+					j = i
+				i += 1
+				node = node[c]
+				if node.has_key(None): # has pattern
+					result.append(node[None]) # replace
+					node = trie # rewind to trie root
+					j = -1
+			elif j < 0:
+				i += 1
+				result.append(c)
+			else:
+				i = j+1 # starting at j has no pattern
+				result.append(line[j])
+				node = trie # rewind to trie root
+				j = -1
+		if j >= 0: # unfinished match
+			result.append(line[j:])
+		outf.writelines(result)
+		lineno += 1
+		bytes += linelen
+		if verbose and lineno % 10000 == 0:
+			print >> sys.stderr, '\rBytes per second:', bytes / (time.clock() - starttime),
+
+endtime = time.clock()
+if verbose:
+	print >> sys.stderr, '\nElapsed time: %.2f seconds'% (endtime - starttime)
