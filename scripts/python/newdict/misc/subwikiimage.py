@@ -15,6 +15,8 @@ try:
 	for line in f:
 		lineno += 1
 		word, mean = line.rstrip('\r\n').split('\t', 1)
+		#if word.startswith('File:'):
+		#	reslist.append(stripprefix(word))
 		ar = htmlquote(mean.replace('‎', '')).split('\\n')
 		state = 0
 		for i in xrange(len(ar)):
@@ -40,7 +42,7 @@ try:
 					ar[i] = '%s|%s' % (htmlunquote(
 						stripprefix(ar[i][:p])),
 						ar[i][p+1:])
-		mean = ''.join(ar)
+		mean = '\\n'.join(ar)
 		print '%s\t%s' % (word, mean)
 except:
 	print >> sys.stderr, 'Error on line', lineno
