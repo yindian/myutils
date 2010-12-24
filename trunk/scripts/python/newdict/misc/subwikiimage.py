@@ -19,7 +19,7 @@ try:
 		state = 0
 		for i in xrange(len(ar)):
 			if state == 0:
-				if ar[i].find('&lt;gallery&gt;') >= 0:
+				if ar[i].find('&lt;gallery') >= 0:
 					state = 1
 				else:
 					reslist.extend([htmlunquote(a[0])
@@ -27,9 +27,9 @@ try:
 						respat.findall(ar[i])])
 					ar[i] = respat.sub(resrepl, ar[i])
 			if state == 1:
-				if ar[i].find('&lt;/gallery&gt;') >= 0:
+				if ar[i].find('&lt;/gallery') >= 0:
 					state = 0
-				elif ar[i].find('&lt;gallery&gt;') >= 0:
+				elif ar[i].find('&lt;gallery') >= 0:
 					pass
 				elif ar[i].strip():
 					p = ar[i].find('|')
