@@ -68,8 +68,8 @@ diff -ur orig\wget-1.11.4\src\main.c wget-1.11.4\src\main.c
      N_("\
 diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
 --- orig\wget-1.11.4\src\mswindows.c	Sun Apr 27 12:48:24 2008
-+++ wget-1.11.4\src\mswindows.c	Sat May 22 12:51:50 2010
-@@ -731,3 +731,194 @@
++++ wget-1.11.4\src\mswindows.c	Sat Dec 25 03:03:44 2010
+@@ -731,3 +731,201 @@
    return (const char *) dst;
  }
  #endif
@@ -119,6 +119,11 @@ diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
 +   return buffer;
 +}
 +static wchar_t *__from_utf8(const char *str)
++{
++   static wchar_t buffer[4096];
++   return _from_utf8(buffer, str, 4096);
++}
++static wchar_t *__from_utf8_alt(const char *str)
 +{
 +   static wchar_t buffer[4096];
 +   return _from_utf8(buffer, str, 4096);
@@ -184,7 +189,7 @@ diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
 +  else {                                                             \
 +    wchar_t *wfname, *wfname2;                                       \
 +    wfname = __from_utf8(fname);                                     \
-+    wfname2 = __from_utf8(fname2);                                   \
++    wfname2 = __from_utf8_alt(fname2);                               \
 +    if (wfname && wfname2) {                                         \
 +      return _w##fun(wfname, wfname2);                               \
 +    } else {                                                         \
@@ -212,12 +217,14 @@ diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
 +#undef mkdir
 +#undef stat
 +#undef fopen
++#undef utime
 +
 +WRAP (chmod,  int, (const char* name, int mode), name, mode)
 +WRAP2(rename, int, (const char* name, const char* name2), name, name2)
 +WRAP0(unlink, int, (const char* name), name)
 +WRAP0(mkdir,  int, (const char* name), name)
 +WRAP2(fopen,  FILE *, (const char* name, const char* mode), name, mode)
++WRAP (utime,  int, (const char* name, struct utimbuf* tim), name, tim)
 +
 +int wrapped_open (const char* name, int mode, ...)
 +{
@@ -266,14 +273,15 @@ diff -ur orig\wget-1.11.4\src\mswindows.c wget-1.11.4\src\mswindows.c
 +#endif
 diff -ur orig\wget-1.11.4\src\mswindows.h wget-1.11.4\src\mswindows.h
 --- orig\wget-1.11.4\src\mswindows.h	Sun Apr 27 12:48:24 2008
-+++ wget-1.11.4\src\mswindows.h	Sat May 22 12:44:02 2010
-@@ -211,4 +211,34 @@
++++ wget-1.11.4\src\mswindows.h	Fri Dec 24 05:43:38 2010
+@@ -211,4 +211,37 @@
  char *ws_mypath (void);
  void windows_main (char **);
  
 +#ifdef _WIN32_WINNT
 +/* Unicode version of file operations. */
 +#include <stdio.h>
++#include <utime.h>
 +#ifdef HAVE_ACCESS
 +#define access  wrapped_access
 +int wrapped_access (const char*, int);
@@ -291,6 +299,7 @@ diff -ur orig\wget-1.11.4\src\mswindows.h wget-1.11.4\src\mswindows.h
 +#endif
 +#define stat(f, b)    wrapped_stat(f, b)
 +#define fopen   wrapped_fopen
++#define utime   wrapped_utime
 +
 +int   wrapped_chmod (const char*, int);
 +int   wrapped_open (const char*, int, ...);
@@ -299,6 +308,7 @@ diff -ur orig\wget-1.11.4\src\mswindows.h wget-1.11.4\src\mswindows.h
 +int   wrapped_mkdir (const char*);
 +int   wrapped_stat (const char*, struct_stat*);
 +FILE* wrapped_fopen (const char*, const char*);
++int   wrapped_utime (const char*, struct utimbuf*);
 +#endif
 +
  #endif /* MSWINDOWS_H */
