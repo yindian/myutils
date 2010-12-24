@@ -5,6 +5,9 @@ htmlquote = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace(
 		'>', '&gt;').replace('"', '&quot;')
 htmlunquote = lambda s: s.replace('&lt;', '<').replace('&gt;', '>').replace(
 		'&quot;', '"').replace('&amp;', '&')
+wikiquote = lambda s: s.replace(' ', '_')
+htmlunquote_0 = htmlunquote
+htmlunquote = lambda s: wikiquote(htmlunquote_0(s))
 respat = re.compile(r'(?<!&lt;nowiki&gt;)\[\[(?:File|Image|图像|圖像|文件|檔案|档案):\s*([^\]\|<>]*?)\s*((?:\|[^\]]*)?)\]\]', re.I)
 resrepl = lambda m: '[[<rref>%s</rref>%s]]' % (htmlunquote(m.group(1)), 
 		m.group(2))
@@ -39,7 +42,7 @@ try:
 						p = len(ar[i])
 					reslist.append(htmlunquote(
 						stripprefix(ar[i][:p])))
-					ar[i] = '%s|%s' % (htmlunquote(
+					ar[i] = '<rref>%s</rref>|%s' % (htmlunquote(
 						stripprefix(ar[i][:p])),
 						ar[i][p+1:])
 		mean = '\\n'.join(ar)
