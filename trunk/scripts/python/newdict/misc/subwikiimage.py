@@ -4,18 +4,18 @@ f = open(sys.argv[1], 'r')
 htmlquote = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace(
 		'>', '&gt;').replace('"', '&quot;')
 respat = re.compile(r'\[\[(?:File|Image|图像|圖像|文件|檔案):\s*([^\]\|<>]*?)\s*((?:\|[^\]]*)?)\]\]', re.I)
-stripprefix = lambda s: s.find(':') >= 0 and s[s.find(':')+1].strip() or s.strip()
+stripprefix = lambda s: s.find(':') >= 0 and s[s.find(':')+1:].strip() or s.strip()
 reslist = []
 lineno = 0
 try:
 	for line in f:
 		lineno += 1
 		word, mean = line.rstrip('\r\n').split('\t', 1)
-		ar = mean.replace('‎', '').split('\n')
+		ar = mean.replace('‎', '').split('\\n')
 		state = 0
 		for i in xrange(len(ar)):
 			if state == 0:
-				if ar[i].find('&lt;gallery&gt;') >= 0:
+				if ar[i].find('<gallery>') >= 0:
 					state = 1
 				else:
 					reslist.extend([a[0] for a in
@@ -23,11 +23,15 @@ try:
 					ar[i] = respat.sub('[[<rref>\g<1>'
 							'</rref>\g<2>]]' ,
 							ar[i])
-			else:
-				if ar[i].find('&lt;/gallery&gt;') >= 0:
+			if state == 1:
+				if ar[i].find('</gallery>') >= 0:
 					state = 0
-				else:
-					p = ar[i].index('|')
+				elif ar[i].find('<gallery>') >= 0:
+					pass
+				elif ar[i].strip():
+					p = ar[i].find('|')
+					if p < 0:
+						p = len(ar[i])
 					reslist.append(stripprefix(ar[i][:p]))
 					ar[i] = '%s|%s' % (stripprefix(
 						ar[i][:p]),
