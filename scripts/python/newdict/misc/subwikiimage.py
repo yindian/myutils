@@ -8,9 +8,15 @@ htmlunquote = lambda s: s.replace('&lt;', '<').replace('&gt;', '>').replace(
 wikiquote = lambda s: s.replace(' ', '_')
 htmlunquote_0 = htmlunquote
 htmlunquote = lambda s: wikiquote(htmlunquote_0(s))
+wgetescpat = re.compile(r'["*/:<>?\\|]')
+wgetescrepl = lambda m: '%%%02X' % (ord(m.group(0)),)
+wgetescape = lambda s: wgetescpat.sub(wgetescrepl, s)
+filenamequote = lambda s: wgetescape(htmlunquote(s))
 respat = re.compile(r'(?<!&lt;nowiki&gt;)\[\[(?:File|Image|图像|圖像|文件|檔案|档案):\s*([^\]\|<>]*?)\s*((?:\|[^\]]*)?)\]\]', re.I)
-resrepl = lambda m: '[[<rref>%s</rref>%s]]' % (htmlunquote(m.group(1)), 
+resrepl = lambda m: '[[<rref>%s</rref>%s]]' % (filenamequote(m.group(1)), 
 		m.group(2))
+tmplpat = re.compile(r'(文件名\s*=\s*)([^\|\\]*\.(?:jpe?g|gif|png|svg|bmp))', re.I)
+tmplrepl = lambda m: '%s<rref>%s</rref>' % (m.group(1), filenamequote(m.group(2)))
 stripprefix = lambda s: s.find(':') >= 0 and s[s.find(':')+1:].strip() or s.strip()
 reslist = []
 lineno = 0
@@ -18,15 +24,21 @@ try:
 	for line in f:
 		lineno += 1
 		word, mean = line.rstrip('\r\n').split('\t', 1)
-		#if word.startswith('File:'):
-		#	reslist.append(stripprefix(word))
 		ar = htmlquote(mean.replace('‎', '')).split('\\n')
+		if word.startswith('File:'):
+			reslist.append(wikiquote(stripprefix(word)))
+			ar.insert(0, '<rref>%s</rref>' % (
+				filenamequote(wikiquote(stripprefix(word))),))
 		state = 0
 		for i in xrange(len(ar)):
 			if state == 0:
 				if ar[i].find('&lt;gallery') >= 0:
 					state = 1
 				else:
+					reslist.extend([htmlunquote(a[1])
+						for a in
+						tmplpat.findall(ar[i])])
+					ar[i] = tmplpat.sub(tmplrepl , ar[i])
 					reslist.extend([htmlunquote(a[0])
 						for a in
 						respat.findall(ar[i])])
@@ -42,7 +54,7 @@ try:
 						p = len(ar[i])
 					reslist.append(htmlunquote(
 						stripprefix(ar[i][:p])))
-					ar[i] = '<rref>%s</rref>|%s' % (htmlunquote(
+					ar[i] = '<rref>%s</rref>|%s' % (filenamequote(
 						stripprefix(ar[i][:p])),
 						ar[i][p+1:])
 		mean = '\\n'.join(ar)
