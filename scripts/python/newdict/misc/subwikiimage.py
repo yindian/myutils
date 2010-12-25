@@ -15,7 +15,7 @@ filenamequote = lambda s: wgetescape(htmlunquote(s))
 respat = re.compile(r'(?<!&lt;nowiki&gt;)\[\[(?:File|Image|图像|圖像|文件|檔案|档案):\s*([^\]\|<>]*?)\s*((?:\|[^\]]*)?)\]\]', re.I)
 resrepl = lambda m: '[[<rref>%s</rref>%s]]' % (filenamequote(m.group(1)), 
 		m.group(2))
-tmplpat = re.compile(r'(文件名\s*=\s*)([^\|\\]*\.(?:jpe?g|gif|png|svg|bmp))', re.I)
+tmplpat = re.compile(r'((?:文件名|image)\s*=\s*)([^\|\\\[\]]*\.(?:jpe?g|gif|png|svg|bmp))', re.I)
 tmplrepl = lambda m: '%s<rref>%s</rref>' % (m.group(1), filenamequote(m.group(2)))
 stripprefix = lambda s: s.find(':') >= 0 and s[s.find(':')+1:].strip() or s.strip()
 reslist = []
