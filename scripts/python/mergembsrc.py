@@ -42,7 +42,8 @@ if sys.argv[1] == '-s':
 		for s in ar[1:]:
 			if s[0] in '~^!':
 				s = s[1:]
-			if len(s) > 1:
+			if len(s) > 1 and not (0xD800 <= ord(s[0]) < 0xDC00 and
+					len(s) == 2):
 				continue
 			if s not in result[ar[0]]:
 				result[ar[0]].append(s)
