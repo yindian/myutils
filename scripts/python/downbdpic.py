@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys, os, re, urllib, urllib2
+import traceback, time
 
 def win32_utf8_argv():
 	try:
@@ -90,7 +91,7 @@ def getalbumlistbyuser(user):
 	return zip([urllib.unquote(s) for s in result], map(int, numresult))
 
 def downloadalbum(user, album, namingrule='%d_%s.jpg', outpath='.', log=None,
-		touni=lambda s: s.decode('cp936'), test=False):
+		touni=lambda s: s.decode('cp936'), test=False, append=False):
 	quser = urllib.quote(user)
 	qalbum = urllib.quote(album)
 	urlpat = 'http://%s.%s/%s/album/%s/index/%%d' % (SPACE, DOMAIN,
@@ -120,12 +121,26 @@ def downloadalbum(user, album, namingrule='%d_%s.jpg', outpath='.', log=None,
 	for i, s, n in zip(xrange(1, sys.maxint), result, nameresult):
 		req = urllib2.Request(picurlpat % (s,))
 		req.add_header('Referer', referer)
+		req.add_header('User-Agent', 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)')
 		if not test:
-			r = urllib2.urlopen(req)
-			f = open(os.path.join(outpath, namingrule % (i,
-				pathquote(touni(n)))), 'wb')
-			f.write(r.read())
-			f.close()
+			done = False
+			if append:
+				if os.path.exists(os.path.join(outpath,
+					namingrule % (i, pathquote(touni(n))))):
+					done = True
+			while not done:
+				try:
+					r = urllib2.urlopen(req)
+					f = open(os.path.join(outpath, namingrule % (i,
+						pathquote(touni(n)))), 'wb')
+					f.write(r.read())
+					f.close()
+					done = True
+				except urllib2.URLError:
+					traceback.print_exc()
+					time.sleep(0.5)
+		else:
+			print '\nURL: %s\tName: %s\t' % (picurlpat % (s,), n),
 		if log: log.write('.')
 
 if __name__ == '__main__':
@@ -142,6 +157,8 @@ if __name__ == '__main__':
 				'treated as the album index in the list'
 		print '  t user_name [album_name]: same as d, but only test, '\
 				'do not actually download'
+		print '  a user_name [album_name]: same as d, but do not '\
+				'download if local file exists'
 		print 'The download output path is the current directory / '\
 				'user_name / album_name, with the exception '\
 				'that if the current directory name is '\
@@ -167,12 +184,13 @@ if __name__ == '__main__':
 		print >> sys.stderr, 'Error listing', user
 		raise
 	if argv[1].lower() == 'l':
-		writeunicode(u'User %s has %d albums' % (uuser,
-			len(ar)))
+		writeunicode(u'User %s has %d albums, %d pics' % (uuser,
+			len(ar), sum([n for s, n in ar])))
 		for i, (s, n) in zip(xrange(1, sys.maxint), ar):
 			writeunicode(u'%d.\t%s (%d)' % (i, touni(s), n))
-	elif argv[1].lower() == 'd' or argv[1].lower() == 't':
+	elif argv[1].lower() in 'dta':
 		test = argv[1].lower() == 't'
+		app  = argv[1].lower() == 'a'
 		if len(argv) == 3:
 			pardir, curdir = os.path.split(os.getcwdu())
 			if curdir == uuser:
@@ -185,7 +203,7 @@ if __name__ == '__main__':
 					ualbum, n), newline=False)
 				downloadalbum(user, s, outpath=os.path.join(
 					outpath, pathquote(ualbum)),
-					log=sys.stdout, test=test)
+					log=sys.stdout, test=test, append=app)
 				print
 		else:
 			idx = None
@@ -216,5 +234,5 @@ if __name__ == '__main__':
 			writeunicode(u'Downloading %s (%d)' % (
 				ualbum, ar[idx][1]), newline=False)
 			downloadalbum(user, album, outpath=outpath,
-				log=sys.stdout, test=test)
+				log=sys.stdout, test=test, append=app)
 			print
