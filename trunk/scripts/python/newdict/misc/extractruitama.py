@@ -30,6 +30,7 @@ if len(sys.argv) != 2:
 
 wordlist = []
 indexlist = [sys.argv[1]]
+taglist = []
 
 lipat = re.compile(r'<li>(\d+)\s*<a href="(.*?)">(.*?)</a></li>')
 hrefurlpat = re.compile(r'<a href="(.*?)">')
@@ -59,9 +60,12 @@ while indexlist:
 		# special cases
 		if url == '../data/e38292/e38292e381a8.html':
 			url = '../data/e38292/e38292e3809c.html'
+			tag = 'e38292e3809ce381a8e38197e3819f'
 		wordlist.append((int(num), word, url, tag))
+		taglist.append((tag, word))
 	if r > 0:
 		indexlist.append(hrefurlpat.findall(lines[r])[0])
+taglist = dict(taglist)
 
 #print len(wordlist)
 #last = None
@@ -77,7 +81,7 @@ lastfname = None
 lastlines = None
 dic = []
 diclinkpat = re.compile(r" ?<a id='dictlink'.*?>(.*?)</a>")
-hrefdatpat = re.compile(r'<a href="../../data/.*?">(.*?)</a>')
+hrefdatpat = re.compile(r'<a href="../../data/.*?#(.*?)">(.*?)</a>')
 for num, word, fname, tag in wordlist:
 	try:
 		if fname == lastfname:
@@ -95,7 +99,6 @@ for num, word, fname, tag in wordlist:
 		q = findline(lines, '</div>', p, rise=True)
 		s = '\n'.join(lines[p:q])[21:]
 		s = diclinkpat.sub('', s)
-		s = hrefdatpat.sub(r'<a href="bword://\g<1>">\g<1></a>', s)
 		result.append(s.strip())
 	except:
 		print >> sys.stderr, num, recode(word), fname
@@ -103,7 +106,10 @@ for num, word, fname, tag in wordlist:
 		traceback.print_exc()
 	else:
 		dic.append((word, result))
-	print '%s\t%s' % (word, '<br>'.join(result or []).replace('\n', '\\n'))
 
-#for word, mean in dic:
-#	print '%s\t%s' % (word, '<br>'.join(mean or []).replace('\n', '\\n'))
+hrefdatsub = lambda m: r'<a href="bword://%s">%s</a>' % (taglist.get(m.group(1),
+	m.group(2)), m.group(2))
+for word, mean in dic:
+	mean = '<br>'.join(mean or [])
+       	mean = hrefdatpat.sub(hrefdatsub, mean)
+	print '%s\t%s' % (word, mean.replace('\n', '\\n'))
