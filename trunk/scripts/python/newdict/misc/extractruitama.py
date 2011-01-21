@@ -60,7 +60,9 @@ while indexlist:
 		# special cases
 		if url == '../data/e38292/e38292e381a8.html':
 			url = '../data/e38292/e38292e3809c.html'
-			tag = 'e38292e3809ce381a8e38197e3819f'
+		elif tag == 'e382bde38395e38388e383a9e383b3e38387e382a3e383b3e382b0e3808de3818be3808ce3838fe383bce38389e383a9e383b3e38387e382a3e383b3e382b0e3818b':
+			url = '../data/e3808c/e3808ce382bd.html'
+		tag = word.encode('hex')
 		wordlist.append((int(num), word, url, tag))
 		taglist.append((tag, word))
 	if r > 0:
