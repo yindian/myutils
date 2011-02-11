@@ -78,12 +78,17 @@ try:
 						+examplelen]]
 		word, pron = title.split('#')
 		pron = pron.split(' ')
-		print '<dt id="%d">Åy%sÅz</dt>' % (i, fmt(word))
+		if pron:
+			print '<dt id="%d">Åy%sÅz%s</dt>' % (i, fmt(word),
+					fmt(pron[-1]))
+		else:
+			print '<dt id="%d">Åy%sÅz</dt>' % (i, fmt(word))
 		for s in pron:
 			s = fmt(s)
-			print '<key type="ï\ãL">%s</key>' % (s,)
 			if isallkana(s.decode('sjis')):
 				print '<key type="Ç©Ç»">%s</key>' % (s,)
+			else:
+				print '<key type="ï\ãL">%s</key>' % (s,)
 		for s in getenglish(fmt(mean)):
 			print '<key type="ï\ãL" title="%s">%s</key>' % (s, s)
 		print '<dd>'
