@@ -59,6 +59,12 @@ try:
 				file.write(ustr.encode(fnenc, 'replace'))
 except:
 	def writeunicode(ustr, file, newline=True):
+		if type(ustr) == type(''):
+			if newline:
+				print >> file, ustr
+			else:
+				file.write(ustr)
+			return
 		if newline:
 			print >> file, ustr.encode(fnenc, 'replace')
 		else:
@@ -67,7 +73,12 @@ except:
 def renameit(path, fromenc, toenc):
 	dest = path
 	try:
-		ansi = path.encode(fromenc)
+		if os.name != 'nt':
+			ansi = path.decode(fnenc).encode(fromenc)
+		else:
+			ansi = path.encode(fromenc)
+	except UnicodeDecodeError:
+		ansi = path
 	except UnicodeEncodeError:
 		if fromenc == toenc:
 			ansi = path.encode(toenc, 'replace').replace('?', '_')
@@ -77,11 +88,13 @@ def renameit(path, fromenc, toenc):
 			raise
 	try:
 		dest = unicode(ansi, toenc)
-	except UnicodeEncodeError:
+	except UnicodeDecodeError:
 		print >> sys.stderr, 'Cannot convert from %s to %s: ' % (fromenc,
 				toenc), 
 		writeunicode(path, sys.stderr)
 		raise
+	if os.name != 'nt':
+		dest = dest.encode(fnenc)
 	return (path, dest)
 
 todolist = []
@@ -90,9 +103,37 @@ def convren((fromenc, toenc), dirname, names):
 	for name in names:
 		todolist.append(renameit(os.path.join(dirname, name), fromenc, toenc))
 
+import encodings, codecs, urllib
+class Codec(codecs.Codec):
+	def encode(self,input,errors='strict'):
+		return urllib.quote(input.encode('utf-8')).encode('ascii'), len(input)
+	def decode(self,input,errors='strict'):
+		return urllib.unquote(str(input)).decode('utf-8'), len(input)
+class IncrementalEncoder(codecs.IncrementalEncoder):
+	def encode(self, input, final=False):
+		return urllib.quote(input.encode('utf-8')).encode('ascii')
+class IncrementalDecoder(codecs.IncrementalDecoder):
+	def decode(self, input, final=False):
+		return urllib.unquote(str(input)).decode('utf-8')
+class StreamWriter(Codec,codecs.StreamWriter): pass
+class StreamReader(Codec,codecs.StreamReader): pass
+encodings._cache['utf-8-url'] = codecs.CodecInfo(
+		name='utf-8-url',
+		encode=Codec().encode,
+		decode=Codec().decode,
+		incrementalencoder=IncrementalEncoder,
+		incrementaldecoder=IncrementalDecoder,
+		streamreader=StreamReader,
+		streamwriter=StreamWriter,
+		)
+
 if __name__ == '__main__':
 	argv = win32_utf8_argv() or sys.argv
-	argv = map(lambda s:unicode(s, 'utf-8'), argv)
+	if os.name != 'nt':
+		zstr = ''
+	else:
+		zstr = u''
+		argv = map(lambda s:unicode(s, 'utf-8'), argv)
 	if len(argv) < 4:
 		showhelp()
 		sys.exit(0)
@@ -103,13 +144,13 @@ if __name__ == '__main__':
 
 	for file in argv[3:]:
 		if os.path.exists(file):
-			convren((fromenc, toenc), u'', [file])
+			convren((fromenc, toenc), zstr, [file])
 			os.path.walk(file, convren, (fromenc, toenc))
 		else:
 			files = glob.glob(file)
 			for file in files:
 				file = unicode(file, fnenc)
-				convren((fromenc, toenc), u'', [file])
+				convren((fromenc, toenc), zstr, [file])
 				os.path.walk(file, convren, (fromenc, toenc))
 			if not files:
 				print >> sys.stderr, 'No such file or directory: ',
