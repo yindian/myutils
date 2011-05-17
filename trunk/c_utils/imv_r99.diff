@@ -1,5 +1,5 @@
 --- imv.c.bak	Wed Jan 27 23:37:50 2010
-+++ imv.c	Wed Aug 18 20:54:56 2010
++++ imv.c	Tue May 17 23:20:06 2011
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -177,7 +177,7 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2484,6 +2551,55 @@
+@@ -2484,6 +2551,60 @@
                 init_filelist();
                 advance(0);
                 break;
@@ -189,6 +189,7 @@
 +                int frac = 4;
 +                int adv;
 +                int n;
++                int santinel;
 +                char buffer[512], **subdir;
 +
 +                if (code == ('B' | MY_ALT))
@@ -209,13 +210,17 @@
 +                    for (n = stb_arr_len(subdir)-1; n >= 0; --n)
 +                        if (!strcmp(subdir[n], buffer))
 +                            break;
++                    santinel = n;
 +                    do {
 +                    n += adv;
 +                    if (n < 0)
 +                        n += stb_arr_len(subdir);
 +                    else if (n >= stb_arr_len(subdir))
 +                        n -= stb_arr_len(subdir);
++                    if (n == santinel)
++                        break;
 +                    } while (!has_img_file(path_to_file, subdir[n]));
++                    if (n != santinel)
 +                    strcpy(path_to_file, subdir[n]);
 +                    stb_readdir_free(subdir);
 +                    }
