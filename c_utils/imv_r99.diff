@@ -1,5 +1,5 @@
 --- imv.c.bak	Wed Jan 27 23:37:50 2010
-+++ imv.c	Tue May 17 23:20:06 2011
++++ imv.c	Thu May 19 00:50:43 2011
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -83,7 +83,7 @@
        if (old) SelectObject(hdc, old);
     }
  
-@@ -1290,6 +1295,29 @@
+@@ -1290,6 +1295,32 @@
  
  char *open_filter = "Image Files\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.hdr;*.spk\0";
  
@@ -93,6 +93,9 @@
 +   static char fullpath[4096];
 +   int i;
 +
++   if (path[strlen(path) - 1] == '/')
++   sprintf(fullpath, "%s%s", path, subdir);
++   else
 +   sprintf(fullpath, "%s/%s", path, subdir);
 +
 +   if (recursive)
@@ -113,7 +116,7 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
-@@ -2360,6 +2388,7 @@
+@@ -2360,6 +2391,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -121,7 +124,7 @@
                 break;
              }
  
-@@ -2384,15 +2413,53 @@
+@@ -2384,15 +2416,53 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -177,7 +180,7 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2484,6 +2551,60 @@
+@@ -2484,6 +2554,60 @@
                 init_filelist();
                 advance(0);
                 break;
