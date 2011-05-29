@@ -119,12 +119,90 @@ def getmeaning(wordidx, d={}):
 		f.close()
 	return d[fileidx][wordidx % 1000].rstrip()
 
+def formatnonble(data):
+	ar = data.split('$')
+	result = [ar[0].replace('\n', '').replace(u'\ufe35',
+			u'（').replace(u'\ufe36', u'）').replace(u'\ufe41',
+				u'「').replace(u'\ufe42' , u'」')]
+	right = False
+	for i in xrange(1, len(ar)):
+		if ar[i][0] == 'b':
+			assert not right
+			result.append('<b>')
+		elif ar[i][0] == 'n':
+			assert not right
+			result.append('</b>')
+		elif ar[i][0] == 'r':
+			result.append('<br>')
+			if not right:
+				result.append('<indent val="4">')
+				right = True
+		else:
+			raise(Exception('Unknown directive $' + ar[i][0]))
+		result.append(ar[i][1:].replace('\n', '').replace(u'\ufe35',
+			u'（').replace(u'\ufe36', u'）').replace(u'\ufe41',
+				u'「').replace(u'\ufe42' , u'」'))
+			
+	return formatruby(''.join(result))
+
+def getnonble(wordidx, gettype=0, l=[], d={}):
+	if not l:
+		f = open('non''ble.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		f = open('word''Data.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		writehtml = True
+	else:
+		writehtml = False
+	if l[1].has_key(getword(wordidx)):
+		key = getword(wordidx).encode('utf-8').encode('base64')
+	else:
+		key = l[0][wordidx]
+	if writehtml:
+		f = open('mei.htm', 'w')
+		print >> f, '<html>\n<body>'
+		for k, v in l[1].iteritems():
+			try:
+				int(k)
+			except:
+				k = k.encode('utf-8').encode('base64')
+			print >> f, '<p><div id="%s"><indent val="0">' % (k,)
+			print >> f, enc(formatnonble(v))
+			print >> f, '</div><br></p><br>'
+		print >> f, '</body>\n</html>'
+		f.close()
+	if gettype:
+		return key
+	return formatnonble(l[1][key])
+
 indentpat = re.compile(r'&[0-9]+&')
-def formatmeaning(s, word):
+warichupat = re.compile(r'\{(.*?)\}')
+def formatmeaning(s, word, wordidx):
 	s = indentpat.sub('', s)
 	s = ''.join(s.splitlines())
 	s = s.replace(u'\u2015', '<b>%s</b>' % (word,))
-	return s
+	s = warichupat.sub(r'<sub>\g<1></sub>', s)
+	ar = s.split(u'｛')
+	result = [ar[0]]
+	for i in xrange(1, len(ar)):
+		p = ar[i].index(u'｝')
+		fn = ar[i][:p]
+		if fn.startswith('mei'):
+			result.append('<a href="mei.htm#%s">' % (
+				getnonble(wordidx, 1)))
+		result.append('<img src="')
+		result.append(fn)
+		if fn.startswith('G'):
+			result.append('_16')
+			if not os.path.exists(fn + '_16.png'):
+				result.append('_s')
+		result.append('.bmp" class="inline">')
+		if fn.startswith('mei'):
+			result.append('</a>')
+		result.append(ar[i][p+1:])
+	return ''.join(result)
 
 def formatruby(s, d={}):
 	if d.has_key(s):
@@ -224,7 +302,7 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 							enc(formatmeaning(
 								getmeaning(
 									wordidx)
-								, word
+								, word, wordidx
 								)),)
 					words.append((wordidx, titletext))
 				finals.append((id4, finalgenre, words))
@@ -296,6 +374,16 @@ tf.close()
 
 gaijiset = set()
 f = open('out.htm', 'r')
+for line in f:
+	ar = line.split('&#')
+	for i in xrange(1, len(ar)):
+		p = ar[i].index(';')
+		if ar[i].startswith('x'):
+			code = int(ar[i][1:p], 16)
+		else:
+			code = int(ar[i][:p])
+		gaijiset.add(code)
+f = open('mei.htm', 'r')
 for line in f:
 	ar = line.split('&#')
 	for i in xrange(1, len(ar)):
