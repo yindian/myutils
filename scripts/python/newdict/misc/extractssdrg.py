@@ -119,33 +119,42 @@ def getmeaning(wordidx, d={}):
 		f.close()
 	return d[fileidx][wordidx % 1000].rstrip()
 
+def v2h(s):
+	return s.replace(u'\ufe35', u'（').replace(u'\ufe36', u'）'
+			).replace(u'\ufe41', u'「').replace(u'\ufe42' , u'」'
+					).replace(u'\ufe43', u'『').replace(
+							u'\ufe44', u'』')
+
 def formatnonble(data):
 	ar = data.split('$')
-	result = [ar[0].replace('\n', '').replace(u'\ufe35',
-			u'（').replace(u'\ufe36', u'）').replace(u'\ufe41',
-				u'「').replace(u'\ufe42' , u'」')]
+	result = [v2h(ar[0].replace('\n', ''))]
 	right = False
+	rightlines = []
 	for i in xrange(1, len(ar)):
 		if ar[i][0] == 'b':
 			assert not right
 			result.append('<b>')
+			result.append(v2h(ar[i][1:].replace('\n', '')))
 		elif ar[i][0] == 'n':
 			assert not right
 			result.append('</b>')
+			result.append(v2h(ar[i][1:].replace('\n', '')))
 		elif ar[i][0] == 'r':
-			result.append('<br>')
 			if not right:
-				result.append('<indent val="4">')
 				right = True
+			rightlines.append(v2h(ar[i][1:].replace('\n', '')))
 		else:
 			raise(Exception('Unknown directive $' + ar[i][0]))
-		result.append(ar[i][1:].replace('\n', '').replace(u'\ufe35',
-			u'（').replace(u'\ufe36', u'）').replace(u'\ufe41',
-				u'「').replace(u'\ufe42' , u'」'))
-			
+	if right:
+		l = max(10, *map(len, rightlines))
+		for s in rightlines:
+			if s:
+				result.append('<br>\n')
+				result.append('<indent val="%d">' % (l-len(s)))
+				result.append(s)
 	return formatruby(''.join(result))
 
-def getnonble(wordidx, gettype=0, l=[], d={}):
+def getnonble(wordidx, gettype=0, l=[]):
 	if not l:
 		f = open('non''ble.plist', 'r')
 		l.append(xml2obj(f.read()))
@@ -157,7 +166,7 @@ def getnonble(wordidx, gettype=0, l=[], d={}):
 	else:
 		writehtml = False
 	if l[1].has_key(getword(wordidx)):
-		key = getword(wordidx).encode('utf-8').encode('base64')
+		key = getword(wordidx).encode('utf-8').encode('base64').rstrip()
 	else:
 		key = l[0][wordidx]
 	if writehtml:
@@ -167,7 +176,7 @@ def getnonble(wordidx, gettype=0, l=[], d={}):
 			try:
 				int(k)
 			except:
-				k = k.encode('utf-8').encode('base64')
+				k = k.encode('utf-8').encode('base64').rstrip()
 			print >> f, '<p><div id="%s"><indent val="0">' % (k,)
 			print >> f, enc(formatnonble(v))
 			print >> f, '</div><br></p><br>'
@@ -176,6 +185,34 @@ def getnonble(wordidx, gettype=0, l=[], d={}):
 	if gettype:
 		return key
 	return formatnonble(l[1][key])
+
+def getnuance(wordidx, keyidx=0, l=[]):
+	if not l:
+		f = open('nuan''ceL''istH.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		f = open('nuan''ceDa''taH.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		writehtml = True
+	else:
+		writehtml = False
+	key = l[0][wordidx].split('/')
+	if writehtml:
+		f = open('san.htm', 'w')
+		print >> f, '<html>\n<body>'
+		for k, v in l[1].iteritems():
+			print >> f, '<h1 id="%s" noindex="1">%s</h1>\n<p>' % (
+					k.encode('utf-8').encode('base64'
+						).rstrip(),
+					enc(warichupat.sub(r'<sub>\g<1></sub>',
+						k)))
+			print >> f, enc(warichupat.sub(r'<sub>\g<1></sub>',
+						v.replace('\n', '')))
+			print >> f, '</p><br>'
+		print >> f, '</body>\n</html>'
+		f.close()
+	return key[keyidx].encode('utf-8').encode('base64').rstrip()
 
 indentpat = re.compile(r'&[0-9]+&')
 warichupat = re.compile(r'\{(.*?)\}')
@@ -192,6 +229,13 @@ def formatmeaning(s, word, wordidx):
 		if fn.startswith('mei'):
 			result.append('<a href="mei.htm#%s">' % (
 				getnonble(wordidx, 1)))
+		elif fn.startswith('sar'):
+			try:
+				keyidx = int(fn[6]) - 1
+			except:
+				keyidx = 0
+			result.append('<a href="san.htm#%s">' % (
+				getnuance(wordidx, keyidx)))
 		result.append('<img src="')
 		result.append(fn)
 		if fn.startswith('G'):
@@ -199,7 +243,7 @@ def formatmeaning(s, word, wordidx):
 			if not os.path.exists(fn + '_16.png'):
 				result.append('_s')
 		result.append('.bmp" class="inline">')
-		if fn.startswith('mei'):
+		if fn.startswith('mei') or fn.startswith('sar'):
 			result.append('</a>')
 		result.append(ar[i][p+1:])
 	return ''.join(result)
@@ -318,7 +362,7 @@ for iden, genre, subs in genrelist:
 			'_'+iden, iden, enc(formatruby(gruby[genre])))
 print >> tf, '</p>'
 for iden, genre, subs in genrelist:
-	print >> tf, '<h1 id="%s">%s</h1>' % (
+	print >> tf, '<h1 id="%s" noindex="1">%s</h1>' % (
 			iden, enc(formatruby(gruby[genre])))
 	print >> tf, '<p>'
 	for subiden, subgenre, subsubs in subs:
@@ -328,7 +372,7 @@ for iden, genre, subs in genrelist:
 				'_'+iden)
 	print >> tf, '</p>'
 	for subiden, subgenre, subsubs in subs:
-		print >> tf, '<h2 id="%s">%s</h2>' % (subiden,
+		print >> tf, '<h2 id="%s" noindex="1">%s</h2>' % (subiden,
 				enc(formatruby(gruby[subgenre])))
 		print >> tf, '<p>'
 		for subsubiden, subsubgenre, finals in subsubs:
@@ -339,7 +383,7 @@ for iden, genre, subs in genrelist:
 					'_'+subiden)
 		print >> tf, '</p>'
 		for subsubiden, subsubgenre, finals in subsubs:
-			print >> tf, '<h3 id="%s">%s</h2>' % (
+			print >> tf, '<h3 id="%s" noindex="1">%s</h2>' % (
 					subsubiden,
 					enc(formatruby(gruby[subsubgenre])))
 			print >> tf, '<p>'
@@ -351,7 +395,7 @@ for iden, genre, subs in genrelist:
 						'_'+subsubiden)
 			print >> tf, '</p>'
 			for finaliden, finalgenre, words in finals:
-				print >> tf, '<h4 id="%s">%s</h2>' % (
+				print >> tf, '<h4 id="%s" noindex="1">%s</h2>' % (
 						finaliden,
 						enc(formatruby(gruby[finalgenre])))
 				print >> tf, '<p>'
@@ -373,27 +417,18 @@ of.close()
 tf.close()
 
 gaijiset = set()
-f = open('out.htm', 'r')
-for line in f:
-	ar = line.split('&#')
-	for i in xrange(1, len(ar)):
-		p = ar[i].index(';')
-		if ar[i].startswith('x'):
-			code = int(ar[i][1:p], 16)
-		else:
-			code = int(ar[i][:p])
-		gaijiset.add(code)
-f = open('mei.htm', 'r')
-for line in f:
-	ar = line.split('&#')
-	for i in xrange(1, len(ar)):
-		p = ar[i].index(';')
-		if ar[i].startswith('x'):
-			code = int(ar[i][1:p], 16)
-		else:
-			code = int(ar[i][:p])
-		gaijiset.add(code)
-f.close()
+for fn in ('out.htm', 'mei.htm', 'san.htm'):
+	f = open(fn, 'r')
+	for line in f:
+		ar = line.split('&#')
+		for i in xrange(1, len(ar)):
+			p = ar[i].index(';')
+			if ar[i].startswith('x'):
+				code = int(ar[i][1:p], 16)
+			else:
+				code = int(ar[i][:p])
+			gaijiset.add(code)
+	f.close()
 
 f = open('GaijiMap.xml', 'w')
 print >> f, """\
