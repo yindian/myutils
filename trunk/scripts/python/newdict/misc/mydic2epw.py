@@ -71,6 +71,14 @@ def html_escape(s):
 	return unicode(s).translate(escmap)
 enc = lambda s: html_escape(s).encode('cp932', 'html_replace')
 
+try:
+	import tcscconv
+except ImportError:
+	totrad = lambda s: s
+else:
+	c = tcscconv.TCSCconv()
+	totrad = c.toTrad
+
 assert __name__ == '__main__'
 if len(sys.argv) != 2:
 	print 'Usage: %s db_file' % (os.path.basename(sys.argv[0]),)
@@ -141,8 +149,15 @@ for wid, wtypeid, wname, wspellall, wjpname, wjpspellall, wcontent, wexample, ws
 		if delimpat.findall(wname):
 			for word in delimpat.split(wname):
 				print >> f, '<key type="表記">%s</key>' % (charrefpat.sub(r'\g<1>', enc(word)),)
-		elif ewn.find('&#x') >= 0:
-			print >> f, '<key type="表記">%s</key>' % (charrefpat.sub(r'\g<1>', ewn),)
+				tword = totrad(word)
+				if tword != word:
+					print >> f, '<key type="表記">%s</key>' % (charrefpat.sub(r'\g<1>', enc(tword)),)
+		else:
+			if ewn.find('&#x') >= 0:
+				print >> f, '<key type="表記">%s</key>' % (charrefpat.sub(r'\g<1>', ewn),)
+			tword = totrad(wname)
+			if tword != wname:
+				print >> f, '<key type="表記">%s</key>' % (charrefpat.sub(r'\g<1>', enc(tword)),)
 		for spell in delimpat.split(half(punctpat.sub('', wspellall))):
 			pin1yin1 = ''.join(map(pinyinuntone, spell.lower().split())).encode('ascii')
 			print >> f, '<key type="表記">%s</key>' % (pin1yin1,)
@@ -164,8 +179,6 @@ for wid, wtypeid, wname, wspellall, wjpname, wjpspellall, wcontent, wexample, ws
 		print >> sys.stderr, 'Error processing id', wid
 		traceback.print_exc()
 		raise
-c.close()
-
 print >> f, """\
 </dl>
 </body>
@@ -227,6 +240,8 @@ for wbtid, wbtname in wbtlist:
 			print >> g, '</p>'
 print >> g, '</body>\n</html>'
 g.close()
+
+c.close()
 
 sys.exit(0)
 
