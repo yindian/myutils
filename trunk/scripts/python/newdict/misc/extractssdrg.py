@@ -4,6 +4,8 @@ import sys, os, re
 import xml.etree.cElementTree as ET
 import pprint, pdb
 
+# preparations: 1. convert plist to xml. 2. convert png to bmp (no alpha)
+
 def _basenode2base(node):
 	if node.tag == 'string':
 		data = node.text
@@ -200,19 +202,45 @@ def getnuance(wordidx, keyidx=0, l=[]):
 	key = l[0][wordidx].split('/')
 	if writehtml:
 		f = open('san.htm', 'w')
-		print >> f, '<html>\n<body>'
+		print >> f, '<html>\n<body>\n<dl>'
 		for k, v in l[1].iteritems():
-			print >> f, '<h1 id="%s" noindex="1">%s</h1>\n<p>' % (
+			print >> f, '<dt id="%s" noindex="1">%s</dt><br>\n<dd><indent val="1">' % (
 					k.encode('utf-8').encode('base64'
 						).rstrip(),
 					enc(warichupat.sub(r'<sub>\g<1></sub>',
 						k)))
 			print >> f, enc(warichupat.sub(r'<sub>\g<1></sub>',
 						v.replace('\n', '')))
-			print >> f, '</p><br>'
-		print >> f, '</body>\n</html>'
+			print >> f, '</dd><br>'
+		print >> f, '</dl>\n</body>\n</html>'
 		f.close()
 	return key[keyidx].encode('utf-8').encode('base64').rstrip()
+
+def getimage(wordidx, keyidx=0, l=[]):
+	if not l:
+		f = open('im''ageD''ata.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		f = open('im''age''Info.plist', 'r')
+		l.append(xml2obj(f.read()))
+		f.close()
+		writehtml = True
+	else:
+		writehtml = False
+	key = l[0][wordidx][keyidx]['im''age''Name']
+	if writehtml:
+		f = open('zu.htm', 'w')
+		print >> f, '<html>\n<body>\n<dl>'
+		for k, v in l[1].iteritems():
+			print >> f, '<dt id="%s" noindex="1">%s</dt>\n<dd><indent val="1">' % (
+					k,
+					enc(v['im''age''Title']))
+			gentxtimg(k, v['title''List'])
+			print >> f, '<img src="%s.bmp">' % (k,)
+			print >> f, '</dd><br>'
+		print >> f, '</dl>\n</body>\n</html>'
+		f.close()
+	return key
 
 indentpat = re.compile(r'&[0-9]+&')
 warichupat = re.compile(r'\{(.*?)\}')
@@ -236,6 +264,13 @@ def formatmeaning(s, word, wordidx):
 				keyidx = 0
 			result.append('<a href="san.htm#%s">' % (
 				getnuance(wordidx, keyidx)))
+		elif fn.startswith('zu'):
+			try:
+				keyidx = int(fn[2]) - 1
+			except:
+				keyidx = 0
+			result.append('<a href="zu.htm#%s">' % (
+				getimage(wordidx, keyidx)))
 		result.append('<img src="')
 		result.append(fn)
 		if fn.startswith('G'):
@@ -243,10 +278,57 @@ def formatmeaning(s, word, wordidx):
 			if not os.path.exists(fn + '_16.png'):
 				result.append('_s')
 		result.append('.bmp" class="inline">')
-		if fn.startswith('mei') or fn.startswith('sar'):
+		if fn.startswith('mei') or fn.startswith('sar'
+				) or fn.startswith('zu'):
 			result.append('</a>')
 		result.append(ar[i][p+1:])
 	return ''.join(result)
+
+def gettypes(wordidx):
+	s = getmeaning(wordidx)
+	s = indentpat.sub('', s)
+	s = ''.join(s.splitlines())
+	ar = s.split(u'Åo')
+	result = []
+	for i in xrange(1, len(ar)):
+		p = ar[i].index(u'Åp')
+		fn = ar[i][:p]
+		if fn.startswith('bun'):
+			result.append('ï∂èÕ')
+		elif fn.startswith('kai'):
+			result.append('âÔòb')
+		elif fn.startswith('koh'):
+			result.append('å√ïó')
+		elif fn.startswith('zok'):
+			result.append('ë≠åÍ')
+		elif fn.startswith('shi'):
+			result.append('êVîN')
+		elif fn.startswith('har'):
+			result.append('èt')
+		elif fn.startswith('nat'):
+			result.append('âƒ')
+		elif fn.startswith('aki'):
+			result.append('èH')
+		elif fn.startswith('huy'):
+			result.append('ì~')
+	return result
+
+def getextra(wordidx):
+	s = getmeaning(wordidx)
+	s = indentpat.sub('', s)
+	s = ''.join(s.splitlines())
+	ar = s.split(u'Åo')
+	result = []
+	for i in xrange(1, len(ar)):
+		p = ar[i].index(u'Åp')
+		fn = ar[i][:p]
+		if fn.startswith('mei'):
+			result.append('ñºåæÅEñºï∂')
+		elif fn.startswith('sar'):
+			result.append('óﬁåÍÇÃÉjÉÖÉAÉìÉX')
+		elif fn.startswith('zu'):
+			result.append('ÉCÉâÉXÉg')
+	return list(set(result))
 
 def formatruby(s, d={}):
 	if d.has_key(s):
@@ -269,6 +351,73 @@ def formatruby(s, d={}):
 			result.append(s)
 	d[s] = ''.join(result)
 	return d[s]
+
+def yomi(s, d={}):
+	s = gruby[s]
+	if d.has_key(s):
+		return d[s]
+	ar = s.split('{')
+	result = [ar[0]]
+	for i in xrange(1,len(ar)):
+		s = ar[i]
+		p = s.find('}')
+		if p > 0 and s.find(':', 0, p) > 0:
+			q = s.find(':', 0, p)
+			result.append(s[q+1:p])
+			result.append(s[p+1:])
+		else:
+			result.append('{')
+			result.append(s)
+	d[s] = ''.join(result)
+	return d[s]
+
+def kanji(c):
+	try:
+		c.encode('sjis')
+		return 0x4E00 <= ord(c) <= 0x9FA5
+	except:
+		return False
+
+from PIL import ImageFont, Image, ImageDraw
+font1 = ImageFont.truetype('ipag.ttc', 56, index=1)
+font2 = ImageFont.truetype('ipag.ttc', 28, index=1)
+font3 = ImageFont.truetype('GoPr6N.otf', 28)
+def genpic(text, haspic=set()):
+	fname = enc(text).encode('hex') + '.bmp'
+	if not fname in haspic:
+		font = font1
+		size = font.getsize(text)
+		img = Image.new("RGB", size, (255,255,255))
+		draw = ImageDraw.Draw(img)
+		draw.text((0,0), text, (0,0,0), font=font)
+		img = img.resize(tuple([x/4 for x in size]), Image.ANTIALIAS)
+		img.save(fname)
+		haspic.add(fname)
+	return '<img src="%s" class="inline">' % (fname,)
+
+def gentxtimg(base, text, haspic=set()):
+	if base in haspic:
+		return
+	img = Image.open(base + '.png')
+	try:
+		img = img.convert("RGB")
+	except:
+		return
+	draw = ImageDraw.Draw(img)
+	for d in text:
+		s, x, y = map(d.get, ('title', 'x', 'y'))
+		if s and (x or y):
+			for l in s.splitlines():
+				try:
+					l.encode('sjis')
+					draw.text((x,y), l, (0,0,0), font=font2)
+					font = font2
+				except:
+					draw.text((x,y), l, (0,0,0), font=font3)
+					font = font3
+				y += font.getsize(l)[1] + 1
+	img.save(base + '.bmp') # need convert to palette bmp afterwards
+	haspic.add(base)
 
 assert __name__ == '__main__'
 
@@ -337,12 +486,27 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 						titletext.index('<ruby>')
 						print >> of, '<key type="ï\ãL">%s</key>' % ( enc(word),)
 						print >> of, '<key type="Ç©Ç»">%s</key>' % ( enc(getruby(wordidx)),)
+					for c in filter(kanji, word):
+						print >> of, '<key type="ÉNÉçÉX">%s</key>' % ( enc(c),)
+					print >> of, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
+					print >> of, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subggenre),)
+					print >> of, '<key type="ï°çá" name="çiÇËçûÇ›">å©èoÇµ</key>'
+					for s in gettypes(wordidx):
+						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›1">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›2">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›3">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›4">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="çiçûÇ›">%s</key>' % (s,)
+					for s in getextra(wordidx):
+						print >> of, '<key type="ï°çá" name="ÉfÅ[É^1">%s</key>' % (s,)
+						print >> of, '<key type="ï°çá" name="ÉfÅ[É^2">%s</key>' % (s,)
 					print >> of, '<dd>&nbsp;&nbsp;<a href="toc.htm#%s">Å™</a>&nbsp;<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a><br><indent val="1">%s</dd>' % (
 							'_'+`wordidx`,
-							id1, enc(genre),
-							id2, enc(subggenre),
-							id3, enc(subsubggenre),
-							id4, enc(finalgenre),
+							id1, genpic(genre),
+							id2, genpic(subggenre),
+							id3, genpic(subsubggenre),
+							id4, genpic(finalgenre),
 							enc(formatmeaning(
 								getmeaning(
 									wordidx)
@@ -364,6 +528,8 @@ print >> tf, '</p>'
 for iden, genre, subs in genrelist:
 	print >> tf, '<h1 id="%s" noindex="1">%s</h1>' % (
 			iden, enc(formatruby(gruby[genre])))
+	print >> tf, '<key type="èåè">%s</key>' % (enc(genre),)
+	print >> tf, '<key type="èåè">%s</key>' % (enc(yomi(genre)),)
 	print >> tf, '<p>'
 	for subiden, subgenre, subsubs in subs:
 		print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
@@ -374,6 +540,11 @@ for iden, genre, subs in genrelist:
 	for subiden, subgenre, subsubs in subs:
 		print >> tf, '<h2 id="%s" noindex="1">%s</h2>' % (subiden,
 				enc(formatruby(gruby[subgenre])))
+		print >> tf, '<key type="èåè">%s</key>' % (enc(subgenre),)
+		print >> tf, '<key type="èåè">%s</key>' % (enc(yomi(subgenre)),)
+		for c in filter(kanji, subgenre):
+			print >> tf, '<key type="ÉNÉçÉX">%s</key>' % ( enc(c),)
+		print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
 		print >> tf, '<p>'
 		for subsubiden, subsubgenre, finals in subsubs:
 			print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
@@ -386,6 +557,12 @@ for iden, genre, subs in genrelist:
 			print >> tf, '<h3 id="%s" noindex="1">%s</h2>' % (
 					subsubiden,
 					enc(formatruby(gruby[subsubgenre])))
+			print >> tf, '<key type="èåè">%s</key>' % (enc(subsubgenre),)
+			print >> tf, '<key type="èåè">%s</key>' % (enc(yomi(subsubgenre)),)
+			for c in filter(kanji, subsubgenre):
+				print >> tf, '<key type="ÉNÉçÉX">%s</key>' % ( enc(c),)
+			print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
+			print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subgenre),)
 			print >> tf, '<p>'
 			for finaliden, finalgenre, words in finals:
 				print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
@@ -398,6 +575,12 @@ for iden, genre, subs in genrelist:
 				print >> tf, '<h4 id="%s" noindex="1">%s</h2>' % (
 						finaliden,
 						enc(formatruby(gruby[finalgenre])))
+				print >> tf, '<key type="èåè">%s</key>' % (enc(finalgenre),)
+				print >> tf, '<key type="èåè">%s</key>' % (enc(yomi(finalgenre)),)
+				for c in filter(kanji, finalgenre):
+					print >> tf, '<key type="ÉNÉçÉX">%s</key>' % ( enc(c),)
+				print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
+				print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subgenre),)
 				print >> tf, '<p>'
 				for wordidx, word in words:
 					print >> tf, '<div id="%s"><a href="out.htm#%s">%s</a> <a href="%s">Å™</a><br></div>' % (
@@ -416,8 +599,67 @@ print >> of, """\
 of.close()
 tf.close()
 
+cf = open('cplx.xml', 'w')
+print >> cf, '<?xml version="1.0" encoding="Shift_JIS"?>'
+print >> cf, '<complex>'
+print >> cf, '<group name="ï™óﬁåüçı">'
+print >> cf, '<category name="ï™óﬁëÃån">'
+for iden, genre, subs in genrelist:
+	print >> cf, '<subcategory name="%s">' % (enc(genre),)
+print >> cf, '</category>'
+print >> cf, '<category name="ï™óﬁëÃån2">'
+for iden, genre, subs in genrelist:
+	print >> cf, '<subcategory name="%s">' % (enc(genre),)
+	for subiden, subgenre, subsubs in subs:
+		print >> cf, '<subcategory name="%s" />' % (enc(subgenre),)
+	print >> cf, '</subcategory>'
+print >> cf, '</category>'
+print >> cf, '<category name="çiÇËçûÇ›">'
+for s in u'å©èoÇµ ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<keyword name="ÉLÅ[ÉèÅ[Éh1" />'
+print >> cf, '<keyword name="ÉLÅ[ÉèÅ[Éh2" />'
+print >> cf, '</group>'
+print >> cf, '<group name="çiçûåüçı">'
+print >> cf, '<category name="çiÇËçûÇ›1">'
+for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="çiÇËçûÇ›2">'
+for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="çiÇËçûÇ›3">'
+for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="çiÇËçûÇ›4">'
+for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<keyword name="ÉLÅ[ÉèÅ[Éh" />'
+print >> cf, '</group>'
+print >> cf, '<group name="ÉGÉLÉXÉgÉâ">'
+print >> cf, '<category name="ÉfÅ[É^1">'
+for s in u'ñºåæÅEñºï∂ ÉCÉâÉXÉg óﬁåÍÇÃÉjÉÖÉAÉìÉX'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="ÉfÅ[É^2">'
+for s in u'ñºåæÅEñºï∂ ÉCÉâÉXÉg óﬁåÍÇÃÉjÉÖÉAÉìÉX'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="çiçûÇ›">'
+for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
+	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<keyword name="ÉLÅ[ÉèÅ[Éh" />'
+print >> cf, '</group>'
+print >> cf, '</complex>'
+cf.close()
+
 gaijiset = set()
-for fn in ('out.htm', 'mei.htm', 'san.htm'):
+for fn in ('out.htm', 'mei.htm', 'san.htm', 'zu.htm'):
 	f = open(fn, 'r')
 	for line in f:
 		ar = line.split('&#')
