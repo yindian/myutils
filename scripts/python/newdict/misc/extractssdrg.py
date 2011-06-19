@@ -237,7 +237,7 @@ def getimage(wordidx, keyidx=0, l=[]):
 					enc(v['im''age''Title']))
 			gentxtimg(k, v['title''List'])
 			print >> f, '<img src="%s.bmp">' % (k,)
-			print >> f, '</dd><br>'
+			print >> f, '</dd>\n<X4081>1F03 1F02</X4081>'
 		print >> f, '</dl>\n</body>\n</html>'
 		f.close()
 	return key
@@ -484,8 +484,8 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 					word = getword(wordidx)
 					if word != titletext:
 						titletext.index('<ruby>')
-						print >> of, '<key type="表記">%s</key>' % ( enc(word),)
-						print >> of, '<key type="かな">%s</key>' % ( enc(getruby(wordidx)),)
+					print >> of, '<key type="表記">%s</key>' % ( enc(word),)
+					print >> of, '<key type="かな">%s</key>' % ( enc(getruby(wordidx)),)
 					for c in filter(kanji, word):
 						print >> of, '<key type="クロス">%s</key>' % ( enc(c),)
 					print >> of, '<key type="複合" name="分類体系">%s</key>' % ( enc(genre),)
