@@ -216,7 +216,7 @@ def getnuance(wordidx, keyidx=0, l=[]):
 		f.close()
 	return key[keyidx].encode('utf-8').encode('base64').rstrip()
 
-def getimage(wordidx, keyidx=0, l=[]):
+def getimage(wordidx, keyidx=0, gettype=0, l=[]):
 	if not l:
 		f = open('im''ageD''ata.plist', 'r')
 		l.append(xml2obj(f.read()))
@@ -240,6 +240,10 @@ def getimage(wordidx, keyidx=0, l=[]):
 			print >> f, '</dd>\n<X4081>1F03 1F02</X4081>'
 		print >> f, '</dl>\n</body>\n</html>'
 		f.close()
+	if gettype == 1:
+		return key + '.bmp'
+	elif gettype == 2:
+		return l[1][key]['im''age''Title']
 	return key
 
 indentpat = re.compile(r'&[0-9]+&')
@@ -272,17 +276,56 @@ def formatmeaning(s, word, wordidx):
 			result.append('<a href="zu.htm#%s">' % (
 				getimage(wordidx, keyidx)))
 		result.append('<img src="')
+		j = len(result)
 		result.append(fn)
 		if fn.startswith('G'):
 			result.append('_16')
 			if not os.path.exists(fn + '_16.png'):
 				result.append('_s')
+		s = ''.join(result[j:])
+		try:
+			assert os.path.exists(s + '.bmp')
+		except:
+			print >> sys.stderr, 'Missing', s + '.bmp'
+			raise
 		result.append('.bmp" class="inline">')
+		if fn.startswith('zu'):
+			result.append(getimage(wordidx, keyidx, 2))
+		#	result.append('<a href="%s">%s</a>' % (
+		#		getimage(wordidx, keyidx, 1),
+		#		getimage(wordidx, keyidx, 2)))
 		if fn.startswith('mei') or fn.startswith('sar'
 				) or fn.startswith('zu'):
 			result.append('</a>')
 		result.append(ar[i][p+1:])
 	return ''.join(result)
+
+gaimap = {
+		46:	'29E8A',
+		213:	'676E',
+		226:	'29E3D',
+		}
+gaicode = {
+		46:	0xFFF1,
+		213:	0xFFF2,
+		226:	0xFFF3,
+		}
+def fix(word, titletext):
+	ar = titletext.split(u'Åo')
+	result = [ar[0]]
+	br = word.split(u'\u00BF')
+	j = 0
+	for i in xrange(1, len(ar)):
+		p = ar[i].index(u'Åp')
+		fn = ar[i][:p]
+		assert fn.startswith('G')
+		result.append(unichr(gaicode[int(fn[1:])]))
+		br[j] += gaimap[int(fn[1:])]
+		j += 1
+		result.append(ar[i][p+1:])
+	word = ''.join(br)
+	titletext = ''.join(result)
+	return word, titletext
 
 def gettypes(wordidx):
 	s = getmeaning(wordidx)
@@ -387,10 +430,11 @@ def genpic(text, haspic=set()):
 	if not fname in haspic:
 		font = font1
 		size = font.getsize(text)
-		img = Image.new("RGB", size, (255,255,255))
+		gap = size[1] * 20 / 14 - size[1]
+		img = Image.new("RGB", (size[0], size[1] + gap), (255,255,255))
 		draw = ImageDraw.Draw(img)
-		draw.text((0,0), text, (0,0,0), font=font)
-		img = img.resize(tuple([x/4 for x in size]), Image.ANTIALIAS)
+		draw.text((0,gap), text, (0,0,0), font=font)
+		img = img.resize((size[0]/4, (size[1]+gap)/4), Image.ANTIALIAS)
 		img.save(fname)
 		haspic.add(fname)
 	return '<img src="%s" class="inline">' % (fname,)
@@ -477,13 +521,17 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 							getwordruby(
 								wordidx)
 							)
+					word = getword(wordidx)
+					if word != titletext:
+						titletext.index('<ruby>')
+						if titletext.find(u'ÅoG') >= 0:
+							word, titletext = (fix(
+								word, titletext
+								))
 					print >> of, '<dt id="%d">%s</dt>' % (
 							wordidx,
 							enc(titletext)
 							)
-					word = getword(wordidx)
-					if word != titletext:
-						titletext.index('<ruby>')
 					print >> of, '<key type="ï\ãL">%s</key>' % ( enc(word),)
 					print >> of, '<key type="Ç©Ç»">%s</key>' % ( enc(getruby(wordidx)),)
 					for c in filter(kanji, word):
@@ -501,11 +549,14 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 					for s in getextra(wordidx):
 						print >> of, '<key type="ï°çá" name="ÉfÅ[É^1">%s</key>' % (s,)
 						print >> of, '<key type="ï°çá" name="ÉfÅ[É^2">%s</key>' % (s,)
-					print >> of, '<dd>&nbsp;&nbsp;<a href="toc.htm#%s">Å™</a>&nbsp;<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a>Å‚<a href="toc.htm#%s">%s</a><br><indent val="1">%s</dd>' % (
+					print >> of, '<dd>&nbsp;&nbsp;<a href="toc.htm#%s">&#xFFF0;</a>&nbsp;<a href="toc.htm#%s">%s</a>%s<a href="toc.htm#%s">%s</a>%s<a href="toc.htm#%s">%s</a>%s<a href="toc.htm#%s">%s</a><br><indent val="1">%s</dd>' % (
 							'_'+`wordidx`,
 							id1, genpic(genre),
+							genpic(u'\u00BB'),
 							id2, genpic(subggenre),
+							genpic(u'\u00BB'),
 							id3, genpic(subsubggenre),
+							genpic(u'\u00BB'),
 							id4, genpic(finalgenre),
 							enc(formatmeaning(
 								getmeaning(
@@ -532,7 +583,7 @@ for iden, genre, subs in genrelist:
 	print >> tf, '<key type="èåè">%s</key>' % (enc(yomi(genre)),)
 	print >> tf, '<p>'
 	for subiden, subgenre, subsubs in subs:
-		print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
+		print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">&#xFFF0;</a><br></div>' % (
 				'_'+subiden,
 				subiden, enc(formatruby(gruby[subgenre])),
 				'_'+iden)
@@ -547,7 +598,7 @@ for iden, genre, subs in genrelist:
 		print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
 		print >> tf, '<p>'
 		for subsubiden, subsubgenre, finals in subsubs:
-			print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
+			print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">&#xFFF0;</a><br></div>' % (
 					'_'+subsubiden,
 					subsubiden,
 					enc(formatruby(gruby[subsubgenre])),
@@ -565,7 +616,7 @@ for iden, genre, subs in genrelist:
 			print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subgenre),)
 			print >> tf, '<p>'
 			for finaliden, finalgenre, words in finals:
-				print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">Å™</a><br></div>' % (
+				print >> tf, '<div id="%s"><a href="%s">%s</a> <a href="%s">&#xFFF0;</a><br></div>' % (
 						'_'+finaliden,
 						finaliden,
 						enc(formatruby(gruby[finalgenre])),
@@ -583,7 +634,7 @@ for iden, genre, subs in genrelist:
 				print >> tf, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subgenre),)
 				print >> tf, '<p>'
 				for wordidx, word in words:
-					print >> tf, '<div id="%s"><a href="out.htm#%s">%s</a> <a href="%s">Å™</a><br></div>' % (
+					print >> tf, '<div id="%s"><a href="out.htm#%s">%s</a> <a href="%s">&#xFFF0;</a><br></div>' % (
 							'_'+`wordidx`,
 							`wordidx`,
 							enc(word),
@@ -671,6 +722,7 @@ for fn in ('out.htm', 'mei.htm', 'san.htm', 'zu.htm'):
 				code = int(ar[i][:p])
 			gaijiset.add(code)
 	f.close()
+gaijiset.add(0xbf) # fix compatibility with previous versions
 
 f = open('GaijiMap.xml', 'w')
 print >> f, """\
@@ -689,6 +741,77 @@ for code in sorted(gaijiset):
 print >> f, '</gaijiSet>'
 f.close()
 
+extragaijifont = {
+		0xFFF0: '''\
+                
+                
+  ###########   
+ #############  
+ #### ########  
+ ###   ####  #  
+ ##     ###  #  
+ #       ##  #  
+          #  #  
+ ###   ####  #  
+ ###   ####  #  
+ ###   ####  #  
+ ###   ###  ##  
+ ####      ###  
+ #############  
+  ###########   ''',
+		0xFFF1: '''\
+                
+   #     #  #   
+  ####   #  #   
+  #  # ######## 
+ ## #    ## #   
+ ######   #     
+### # # ####### 
+  ##### #       
+  # # # ####### 
+  # # #         
+  ##### # # #   
+      # # # #   
+ #### # # # #   
+ # # #### # # ##
+ # #  ##  # ### 
+      #         ''',
+		0xFFF2: '''\
+                
+    #     #     
+    #     #     
+    #     #     
+ ############## 
+    #     #     
+   ##     #     
+   ##  #######  
+  #### #  #  #  
+  # ####  #  #  
+ ## #  #  #  #  
+ #  #  #  #  #  
+    #  #  # ##  
+    #  #  #     
+    #     #     
+                ''',
+		0xFFF3: '''\
+                
+   #     #  #   
+  ####   #  #   
+  # #  ######## 
+ ## #    #  #   
+ #####  ##      
+#### #  #  #    
+  ####  #  # ## 
+  ## # ##  ###  
+  ## # ##  ##   
+  ##########    
+        #  #    
+ #### # #  #  # 
+ # ## # #  #  # 
+ # # ## #  #### 
+                '''
+		}
+
 f = open('Gaiji.xml', 'w')
 print >> f, """\
 <?xml version="1.0" encoding="Shift_JIS"?>
@@ -701,6 +824,12 @@ for code in sorted(gaijiset):
 				idx2ebc(idx),
 				)
 		half = False
+	if code >= 0xFFF0:
+		print >> f, '<fontData ebcode="%s">' % (idx2ebc(idx),)
+		print >> f, extragaijifont[code]
+		print >> f, '</fontData>'
+		idx += 1
+		continue
 	p = os.popen('fontdumpw "%s" 0x%04X -e=%s%s' % (
 		half and "Tahoma" or "MingLiU", code, idx2ebc(idx),
 		half and ' -x=8' or ''))
