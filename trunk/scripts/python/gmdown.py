@@ -103,14 +103,36 @@ for sid in sys.argv[1:]:
 		except KeyboardInterrupt:
 			raise
 		except:
-			traceback.print_exc()
-			f = open('musicdownload' + sid, 'w')
-			f.write(buf)
-			f.close()
-			failids.append(sid)
-			print >> sys.stderr, 'Failed for', sid
-			time.sleep(5)
-			continue
+			if buf.find('captcha') < 0:
+				try:
+					front = buf.index('<tr class="meta-data-tr"><td class="td-song-name">') + 50
+					last =buf.index('</td>', front)
+					title = buf[front:last]
+					url = infourltplt % (sid, hashlib.md5(salt + sid).hexdigest())
+					f = urllib2.urlopen(url, timeout=30)
+					buf = f.read()
+					f.close()
+					front = buf.index('ongUrl>') + 7
+					last = buf.index('</s', front)
+					url = buf[front:last].strip()
+				except:
+					traceback.print_exc()
+					f = open('musicdownload' + sid, 'w')
+					f.write(buf)
+					f.close()
+					failids.append(sid)
+					print >> sys.stderr, 'Failed for', sid
+					time.sleep(5)
+					continue
+			else:
+				traceback.print_exc()
+				f = open('musicdownload' + sid, 'w')
+				f.write(buf)
+				f.close()
+				failids.append(sid)
+				print >> sys.stderr, 'Failed for', sid
+				time.sleep(5)
+				continue
 	fname = fnquote(fnfmt % (idx, title))
 	if not os.path.exists(fname):
 		print 'Downloading', fname
