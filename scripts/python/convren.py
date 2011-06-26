@@ -126,6 +126,43 @@ encodings._cache['utf-8-url'] = codecs.CodecInfo(
 		streamreader=StreamReader,
 		streamwriter=StreamWriter,
 		)
+def unxmlcharref(s):
+	ar = s.split('&#')
+	result = [ar[0]]
+	for s in ar[1:]:
+		p = s.find(';')
+		if p > 0 and s[:p].isdigit():
+			result.append(unichr(int(s[:p])))
+			result.append(s[p+1:])
+		elif p > 0 and s[0] == 'x':
+			result.append(unichr(int(s[1:p], 16)))
+			result.append(s[p+1:])
+		else:
+			result.append(u'&#')
+			result.append(s)
+	return u''.join(result)
+class Codec(codecs.Codec):
+	def encode(self,input,errors='strict'):
+		return input.encode('ascii', 'xmlcharrefreplace'), len(input)
+	def decode(self,input,errors='strict'):
+		return unxmlcharref(str(input)), len(input)
+class IncrementalEncoder(codecs.IncrementalEncoder):
+	def encode(self, input, final=False):
+		return input.encode('ascii', 'xmlcharrefreplace')
+class IncrementalDecoder(codecs.IncrementalDecoder):
+	def decode(self, input, final=False):
+		return unxmlcharref(str(input))
+class StreamWriter(Codec,codecs.StreamWriter): pass
+class StreamReader(Codec,codecs.StreamReader): pass
+encodings._cache['xmlcharref'] = codecs.CodecInfo(
+		name='xmlcharref',
+		encode=Codec().encode,
+		decode=Codec().decode,
+		incrementalencoder=IncrementalEncoder,
+		incrementaldecoder=IncrementalDecoder,
+		streamreader=StreamReader,
+		streamwriter=StreamWriter,
+		)
 
 if __name__ == '__main__':
 	argv = win32_utf8_argv() or sys.argv
