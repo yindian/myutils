@@ -22,7 +22,7 @@ for sid in sys.argv[1:]:
 	if glob.glob(fnfmt % (idx, '*')):
 		print 'Skipping index', idx
 		continue
-	f = urllib2.urlopen(prefix + sid)
+	f = urllib2.urlopen(prefix + sid, timeout=30)
 	buf = f.read()
 	f.close()
 	try:
@@ -36,23 +36,29 @@ for sid in sys.argv[1:]:
 	except:
 		try:
 			assert buf.find('captcha') > 0
-			front = buf.index('<div class="captchaImage"><img src="') + 36
-			end = buf.index('"', front)
-			url = site + buf[front:end]
-			captcha = raw_input('Please input captcha text for ' + url + ' : ')
-			front = buf.index('<input type="hidden" name="tok" value="', front) + 39
-			end = buf.index('"', front)
-			tok = buf[front:end]
-			f = urllib2.urlopen(prefix + sid + '&tok=' + tok + '&response=' + captcha + '&submitBtn=' + urllib.quote('提交'))
-			buf = f.read()
-			f.close()
-			front = buf.index('<a href="/music/top100/url?q=http://') + 9
-			last = buf.index('"><img src="', front)
-			url = site + buf[front:last].replace('%3A', ':'
-			).replace('%2F', '/').replace('&amp;', '&')
-			front = buf.index('<tr class="meta-data-tr"><td class="td-song-name">') + 50
-			last =buf.index('</td>', front)
-			title = buf[front:last]
+			while True:
+				try:
+					front = buf.index('<div class="captchaImage"><img src="') + 36
+					end = buf.index('"', front)
+					url = site + buf[front:end]
+					captcha = raw_input('Please input captcha text for ' + url + ' : ')
+					front = buf.index('<input type="hidden" name="tok" value="', front) + 39
+					end = buf.index('"', front)
+					tok = buf[front:end]
+					f = urllib2.urlopen(prefix + sid + '&tok=' + tok + '&response=' + captcha + '&submitBtn=' + urllib.quote('提交'), timeout=30)
+					buf = f.read()
+					f.close()
+					front = buf.index('<a href="/music/top100/url?q=http://') + 9
+					last = buf.index('"><img src="', front)
+					url = site + buf[front:last].replace('%3A', ':'
+					).replace('%2F', '/').replace('&amp;', '&')
+					front = buf.index('<tr class="meta-data-tr"><td class="td-song-name">') + 50
+					last =buf.index('</td>', front)
+					title = buf[front:last]
+				except ValueError:
+					continue
+				else:
+					break
 		except:
 			traceback.print_exc()
 			f = open('musicdownload' + sid, 'w')
@@ -65,7 +71,7 @@ for sid in sys.argv[1:]:
 	fname = fnquote(fnfmt % (idx, title))
 	if not os.path.exists(fname):
 		print 'Downloading', fname
-		f = urllib2.urlopen(url)
+		f = urllib2.urlopen(url, timeout=30)
 		g = open(fname, 'wb')
 		g.write(f.read())
 		f.close()
