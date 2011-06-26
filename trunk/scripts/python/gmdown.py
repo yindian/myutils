@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys, os, urllib, urllib2
 import re, time, glob, traceback
+import hashlib
 
 pathspecial = re.compile(r'[/\\;:<>\?\*&|]')
 pathspecial = re.compile(r'[/\\:]')
@@ -17,6 +18,46 @@ idx = 0
 failids = []
 site = 'aHR0cDovL3d3dy5nb29nbGUuY24='.decode('base64')
 prefix = 'aHR0cDovL3d3dy5nb29nbGUuY24vbXVzaWMvdG9wMTAwL211c2ljZG93bmxvYWQ/aWQ9'.decode('base64')
+infourltplt = 'aHR0cDovL3d3dy5nb29nbGUuY24vbXVzaWMvc29uZ3N0cmVhbWluZz9pZD0lcyZjYWQ9bG9jYWxVc2VyX3BsYXllciZjZCZzaWc9JXMmb3V0cHV0PXhtbA=='.decode('base64')
+salt = 'YTMyMzBiYzJlZjE5MzllZGFiYzM5ZGRkMDMwMDk0Mzk='.decode('base64')
+if len(sys.argv) > 2 and sys.argv[1] == '-lrc':
+	fnfmt = fnfmt[:-3] + 'lrc'
+	for sid in sys.argv[2:]:
+		idx += 1
+		if glob.glob(fnfmt % (idx, '*')):
+			print 'Skipping index', idx
+			continue
+		url = infourltplt % (sid, hashlib.md5(salt + sid).hexdigest())
+		try:
+			f = urllib2.urlopen(url, timeout=30)
+			buf = f.read()
+			f.close()
+			front = buf.index('icsUrl>') + 7
+			last = buf.index('</lyr')
+			url = buf[front:last].strip()
+
+			f = urllib2.urlopen(prefix + sid, timeout=30)
+			buf = f.read()
+			f.close()
+			front = buf.index('<tr class="meta-data-tr"><td class="td-song-name">') + 50
+			last =buf.index('</td>', front)
+			title = buf[front:last]
+
+			fname = fnquote(fnfmt % (idx, title))
+			print 'Downloading', fname
+			f = urllib2.urlopen(url, timeout=30)
+			g = open(fname, 'wb')
+			g.write(f.read())
+			f.close()
+			g.close()
+		except KeyboardInterrupt:
+			raise
+		except:
+			print >> sys.stderr, url
+			traceback.print_exc()
+			time.sleep(1)
+			continue
+	sys.exit(0)
 for sid in sys.argv[1:]:
 	idx += 1
 	if glob.glob(fnfmt % (idx, '*')):
@@ -59,6 +100,8 @@ for sid in sys.argv[1:]:
 					continue
 				else:
 					break
+		except KeyboardInterrupt:
+			raise
 		except:
 			traceback.print_exc()
 			f = open('musicdownload' + sid, 'w')
