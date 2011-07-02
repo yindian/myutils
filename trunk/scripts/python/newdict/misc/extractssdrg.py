@@ -175,6 +175,7 @@ def getnonble(wordidx, gettype=0, l=[]):
 		f = open('mei.htm', 'w')
 		print >> f, '<html>\n<body>'
 		for k, v in l[1].iteritems():
+			print >> f, '<dt></dt>'
 			try:
 				int(k)
 			except:
@@ -538,6 +539,7 @@ for key1 in sorted(genredict.iterkeys(), cmp=numsortcmp):
 						print >> of, '<key type="ÉNÉçÉX">%s</key>' % ( enc(c),)
 					print >> of, '<key type="ï°çá" name="ï™óﬁëÃån">%s</key>' % ( enc(genre),)
 					print >> of, '<key type="ï°çá" name="ï™óﬁëÃån2">%s</key>' % ( enc(subggenre),)
+					print >> of, '<key type="ï°çá" name="ï™óﬁ">%s</key>' % ( enc(genre),)
 					print >> of, '<key type="ï°çá" name="çiÇËçûÇ›">å©èoÇµ</key>'
 					for s in gettypes(wordidx):
 						print >> of, '<key type="ï°çá" name="çiÇËçûÇ›">%s</key>' % (s,)
@@ -703,6 +705,10 @@ print >> cf, '</category>'
 print >> cf, '<category name="çiçûÇ›">'
 for s in u'ï∂èÕ âÔòb å√ïó ë≠åÍ êVîN èt âƒ èH ì~'.split():
 	print >> cf, '<subcategory name="%s" />' % (enc(s),)
+print >> cf, '</category>'
+print >> cf, '<category name="ï™óﬁ">'
+for iden, genre, subs in genrelist:
+	print >> cf, '<subcategory name="%s">' % (enc(genre),)
 print >> cf, '</category>'
 print >> cf, '<keyword name="ÉLÅ[ÉèÅ[Éh" />'
 print >> cf, '</group>'
