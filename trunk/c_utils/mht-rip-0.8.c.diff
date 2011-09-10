@@ -1,0 +1,58 @@
+--- mht-rip-0.8.c.orig	Sat Sep 10 09:37:59 2011
++++ mht-rip-0.8.c	Sat Sep 10 09:54:37 2011
+@@ -139,7 +139,7 @@
+ 
+ int line_to_page( char *line, struct page *current, int line_length )
+ {
+-  if( (current->location + line_length) > current->size )
++  while ( (current->location + line_length) > current->size )
+     {
+       current->size += ALLOC_SIZE;
+       current->page_buffer = (char *) realloc( current->page_buffer, sizeof( char ) * current->size );
+@@ -246,6 +246,28 @@
+ 			boundary[ boundary_len + 2 ] = '\0';
+ 			return boundary;
+ 		}
++        else if( !strncmp( seeker, target, strlen( target ) -1 ) )
++		{
++			seeker += strlen( target ) - 1;
++			end_seeker = seeker;
++
++			while( end_seeker - in_buffer < buffer_size )
++			{
++				if( *end_seeker == '\n' || *end_seeker == '\r' )
++				{
++					break;
++				}
++				end_seeker++;
++			}
++
++			boundary_len = end_seeker - seeker;
++			boundary = malloc( boundary_len + 3 );
++			boundary[0] = '-';
++			boundary[1] = '-';
++			strncpy( boundary + 2, seeker, boundary_len );
++			boundary[ boundary_len + 2 ] = '\0';
++			return boundary;
++		}
+ 		seeker++;
+ 	}
+ 
+@@ -320,7 +342,7 @@
+ 		{
+ 			if( strstr( line, "Content-Transfer-Encoding:" ) )
+ 			{
+-				if( strstr( line, "base64" ) )
++				if( strstr( line, "base64" ) || strstr( line, "Base64" ) )
+ 				{
+ 					TYPE_FLAG = T_BASE64;
+ 				}
+@@ -359,7 +381,7 @@
+ struct page* buffer_to_pages( char *in_buffer, size_t buffer_size )
+ {
+   char *boundary = NULL;
+-  char *section_start, *section_end = NULL;
++  char *section_start = NULL, *section_end = NULL;
+   char *line_start;
+   struct page *page_head = NULL;
+   struct page *current_page = NULL;
