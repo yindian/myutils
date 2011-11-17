@@ -1,0 +1,11 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =9
+let g:netrw_dirhist_1='/home/okunch/prog/ServerFeibo/trunk/p2plib/client/porting'
+let g:netrw_dirhist_2='/home/okunch/prog/ServerFeibo/trunk/p2plib/client/porting/apr-porting'
+let g:netrw_dirhist_3='/home/okunch/prog/ServerFeibo/trunk/p2plib/client/porting'
+let g:netrw_dirhist_4='/home/okunch/prog/ServerFeibo/trunk/p2plib/client/porting/apr'
+let g:netrw_dirhist_5='/home/okunch/.config/emesene1.0/yindian_mail_ustc_edu_cn/logs'
+let g:netrw_dirhist_6='/home/okunch/.config/emesene1.0/yindian_mail_ustc_edu_cn'
+let g:netrw_dirhist_7='/home/okunch/.config/emesene1.0/yindian_mail_ustc_edu_cn/cache'
+let g:netrw_dirhist_8='/home/okunch/.config/emesene1.0/yindian_mail_ustc_edu_cn'
+let g:netrw_dirhist_9='/home/okunch/.config/emesene1.0/yindian_mail_ustc_edu_cn/logs'
