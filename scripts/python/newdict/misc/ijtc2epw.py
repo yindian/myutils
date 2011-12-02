@@ -22,6 +22,7 @@ sentpat = re.compile(r'@@[0-9]+\^\^')
 parenpat = re.compile(r'\((.*?)\)')
 tagpat = re.compile(r'<.*?>')
 xpat = re.compile(r'<X4081>(..)(..)</X4081>', re.I)
+rbpat = re.compile(r'<K>(.*?)</K><H>(.*?)</H>')
 def tofull(s):
 	result = []
 	for c in s:
@@ -49,6 +50,20 @@ def enc(s):
 			result.append('&#')
 		finally:
 			result.append(s)
+	return ''.join(result)
+def enc2title(s):
+	s = xpat.sub(r'&#x\g<1>;&#x\g<2>;', s)
+	ar = s.split('&#x');
+	result = [ar[0]]
+	for s in ar[1:]:
+		if result[-1] and ord(result[-1].decode('sjis')[-1]) < 0x80 and not (len(
+			result[-1]) == 3 and result[-1][-1] == ';' and
+			len(result) > 1 and result[-2] == '&#x'):
+			t = result.pop()
+			result.append(t[:-1])
+			result.append(enc(tofull(t[-1])))
+		result.append('&#x')
+		result.append(s)
 	return ''.join(result)
 
 tonemap = {
@@ -96,7 +111,7 @@ for num,kana,kanji,tone,conjug,syn,ant,kazoe,hinsi,snd,trans,et in c:
 			print '<dt id="%s">%s</dt>' % (enc(num), s,)
 		else:
 			print '<dt id="%s" title="%s">%s</dt>' % (enc(num),
-					xpat.sub(r'&#x\g<1>;&#x\g<2>;', s), s)
+					enc2title(s), s)
 		title = parenpat.sub('', kanji)
 		if title != kanji:
 			print '<key type="ï\ãL">%s</key>' % (tagpat.sub('',
@@ -231,11 +246,47 @@ for num,kana,kanji,tone,conjug,syn,ant,kazoe,hinsi,snd,trans,et in c:
 		first = False
 
 	print '</dd>\n</dl>\n'
+print """\
+</body>
+<body>"""
+
+fields = 'TlVNQkVSLEtFWVdPUkQsVFJBTlNMQVRJT04sRVQ='
+c.execute('select %s from cjwords' % (fields.decode('base64'),))
+for num,key,trans,et in c:
+	print '<dl>'
+	s = 'Åy%sÅz' % (enc(key),)
+	if s.find('<X4081>') < 0:
+		print '<dt id="c%s">%s</dt>' % (enc(num), s,)
+	else:
+		print '<dt id="c%s" title="%s">%s</dt>' % (enc(num),
+				enc2title(s), s)
+	out('<dd>')
+	trans = rbpat.sub(r'<ruby><rb>\g<1></rb><rt>\g<2></rt></ruby>', trans)
+	for trans in trans.split('&&'):
+		trans = trans.split('||')
+		for line, lineno in zip(trans, xrange(1, sys.maxint)):
+			if not line: continue
+			ar = line.split(';;')
+			assert len(ar) <= 2
+			if not ar: continue
+			if lineno > 1 or len(trans) > 1:
+				out(enc(unichr(0xe000 + lineno)))
+			if ar[0].find('##') < 0:
+				out(enc(ar[0]))
+				out('<br>')
+			else:
+				aar = ar[0].split('##')
+				out(enc(aar[0]))
+				out('<br>')
+	print '</dd>\n</dl>\n'
+
 c.close()
 
 print """\
 </body>
 </html>"""
+
+exit()
 
 gaijimap = {}
 for k, v in tonemap.iteritems():
