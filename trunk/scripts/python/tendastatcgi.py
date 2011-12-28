@@ -14,6 +14,8 @@ namemap = {}
 clients = o.open('http://192.168.0.1/lan_dhcp_clients.asp').read()
 clients = clients[clients.index('var dhcpList=new Array')+22:clients.index('ctime=0;')-3]
 clients = eval(clients)
+if type(clients) != tuple:
+	clients = (clients,)
 for row in clients:
 	ar = row.split(';')
 	namemap[ar[1]] = ar[0]
