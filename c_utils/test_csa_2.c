@@ -9,6 +9,9 @@
 #include <string.h>
 #include "csa.h"
 #include "cst.h"
+#ifdef printf
+#undef printf
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -16,8 +19,8 @@ int main(int argc, char *argv[])
     CSA SA;
     char *key;
 
-    if (argc != 4) {
-        fprintf(stderr, "syntax: suftest file key\n");
+    if (argc < 4) {
+        fprintf(stderr, "syntax: suftest file key [-c]\n");
         return -1;
     }
 
@@ -36,24 +39,31 @@ int main(int argc, char *argv[])
         keylen = strlen(key);
         s = SA.search(key,keylen,&SA,&l,&r);
         if (s == keylen) {
+            printf("%d\n", r-l+1);
+            if (argc >= 5 && strcmp(argv[4], "-c") == 0)
+                return 0;
             if (r-l+1 > MAXRESULT) r = l+MAXRESULT-1;
 
             for (i=l; i<=r; i++) {
                 j = SA.lookup(&SA,i);
                 s = max(j-20,0);
                 do {
-                    SA.text(buf,&SA,s,j-1);
-                    buf[j-s] = '\0';
+                    k = min(s+19, j-1);
+                    SA.text(buf,&SA,s,k);
+                    buf[k-s+1] = '\0';
                     if ((p=strrchr(buf, '\n'))) break;
                     s = max(s-20,0);
                 } while (s > max(0, j-BUFLEN));
                 t = min(j+20+keylen-1,SA.n-1);
+                k = j+keylen;
                 do {
-                    SA.text(buf,&SA,j+keylen,t);
-                    buf[t-j-keylen+1] = '\0';
+                    SA.text(buf,&SA,k,t);
+                    buf[t-k+1] = '\0';
                     if ((q=strchr(buf, '\n'))) break;
+                    k = t + 1;
                     t = min(t+20,SA.n-1);
                 } while (t < min(SA.n-1, j+BUFLEN));
+                if (q) q += k - j - keylen;
                 SA.text(buf,&SA,s,j-1);
                 if (!p) putchar('.'),putchar('.'),putchar('.');
                 for (k=p-buf+1; k<j-s; k++) putchar(buf[k]);
