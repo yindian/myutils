@@ -1,8 +1,39 @@
 #!/bin/bash
 
-CSA2=/usr/local/bin/csa2
+CSA2=/usr/local/bin/csa4
 DATA_ROOT=/ssd/data/luck/
 DATA_LIST=""
+
+PUBLIC=true
+if [[ $REMOTE_ADDR =~ 192.168.* ]]; then
+	PUBLIC=false
+elif [[ $QUERY_STRING == secret ]]; then
+	if [[ "$HTTP_AUTHORIZATION" = "Basic dXNlcjpwYXNz" ]]; then
+		PUBLIC=false
+	else
+		echo "Status: 401 Unauthroized"
+		echo "WWW-authenticate: Basic realm=\"Restricted\""
+		echo "Content-Type: text/html"
+		echo ""
+		cat << EOF
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8;">
+<title>试试手气</title>
+</head>
+<body>
+对不起，你无权访问此页面。
+</body>
+</html>
+EOF
+		exit
+	fi
+fi
+if $PUBLIC; then
+	COUNTFLAG=-c
+else
+	COUNTFLAG=
+fi
 
 echo "Content-Type: text/html"
 echo ""
@@ -75,26 +106,32 @@ EOF
 if [[ "$QUERY" != "" ]]; then
 	echo "<hr/>"
 	echo "Querying $QUERY" >> /tmp/luck.log
+	QUERY="$(iconv -f utf-8 -t gb18030 <<< "$QUERY")"
 	while read TITLE BASENAME; do
-		echo "<h3>$TITLE</h3>"
-		RESULT="$($CSA2 "$DATA_ROOT/$BASENAME.idx" "$DATA_ROOT/$BASENAME.psd" "$QUERY" 2>>/tmp/luck.log)"
+		RESULT="$($CSA2 "$DATA_ROOT/$BASENAME.idx" "$DATA_ROOT/$BASENAME.psd" "$QUERY" $COUNTFLAG 2>>/tmp/luck.log)"
 		RETURN=$?
 		if [[ -z "$RESULT" ]]; then
+			echo "<h3>$TITLE</h3>"
 			if [[ $RETURN -ge ${#QUERY} ]]; then
-				PREFIX="(空)"
+				PREFIX="(程序出错，请联系管理员)"
 			elif [[ $RETURN -lt 2 ]]; then
-				PREFIX="${QUERY:0:$RETURN} (可能是程序出错，请联系管理员)"
+				PREFIX="$(iconv -f gb18030 -t utf-8 -c <<< "${QUERY:0:$RETURN}") (可能是程序出错，请联系管理员)"
 			else
-				PREFIX="${QUERY:0:$RETURN}"
+				PREFIX="$(iconv -f gb18030 -t utf-8 -c <<< "${QUERY:0:$RETURN}")"
 			fi
 			echo "没有找到结果。最长匹配前缀：$PREFIX"
 		else
-			if ! iconv -f utf-8 -t utf-16le <<< "$RESULT" > /dev/null 2>/dev/null; then
-				RESULT="$(iconv -f gb18030 -t utf-8 -c <<< "$RESULT")"
+			echo "<h3>$TITLE ($(head -1 <<< "$RESULT")个结果)</h3>"
+			if $PUBLIC; then
+				echo "为避免不必要的麻烦，不提供结果显示，请见谅。"
+			else
+				if ! iconv -f utf-8 -t utf-16le <<< "$RESULT" > /dev/null 2>/dev/null; then
+					RESULT="$(iconv -f gb18030 -t utf-8 -c <<< "$RESULT")"
+				fi
+				echo "<pre>"
+				sed '1d' <<< "$RESULT"
+				echo "</pre>"
 			fi
-			echo "<pre>"
-			echo "$RESULT"
-			echo "</pre>"
 		fi
 	done <<< "$DATA_LIST"
 fi
