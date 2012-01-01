@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
                 } while (t < min(SA.n-1, j+BUFLEN));
                 if (q) q += k - j - keylen;
                 SA.text(buf,&SA,s,j-1);
-                if (!p) putchar('.'),putchar('.'),putchar('.');
-                for (k=p-buf+1; k<j-s; k++) putchar(buf[k]);
+                if (!p && s > 0) putchar('.'),putchar('.'),putchar('.');
+                for (k=p ? p-buf+1 : 0; k<j-s; k++) putchar(buf[k]);
                 for (k=0; k<keylen; k++) putchar(key[k]);
                 SA.text(buf,&SA,j+keylen,t);
                 if (!q) {
