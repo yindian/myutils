@@ -1,5 +1,5 @@
 --- imv.c.bak	Tue May 17 23:19:14 2011
-+++ imv.c	Thu May 19 00:50:43 2011
++++ imv.c	Tue Jan 17 23:12:57 2012
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -11,7 +11,59 @@
  };
  
  // given raw decoded data from stbi_load, make it into a proper Image (e.g. creating a
-@@ -665,6 +665,7 @@
+@@ -353,6 +353,43 @@
+ float lmin=0,lmax=1;
+ int mono;
+ #endif
++
++int autorotate = 0; // 0: don't rotate; 1: landscape (w:h>1.3); 2: portrait
++void check_rotate(int *pimage_x, int *pimage_y, uint8 **pimage_data)
++{
++    int i,j,k,l;
++    int image_x = *pimage_x;
++    int image_y = *pimage_y;
++    uint8 *image_data = *pimage_data;
++    if (autorotate &&
++        (autorotate == 1 && image_y * 3 > image_x * 4) ||
++        (autorotate == 2 && image_x * 3 > image_y * 4)) {
++        uint8 *rotated_data = (uint8 *) malloc(image_x * image_y * BPP);
++        if (rotated_data) {
++            k = 0;
++            for (j=0; j < image_y; ++j) {
++                l = j * BPP;
++                for (i=0; i < image_x; ++i) {
++#if BPP != 4
++                    rotated_data[l+0] = image_data[k+0];
++                    rotated_data[l+1] = image_data[k+1];
++                    rotated_data[l+2] = image_data[k+2];
++                    rotated_data[l+3] = image_data[k+3];
++#else
++                    *(uint32 *)(rotated_data+l) = *(uint32 *)(image_data+k);
++#endif
++                    k += BPP;
++                    l += image_y * BPP;
++                }
++            }
++            free(image_data);
++            *pimage_data = rotated_data;
++            *pimage_x = image_y;
++            *pimage_y = image_x;
++        }
++    }
++}
++
+ void make_image(Image *z, int image_x, int image_y, uint8 *image_data, BOOL image_loaded_as_rgb, int image_n)
+ {
+    int i,j,k,ymin=0,ymax=256*8-1;
+@@ -526,6 +563,7 @@
+          } else {
+             // post-process the image into the right format
+             f->image = (Image *) malloc(sizeof(*f->image));
++            check_rotate(&x, &y, &data);
+             make_image(f->image, x, y,data, loaded_as_rgb, n);
+             barrier();
+             f->status = LOAD_available;
+@@ -665,6 +703,7 @@
     "CTRL-I: launch new viewer instance\n"
  ;
  
@@ -19,7 +71,7 @@
  // draw the help text semi-prettily
  // originally this was to try to avoid having to darken the image
  // that it's rendered over, but I couldn't make that work, and with
-@@ -673,6 +674,8 @@
+@@ -673,6 +712,8 @@
  void draw_nice(HDC hdc, char *text, RECT *rect, uint flags)
  {
     int i,j;
@@ -28,7 +80,7 @@
     SetTextColor(hdc, RGB(80,80,80));
     for (i=2; i >= 1; i -= 1)
     for (j=2; j >= 1; j -= 1)
-@@ -681,10 +684,10 @@
+@@ -681,10 +722,10 @@
        RECT r = { rect->left+i, rect->top+j, rect->right+i, rect->bottom + j };
        if (i == 1 && j == 1)
           SetTextColor(hdc, RGB(0,0,0));
@@ -41,7 +93,7 @@
  }
  
  // cached error message for most recent image
-@@ -704,7 +707,7 @@
+@@ -704,7 +745,7 @@
  }
  
  HFONT label_font;
@@ -50,7 +102,7 @@
  
  // build the font for the filename label
  void build_label_font(void)
-@@ -771,6 +774,7 @@
+@@ -771,6 +812,7 @@
        RECT z;
        HFONT old = NULL;
        char buffer[1024];
@@ -58,7 +110,7 @@
        char *name = cur_filename ? cur_filename : "(none)";
        if (fileinfo) {
           if (recursive)
-@@ -779,13 +783,14 @@
+@@ -779,13 +821,14 @@
              sprintf(buffer, "%s ( %d / %d )", name, cur_loc+1, stb_arr_len(fileinfo));
           name = buffer;
        }
@@ -74,7 +126,7 @@
        z.left = rect.left+1;
        z.bottom = rect.bottom+1;
        z.top = z.bottom - size.cy - 4;
-@@ -794,7 +799,7 @@
+@@ -794,7 +837,7 @@
        FillRect(hdc, &z, b);
        z.bottom -= 2; // extra padding on bottom because it's at edge of window
        SetTextColor(hdc, RGB(255,255,255));
@@ -83,7 +135,7 @@
        if (old) SelectObject(hdc, old);
     }
  
-@@ -1290,6 +1295,32 @@
+@@ -1290,6 +1333,32 @@
  
  char *open_filter = "Image Files\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.hdr;*.spk\0";
  
@@ -116,7 +168,16 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
-@@ -2332,6 +2363,7 @@
+@@ -2078,7 +2147,7 @@
+                unsigned char curc[6];
+                int new_border;
+                int old_cubic = upsample_cubic;
+-               memcpy(cur, alpha_background, 6);
++               memcpy(curc, alpha_background, 6);
+ 
+                // load the settings back out of the dialog box
+                for (i=0; i < 6; ++i)
+@@ -2332,6 +2401,7 @@
                 break;
  
              case ' ': // space
@@ -124,7 +185,19 @@
                 advance(1);
                 break;
  
-@@ -2360,6 +2392,7 @@
+@@ -2352,6 +2422,11 @@
+                   KillTimer(win,0);
+                break;
+ 
++            case 'r':
++            case 'R':
++               autorotate = (autorotate + 1) % 3;
++               break;
++
+             case '.': {
+                char buffer[512];
+                strcpy(buffer, path_to_file);
+@@ -2360,6 +2435,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -132,7 +205,7 @@
                 break;
              }
  
-@@ -2384,15 +2417,53 @@
+@@ -2384,15 +2460,53 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -188,7 +261,7 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2486,6 +2557,60 @@
+@@ -2486,6 +2600,60 @@
                 break;
              }
  
@@ -249,7 +322,7 @@
              case 'I' | MY_CTRL: {
                 // not sure which of these is smaller
                 #if 0
-@@ -2500,10 +2625,13 @@
+@@ -2500,10 +2668,13 @@
                    CreateProcess(NULL, buffer, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
                 #else
                    char buffer[MAX_PATH],filename[1024] = {'\"'};
@@ -264,3 +337,11 @@
                 #endif
                 break;
              }
+@@ -2759,6 +2930,7 @@
+    // create the source image by converting the image data to BGR,
+    // pre-blending alpha
+    source = malloc(sizeof(*source));
++   check_rotate(&image_x, &image_y, &image_data);
+    make_image(source, image_x, image_y, image_data, image_loaded_as_rgb, image_n);
+ 
+    // create a cache entry in case they start browsing later
