@@ -1,5 +1,5 @@
 --- imv.c.bak	Tue May 17 23:19:14 2011
-+++ imv.c	Tue Jan 17 23:12:57 2012
++++ imv.c	Wed Jan 18 01:53:55 2012
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -30,18 +30,18 @@
 +        if (rotated_data) {
 +            k = 0;
 +            for (j=0; j < image_y; ++j) {
-+                l = j * BPP;
++                l = ((image_x-1)*image_y + j) * BPP;
 +                for (i=0; i < image_x; ++i) {
 +#if BPP != 4
 +                    rotated_data[l+0] = image_data[k+0];
 +                    rotated_data[l+1] = image_data[k+1];
 +                    rotated_data[l+2] = image_data[k+2];
-+                    rotated_data[l+3] = image_data[k+3];
++					//rotated_data[l+3] = image_data[k+3];
 +#else
 +                    *(uint32 *)(rotated_data+l) = *(uint32 *)(image_data+k);
 +#endif
 +                    k += BPP;
-+                    l += image_y * BPP;
++                    l -= image_y * BPP;
 +                }
 +            }
 +            free(image_data);
