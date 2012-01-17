@@ -1,4 +1,4 @@
---- imv.c.bak	Wed Jan 27 23:37:50 2010
+--- imv.c.bak	Tue May 17 23:19:14 2011
 +++ imv.c	Thu May 19 00:50:43 2011
 @@ -343,8 +343,8 @@
  
@@ -116,7 +116,15 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
-@@ -2360,6 +2391,7 @@
+@@ -2332,6 +2363,7 @@
+                break;
+ 
+             case ' ': // space
++            case '\r': // enter
+                advance(1);
+                break;
+ 
+@@ -2360,6 +2392,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -124,7 +132,7 @@
                 break;
              }
  
-@@ -2384,15 +2416,53 @@
+@@ -2384,15 +2417,53 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -180,12 +188,10 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2484,6 +2554,60 @@
-                init_filelist();
-                advance(0);
+@@ -2486,6 +2557,60 @@
                 break;
-+            }
-+
+             }
+ 
 +            case 'B' | MY_ALT:
 +            case 'F' | MY_ALT: {
 +                static int stat = 0;
@@ -238,6 +244,23 @@
 +                }
 +
 +                break;
-             }
- 
++            }
++
              case 'I' | MY_CTRL: {
+                // not sure which of these is smaller
+                #if 0
+@@ -2500,10 +2625,13 @@
+                   CreateProcess(NULL, buffer, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
+                #else
+                   char buffer[MAX_PATH],filename[1024] = {'\"'};
++                  stb__wchar buf1[MAX_PATH], buf2[1024];
+                   GetModuleFileName(NULL, buffer, sizeof(buffer));
+                   stb_fullpath(filename+1, sizeof(filename)-2, source_c->filename);
+                   strcat(filename, "\"");
+-                  _spawnl(_P_NOWAIT, buffer, buffer, filename, NULL);
++                  stb_from_utf8_multi(buf1, buffer, sizeof(buf1));
++                  stb_from_utf8_multi(buf2, filename, sizeof(buf2));
++                  _wspawnl(_P_NOWAIT, buf1, buf1, buf2, NULL);
+                #endif
+                break;
+             }
