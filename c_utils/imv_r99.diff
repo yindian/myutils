@@ -1,5 +1,5 @@
 --- imv.c.bak	Tue May 17 23:19:14 2011
-+++ imv.c	Wed Jan 18 02:05:29 2012
++++ imv.c	Tue Feb 07 21:18:08 2012
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -135,7 +135,7 @@
        if (old) SelectObject(hdc, old);
     }
  
-@@ -1290,6 +1333,32 @@
+@@ -1290,6 +1333,36 @@
  
  char *open_filter = "Image Files\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.hdr;*.spk\0";
  
@@ -145,6 +145,10 @@
 +   static char fullpath[4096];
 +   int i;
 +
++   if (!strncmp(path, subdir, strlen(path)) &&
++       (subdir[strlen(path) - 1] == '/' || subdir[strlen(path)] == '/'))
++       strcpy(fullpath, subdir);
++   else
 +   if (path[strlen(path) - 1] == '/')
 +   sprintf(fullpath, "%s%s", path, subdir);
 +   else
@@ -168,7 +172,7 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
-@@ -2078,7 +2147,7 @@
+@@ -2078,7 +2151,7 @@
                 unsigned char curc[6];
                 int new_border;
                 int old_cubic = upsample_cubic;
@@ -177,7 +181,7 @@
  
                 // load the settings back out of the dialog box
                 for (i=0; i < 6; ++i)
-@@ -2332,6 +2401,7 @@
+@@ -2332,6 +2405,7 @@
                 break;
  
              case ' ': // space
@@ -185,7 +189,7 @@
                 advance(1);
                 break;
  
-@@ -2352,6 +2422,11 @@
+@@ -2352,6 +2426,11 @@
                    KillTimer(win,0);
                 break;
  
@@ -197,7 +201,7 @@
              case '.': {
                 char buffer[512];
                 strcpy(buffer, path_to_file);
-@@ -2360,6 +2435,7 @@
+@@ -2360,6 +2439,7 @@
                 stb_splitpath(path_to_file, buffer, STB_PATH);
                 if (recursive)
                    init_filelist();
@@ -205,7 +209,7 @@
                 break;
              }
  
-@@ -2384,15 +2460,53 @@
+@@ -2384,15 +2464,53 @@
                   | (GetKeyState(VK_MENU   ) < 0 ? MY_ALT  : 0);
           code += wParam;
           switch (code) {
@@ -261,11 +265,12 @@
              case VK_F1:
              case 'H':
              case 'H' | MY_SHIFT:
-@@ -2486,6 +2600,60 @@
+@@ -2486,6 +2604,69 @@
                 break;
              }
  
 +            case 'B' | MY_ALT:
++            case 'N':
 +            case 'F' | MY_ALT: {
 +                static int stat = 0;
 +                int frac = 4;
@@ -279,6 +284,12 @@
 +                else
 +                    adv = 1;
 +                stat += adv;
++                if (stat >= 0 && stat < frac && fileinfo) {
++                    n = stb_arr_len(fileinfo);
++                    while (stat >= 0 && stat < frac &&
++                           (n * stat / frac) == cur_loc)
++                        stat += adv;
++                }
 +                if (stat < 0 || stat >= frac) {
 +                    stat += frac * -adv;
 +
@@ -312,7 +323,9 @@
 +                } else {
 +                    if (fileinfo == NULL)
 +                        init_filelist();
-+                    n = stb_arr_len(fileinfo);
++                    while (stat + adv >= 0 && stat + adv < frac &&
++                           (n * stat / frac) == (n * (stat + adv) / frac))
++                        stat += adv;
 +                    advance((n * stat / frac) - cur_loc);
 +                }
 +
@@ -322,7 +335,7 @@
              case 'I' | MY_CTRL: {
                 // not sure which of these is smaller
                 #if 0
-@@ -2500,10 +2668,13 @@
+@@ -2500,10 +2681,13 @@
                    CreateProcess(NULL, buffer, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
                 #else
                    char buffer[MAX_PATH],filename[1024] = {'\"'};
@@ -337,7 +350,7 @@
                 #endif
                 break;
              }
-@@ -2759,6 +2930,7 @@
+@@ -2759,6 +2943,7 @@
     // create the source image by converting the image data to BGR,
     // pre-blending alpha
     source = malloc(sizeof(*source));
