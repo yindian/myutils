@@ -1,5 +1,14 @@
 --- imv.c.bak	Tue May 17 23:19:14 2011
-+++ imv.c	Tue Feb 07 21:18:08 2012
++++ imv.c	Mon Apr 09 00:12:04 2012
+@@ -306,7 +306,7 @@
+          // flag on previous requests, and we shouldn't waste time loading
+          // data that's no longer high-priority
+          if (dc.files[i]->bail) {
+-            o(("READ: Bailing on disk request\n"));
++            o(("READ: Bailing on disk request %s\n", dc.files[i]->filename));
+             dc.files[i]->status = LOAD_inactive;
+          } else {
+             o(("READ: Loading file %s\n", dc.files[i]->filename));
 @@ -343,8 +343,8 @@
  
  static unsigned char alpha_background[2][3] =
@@ -172,6 +181,21 @@
  // build a filelist for the current directory
  void init_filelist(void)
  {
+@@ -1550,12 +1623,12 @@
+          stb_sem_release(disk_command_queue);
+       }
+    }
+-   stb_mutex_end(cache_mutex);
+ 
+    // tell disk loader not to bother with older files
+    for (i=0; i < MAX_CACHED_IMAGES; ++i)
+-      if (cache[i].lru < lru_stamp-1)
++      if (cache[i].lru < lru_stamp-1 && cache[i].filename) // avoid flush cache with null filename
+          cache[i].bail = 1;
++   stb_mutex_end(cache_mutex);
+ 
+    if (do_show)
+       SetTimer(win, 0, (int)(delay_time*1000), NULL);
 @@ -2078,7 +2151,7 @@
                 unsigned char curc[6];
                 int new_border;
