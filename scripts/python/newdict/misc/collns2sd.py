@@ -15,12 +15,48 @@ wordhrefpat = re.compile(r'href="/([^"]*)"')
 def ref2h(m):
 	return 'href="bword://%s"' % (m.group(1).replace('_', ' '),)
 
-def nodefmt(node):
-	return u''.join(node.findAll(text=True))
+def nodetext(node):
+	return spcpat2.sub(u' ', u''.join(node.findAll(text=True)).replace(u'\u0080', u' ')).strip()
+
+whole_line_tags = set([u'div', u'p', u'ul', u'ol', u'li', u'h1',\
+		u'h2', u'h3', u'h4', u'h5', u'h6', u'dl', u'dt'])
+
+def nodefmt(node, indent=0):
+	try:
+		node.contents
+	except AttributeError:
+		return unicode(node).replace(u'\u0080', u' ')
+	result = []
+	for sub in node.contents:
+		text = nodefmt(sub, indent)
+		if not text.strip():
+			if text.find(u'\n') >= 0:
+				text = u'\n'
+			elif result and not result[-1][-1].isspace():
+				result.append(u' ')
+				continue
+			elif not result or result[-1].endswith(u'\n'):
+				continue
+		elif not result or result[-1][-1].isspace():
+			text = text.lstrip()
+		if text == u'\n' and (not result or result[-1].endswith(u'\n')):
+			pass
+		elif text:
+			if text != u'\n' and getattr(sub, 'name', None) in whole_line_tags and result and not result[-1].endswith(u'\n'):
+				result[-1] = result[-1].rstrip()
+				result.append(u'\n')
+				text = text.lstrip()
+			if text:
+				result.append(text)
+	result = u''.join(result)
+	if node.name in whole_line_tags and not result.endswith(u'\n'):
+		return result + u'\n'
+	return result
 
 def getmeaning(word, buf):
 	result = []
 	soup = BeautifulSoup(buf, convertEntities=BeautifulSoup.HTML_ENTITIES)
+	part = 0
 	for content in soup.find('div', 'part_main').findAll(True, recursive=False):
 		if content.name == 'div':
 			assert content['class'] == 'collins_content' or content['class'].rstrip() == 'collins_content'
@@ -51,9 +87,10 @@ def getmeaning(word, buf):
 					pass
 				else:
 					raise Exception('Unknown class %s' % (node['class'],))
-				result.append(nodefmt(node))
+				result.append(spcpat.sub(u' ', nodefmt(node)))
 		elif content.name == 'h3':
-			pass
+			part += 1
+			result.append(u'<big><b>%d. %s</b></big>' % (part, nodetext(content),))
 		else:
 			raise Exception('Unknown tag %s' % (content.name,))
 	return u'\n'.join(result)
