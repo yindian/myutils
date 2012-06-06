@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 import glob
 import re
@@ -16,19 +17,28 @@ def ref2h(m):
 	return 'href="bword://%s"' % (m.group(1).replace('_', ' '),)
 
 def nodetext(node):
-	return spcpat2.sub(u' ', u''.join(node.findAll(text=True)).replace(u'\u0080', u' ')).strip()
+	return spcpat2.sub(u' ', u''.join(node.findAll(text=True)).replace(u'\xa0', u' ')).strip()
 
 whole_line_tags = set([u'div', u'p', u'ul', u'ol', u'li', u'h1',\
 		u'h2', u'h3', u'h4', u'h5', u'h6', u'dl', u'dt'])
+keep_tags = set([u'abr', u'b', u'i', u'sub', u'sup', u'tt', u'big', u'small', u'tr', u'ex', u'k', u'c', u'rref', u'kref', u'iref'])
 
 def nodefmt(node, indent=0):
 	try:
 		node.contents
 	except AttributeError:
-		return unicode(node).replace(u'\u0080', u' ')
+		return unicode(node).replace(u'\xa0', u' ')
+	assert node.name != 'br'
 	result = []
 	for sub in node.contents:
-		text = nodefmt(sub, indent)
+		newindent = indent
+		try:
+			if sub.name == 'span' and sub['class'] == 'tips_box':
+				newindent += 4
+				sub.name = 'div'
+		except:
+			pass
+		text = nodefmt(sub, newindent)
 		if not text.strip():
 			if text.find(u'\n') >= 0:
 				text = u'\n'
@@ -42,13 +52,29 @@ def nodefmt(node, indent=0):
 		if text == u'\n' and (not result or result[-1].endswith(u'\n')):
 			pass
 		elif text:
+			#if text.startswith(u'【搭配模式】'):
+			#	pdb.set_trace()
 			if text != u'\n' and getattr(sub, 'name', None) in whole_line_tags and result and not result[-1].endswith(u'\n'):
-				result[-1] = result[-1].rstrip()
-				result.append(u'\n')
-				text = text.lstrip()
+				if node.name == u'span' and sub.name == u'div' and sub.get('class') == u'tips_main':
+					t = text.strip()
+					if t:
+						text = u'(%s)' % (t,)
+				else:
+					result[-1] = result[-1].rstrip()
+					result.append(u'\n')
+					text = text.lstrip()
 			if text:
+				if newindent and (not result or result[-1].endswith(u'\n')):
+					result.append(newindent * ' ')
 				result.append(text)
 	result = u''.join(result)
+	if node.name == u'b':
+		result = u'<c>%s</c>' % (result,)
+	elif node.name == u'span':
+		if node.get('class') == u'text_blue':
+			node.name = u'c'
+	if node.name in keep_tags:
+		result = u'<%s>%s</%s>' % (node.name, result, node.name)
 	if node.name in whole_line_tags and not result.endswith(u'\n'):
 		return result + u'\n'
 	return result
@@ -57,9 +83,9 @@ def getmeaning(word, buf):
 	result = []
 	soup = BeautifulSoup(buf, convertEntities=BeautifulSoup.HTML_ENTITIES)
 	part = 0
-	for content in soup.find('div', 'part_main').findAll(True, recursive=False):
+	for content in reduce(lambda a, b: a + b, [div.findAll(True, recursive=False) for div in reduce(lambda a, b: a + [b], soup.findAll('div', 'part_main'), [])], []):
 		if content.name == 'div':
-			assert content['class'] == 'collins_content' or content['class'].rstrip() == 'collins_content'
+			assert content['class'].split()[0] == 'collins_content'
 			for node in content(True, recursive=False):
 				assert node.name == 'div'
 				if node['class'] == 'collins_en_cn':
@@ -87,7 +113,7 @@ def getmeaning(word, buf):
 					pass
 				else:
 					raise Exception('Unknown class %s' % (node['class'],))
-				result.append(spcpat.sub(u' ', nodefmt(node)))
+				result.append(nodefmt(node))
 		elif content.name == 'h3':
 			part += 1
 			result.append(u'<big><b>%d. %s</b></big>' % (part, nodetext(content),))
