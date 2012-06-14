@@ -19,6 +19,17 @@ def ref2h(m):
 def nodetext(node):
 	return spcpat2.sub(u' ', u''.join(node.findAll(text=True)).replace(u'\xa0', u' ')).strip()
 
+def addbefore(text, what):
+	p = 0
+	l = len(text)
+	while p < l:
+		if text[p] == '<':
+			p = text.index('>', p)
+		elif not text[p].isspace():
+			break
+		p += 1
+	return text[:p] + what + text[p:]
+
 whole_line_tags = set([u'div', u'p', u'ul', u'ol', u'li', u'h1',\
 		u'h2', u'h3', u'h4', u'h5', u'h6', u'dl', u'dt'])
 keep_tags = set([u'abr', u'b', u'i', u'sub', u'sup', u'tt', u'big', u'small', u'tr', u'ex', u'k', u'c', u'rref', u'kref', u'iref'])
@@ -36,6 +47,8 @@ def nodefmt(node, indent=0):
 			if sub.name == 'span' and sub['class'] == 'tips_box':
 				newindent += 4
 				sub.name = 'div'
+			elif sub.name == 'li' and sub['class'].startswith('explain'):
+				newindent += 3
 		except:
 			pass
 		text = nodefmt(sub, newindent)
@@ -64,15 +77,64 @@ def nodefmt(node, indent=0):
 					result.append(u'\n')
 					text = text.lstrip()
 			if text:
-				if newindent and (not result or result[-1].endswith(u'\n')):
-					result.append(newindent * ' ')
+				if newindent and (result and result[-1].endswith(u'\n')):
+					text = addbefore(text, newindent * u'　')
 				result.append(text)
 	result = u''.join(result)
 	if node.name == u'b':
 		result = u'<c>%s</c>' % (result,)
 	elif node.name == u'span':
-		if node.get('class') == u'text_blue':
+		cls = node.get('class')
+		if cls == u'text_blue':
 			node.name = u'c'
+		elif cls == u'num':
+			result = u'<big>%s</big>' % (result,)
+		elif cls == u'st' or cls == u'text_gray':
+			try:
+				node.get('style').index('bold')
+			except:
+				pass
+			else:
+				result = u'<b>%s</b>' % (result,)
+	elif node.name == u'a':
+		href = node['href']
+		if href.startswith('/'):
+			word = href[1:].replace('_', ' ')
+			see = seealso = False
+			if word.startswith('See'):
+				assert result.startswith('See')
+				word = ' '.join(word.split()[1:])
+				assert word
+				result = ' '.join(result.split()[1:])
+				see = True
+			elif word.startswith('see also'):
+				assert result.startswith('see also')
+				word = ' '.join(word.split()[2:])
+				assert word
+				result = ' '.join(result.split()[2:])
+				seealso = True
+			if word != result:
+				print >> sys.stderr, 'Link mismatch: %s vs %s'%(
+						word, result)
+			result = u'<kref>%s</kref>' % (result,)
+			if see:
+				result = u'See ' + result
+			elif seealso:
+				result = u'see also ' + result
+	elif node.name == u'li':
+		try:
+			assert node['class'].startswith('explain')
+		except:
+			ar = result.splitlines()
+			try:
+				assert len(ar) == 2
+			except:
+				assert len(ar) == 1
+				result = u'<ex>　　・%s</ex>' % (ar[0], )
+			else:
+				result = u'<ex>　　・%s\n　　　%s</ex>' % (ar[0], ar[1])
+		else:
+			result = addbefore(result, u'◆')
 	if node.name in keep_tags:
 		result = u'<%s>%s</%s>' % (node.name, result, node.name)
 	if node.name in whole_line_tags and not result.endswith(u'\n'):
@@ -81,7 +143,8 @@ def nodefmt(node, indent=0):
 
 def getmeaning(word, buf):
 	result = []
-	soup = BeautifulSoup(buf, convertEntities=BeautifulSoup.HTML_ENTITIES)
+	soup = BeautifulSoup(buf, convertEntities=BeautifulSoup.HTML_ENTITIES,
+			fromEncoding='utf-8')
 	part = 0
 	for content in reduce(lambda a, b: a + b, [div.findAll(True, recursive=False) for div in reduce(lambda a, b: a + [b], soup.findAll('div', 'part_main'), [])], []):
 		if content.name == 'div':
@@ -131,7 +194,7 @@ style = '<style type="text/css">\n' + f.read() + '</style>\n'
 f.close()
 style = style.replace('\r\n', '\\n').replace('\n', '\\n')
 flist = glob.glob('*')
-#flist = glob.glob('www.iciba.com/get')
+#flist = glob.glob('www.iciba.com/forget')
 flist.sort()
 result = []
 for fname in flist:
@@ -157,4 +220,5 @@ for fname in flist:
 		print BeautifulSoup(buf).prettify()
 		raise
 	result.append('\n')
-print ''.join(result)
+	sys.stdout.writelines(result)
+	result = []
