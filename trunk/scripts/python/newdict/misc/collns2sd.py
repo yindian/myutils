@@ -138,7 +138,7 @@ def nodefmt(node, indent=0):
 			result = addbefore(result, u'◆')
 	elif node.name == u'div':
 		try:
-			assert node['class'].startswith('explain')
+			assert node['class'].startswith('vExplain')
 		except:
 			pass
 		else:
