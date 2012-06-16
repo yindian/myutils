@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
+import os.path
 import glob
 import re
 from BeautifulSoup import BeautifulSoup
@@ -115,7 +116,7 @@ def nodefmt(node, indent=0):
 				seealso = True
 			if word != result:
 				print >> sys.stderr, 'Link mismatch: %s vs %s'%(
-						word, result)
+						word.encode('utf-8'), result.encode('utf-8'))
 			result = u'<kref>%s</kref>' % (result,)
 			if see:
 				result = u'See ' + result
@@ -135,6 +136,15 @@ def nodefmt(node, indent=0):
 				result = u'<ex>　　・%s\n　　　%s</ex>' % (ar[0], ar[1])
 		else:
 			result = addbefore(result, u'◆')
+	elif node.name == u'div':
+		try:
+			assert node['class'].startswith('explain')
+		except:
+			pass
+		else:
+			result = addbefore(result, u'◆')
+	elif node.name == u'strong':
+		result = u'<b><big>%s</big></b>' % (result,)
 	if node.name in keep_tags:
 		result = u'<%s>%s</%s>' % (node.name, result, node.name)
 	if node.name in whole_line_tags and not result.endswith(u'\n'):
@@ -148,6 +158,9 @@ def getmeaning(word, buf):
 	part = 0
 	for content in reduce(lambda a, b: a + b, [div.findAll(True, recursive=False) for div in reduce(lambda a, b: a + [b], soup.findAll('div', 'part_main'), [])], []):
 		if content.name == 'div':
+			if pronfreqmap.has_key(word) and pronfreqmap[word][part]:
+				result.append(u'　<tr>%s</tr> %s' % 
+						pronfreqmap[word][part])
 			assert content['class'].split()[0] == 'collins_content'
 			for node in content(True, recursive=False):
 				assert node.name == 'div'
@@ -182,9 +195,70 @@ def getmeaning(word, buf):
 			result.append(u'<big><b>%d. %s</b></big>' % (part, nodetext(content),))
 		else:
 			raise Exception('Unknown tag %s' % (content.name,))
+	if pronfreqmap.has_key(word):
+		try:
+			assert len(pronfreqmap[word]) == part + 1
+		except:
+			print >> sys.stderr, 'Part number mismatch', fname
 	return u'\n'.join(result)
 
 assert __name__ == '__main__'
+
+pronfreqmap = {}
+
+if len(sys.argv) > 1:
+	from romanclass import fromRoman
+	f = open(sys.argv[1], 'rb')
+	buf = f.read()
+	f.close()
+	buf = buf.decode('utf-16le')
+	def flushpronfreq(word, pron, freq):
+		if pron or freq:
+			pronfreqmap.setdefault(word, []).append((pron,
+				u'★' * (freq or 0)))
+		else:
+			pronfreqmap.setdefault(word, []).append(None)
+	word = pron = freq = None
+	checktr = False
+	checkfreq = 0
+	for line in buf.splitlines():
+		if not line.startswith('\t'):
+			if word is not None:
+				flushpronfreq(word, pron, freq)
+			word = line
+			part = 0
+			pron = freq = None
+			checktr = True
+			checkfreq = 3
+		else:
+			assert word
+			if line.startswith('\t[b]'):
+				flushpronfreq(word, pron, freq)
+				p = line.index('[/b]')
+				try:
+					newpart = fromRoman(line[4:p])
+				except:
+					pass
+				else:
+					assert newpart == part + 1
+					part = newpart
+					pron = freq = None
+					checktr = True
+					checkfreq = 3
+			if checktr:
+				p = line.find('\\[[t]')
+				if p > 0:
+					q = line.find('[/t]\\]')
+					pron = line[p+5:q]
+				checktr = False
+			if checkfreq:
+				if line.startswith('\t[m1][p]'):
+					n = line.count(u'♦')
+					if n > 0:
+						freq = n
+				checkfreq -= 1
+	if word is not None:
+		flushpronfreq(word, pron, freq)
 
 try:
 	f = open('style.css')
@@ -194,7 +268,7 @@ style = '<style type="text/css">\n' + f.read() + '</style>\n'
 f.close()
 style = style.replace('\r\n', '\\n').replace('\n', '\\n')
 flist = glob.glob('*')
-#flist = glob.glob('www.iciba.com/forget')
+#flist = glob.glob('www.iciba.com/get')
 flist.sort()
 result = []
 for fname in flist:
@@ -206,6 +280,7 @@ for fname in flist:
 	except:
 		print >> sys.stderr, 'Not found in', fname
 		continue
+	fname = os.path.basename(fname)
 	result.append(fname)
 	result.append('\t')
 	#result.append(style)
