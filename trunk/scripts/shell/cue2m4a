@@ -5,6 +5,8 @@ if [ -z "$1" ]; then
 	exit
 fi
 
+SED=$(which gsed || echo sed)
+
 while [ -n "$1" ]; do
 	BASE=$(basename "$1" .cue)
 	AUDIO=
@@ -32,10 +34,10 @@ while [ -n "$1" ]; do
 	DATE=
 	COMMENT=
 	for ATTR in PERFORMER TITLE; do
-		export $ATTR="$(grep -w ^$ATTR "$1" | sed -n 's/^\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
+		export $ATTR="$(grep -w ^$ATTR "$1" | $SED -n 's/^\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
 	done
 	for ATTR in GENRE DATE COMMENT; do
-		export $ATTR="$(grep -w ^REM "$1" | grep -w $ATTR | sed -n 's/^\S\+\s\+\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
+		export $ATTR="$(grep -w ^REM "$1" | grep -w $ATTR | $SED -n 's/^\S\+\s\+\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
 	done
 	if [ -n "$PERFORMER" ]; then
 		mp4tags -R "$PERFORMER" "$BASE.m4a"
@@ -57,7 +59,7 @@ while [ -n "$1" ]; do
 	mp4chaps -iQ "$BASE.m4a"
 	rm "$BASE.chapters.txt"
 	ART=
-	for FNAME in "$BASE"*.[jJ][pP][gG] "$BASE"*/*.[jJ][pP][gG]; do
+	for FNAME in "$BASE"*.[jJ][pP][gG] "$BASE"*/*.[jJ][pP][gG] "$BASE"*/*/*.[jJ][pP][gG]; do
 		if [ -e "$FNAME" ]; then
 			ART="$FNAME"
 			break
