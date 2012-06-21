@@ -1,0 +1,69 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+	echo "Usage: `basename $0` *.cue"
+	echo "Requires gawk, ffmpeg and mp4v2 to run"
+	exit
+fi
+
+while [ -n "$1" ]; do
+	BASE=$(basename "$1" .cue)
+	AUDIO=
+	for SUFFIX in .wav .tta .flac .ape; do
+		if [ -e "$BASE$SUFFIX" ]; then
+			AUDIO="$BASE$SUFFIX"
+			break
+		fi
+	done
+	if [ ! -e "$AUDIO" ]; then
+		echo "No audio file found for $1"
+		shift
+		continue
+	fi
+	if ffmpeg -i "$AUDIO" -acodec alac "$BASE.m4a"; then
+		:
+	else
+		echo "Transcoding failed for $AUDIO"
+		shift
+		continue
+	fi
+	PERFORMER=
+	TITLE=
+	GENRE=
+	DATE=
+	COMMENT=
+	for ATTR in PERFORMER TITLE; do
+		export $ATTR="$(grep -w ^$ATTR "$1" | sed -n 's/^\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
+	done
+	for ATTR in GENRE DATE COMMENT; do
+		export $ATTR="$(grep -w ^REM "$1" | grep -w $ATTR | sed -n 's/^\S\+\s\+\S\+\s\+//;s/\s\+$//;s/^"\(.*\)"$/\1/;1p')"
+	done
+	if [ -n "$PERFORMER" ]; then
+		mp4tags -R "$PERFORMER" "$BASE.m4a"
+	fi
+	if [ -n "$TITLE" ]; then
+		mp4tags -A "$TITLE" "$BASE.m4a"
+	fi
+	if [ -n "$GENRE" ]; then
+		mp4tags -g "$GENRE" "$BASE.m4a"
+	fi
+	if [ -n "$DATE" ]; then
+		mp4tags -y "$DATE" "$BASE.m4a"
+	fi
+	if [ -n "$COMMENT" ]; then
+		mp4tags -c "$COMMENT" "$BASE.m4a"
+	fi
+	#mp4tags -T $(grep -wc TRACK "$1") "$BASE.m4a"
+	gawk '/TRACK/{t++};/TITLE/{if (t) {sub("^[ \t]*TITLE[ \t]*","");x[t]=gensub(/^"(.*)"[ \t\r\n]*$/,"\\1",1);}};/INDEX/{split(gensub(/[ \t\r\n]*$/,"",1,$NF),a,/:/);y[t]=sprintf("%02d:%02d:%02d.%03d",a[1]/60,a[1]%60,a[2],a[3]/75*1000);};END{for (c in x) printf("%s %s\n",y[c],x[c])}' "$1" | sort > "$BASE.chapters.txt"
+	mp4chaps -iQ "$BASE.m4a"
+	rm "$BASE.chapters.txt"
+	ART=
+	for FNAME in "$BASE"*.[jJ][pP][gG] "$BASE"*/*.[jJ][pP][gG]; do
+		if [ -e "$FNAME" ]; then
+			ART="$FNAME"
+		fi
+	done
+	if [ -n "$ART" ]; then
+		mp4art --add "$ART" "$BASE.m4a"
+	fi
+	shift
+done
