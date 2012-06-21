@@ -60,6 +60,7 @@ while [ -n "$1" ]; do
 	for FNAME in "$BASE"*.[jJ][pP][gG] "$BASE"*/*.[jJ][pP][gG]; do
 		if [ -e "$FNAME" ]; then
 			ART="$FNAME"
+			break
 		fi
 	done
 	if [ -n "$ART" ]; then
