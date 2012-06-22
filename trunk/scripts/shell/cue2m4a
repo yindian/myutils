@@ -1,13 +1,20 @@
 #!/bin/bash
 if [ -z "$1" ]; then
-	echo "Usage: `basename $0` *.cue"
+	echo "Usage: `basename $0` [-s] *.cue"
+	echo "If -s is specified, split the tracks"
 	echo "Requires gawk, ffmpeg and mp4v2 to run"
 	exit
 fi
 
 SED=$(which gsed || echo sed)
 
-while [ -n "$1" ]; do
+SPLIT=false
+if [ "$1" = "-s" ]; then
+	SPLIT=true
+	shift
+fi
+
+convert_it() {
 	BASE=$(basename "$1" .cue)
 	AUDIO=
 	for SUFFIX in .wav .tta .flac .ape; do
@@ -56,8 +63,12 @@ while [ -n "$1" ]; do
 	fi
 	#mp4tags -T $(grep -wc TRACK "$1") "$BASE.m4a"
 	gawk '/TRACK/{t++};/TITLE/{if (t) {sub("^[ \t]*TITLE[ \t]*","");x[t]=gensub(/^"(.*)"[ \t\r\n]*$/,"\\1",1);}};/INDEX/{split(gensub(/[ \t\r\n]*$/,"",1,$NF),a,/:/);y[t]=sprintf("%02d:%02d:%02d.%03d",a[1]/60,a[1]%60,a[2],a[3]/75*1000);};END{for (c in x) printf("%s %s\n",y[c],x[c])}' "$1" | sort > "$BASE.chapters.txt"
+	if $SPLIT; then
+		:
+	else
 	mp4chaps -iQ "$BASE.m4a"
 	rm "$BASE.chapters.txt"
+	fi
 	ART=
 	for FNAME in "$BASE"*.[jJ][pP][gG] "$BASE"*/*.[jJ][pP][gG] "$BASE"*/*/*.[jJ][pP][gG]; do
 		if [ -e "$FNAME" ]; then
@@ -65,8 +76,48 @@ while [ -n "$1" ]; do
 			break
 		fi
 	done
-	if [ -n "$ART" ]; then
-		mp4art --add "$ART" "$BASE.m4a"
+	if $SPLIT; then
+		NUM_TRACKS=$(grep -wc TRACK "$1")
+		TRACK=0
+		LAST_OFFSET=
+		LAST_TITLE=
+		while read OFS TITLE; do
+			OFFSET=$(gawk -F : '{print(($1*60+$2)*60+$3)}' <<< "$OFS")
+			if ((TRACK > 0)); then
+				OUT=`printf "%s - %02d. %s.m4a" "$BASE" $TRACK "$LAST_TITLE"`
+				(set -x; ffmpeg -v quiet -y -i "$BASE.m4a" -ss $LAST_OFFSET -t $(gawk "END{print($OFFSET - ${LAST_OFFSET:-0} - 0.001)}" < /dev/null) -acodec copy "$OUT") < /dev/null
+				mp4tags -t $TRACK -T $NUM_TRACKS "$OUT"
+				if [ -n "$LAST_TITLE" ]; then
+					mp4tags -s "$LAST_TITLE" "$OUT"
+				fi
+				if [ -n "$ART" ]; then
+					mp4art --add "$ART" "$OUT"
+				fi
+			fi
+			LAST_OFFSET="$OFFSET"
+			LAST_TITLE="$TITLE"
+			((TRACK++))
+		done < "$BASE.chapters.txt"
+		if [ -n "$LAST_OFFSET" ]; then
+			OUT=`printf "%s - %02d. %s.m4a" "$BASE" $TRACK "$LAST_TITLE"`
+			(set -x; ffmpeg -v quiet -y -i "$BASE.m4a" -ss $LAST_OFFSET -acodec copy "$OUT")
+			mp4tags -t $TRACK -T $NUM_TRACKS "$OUT"
+			if [ -n "$LAST_TITLE" ]; then
+				mp4tags -s "$LAST_TITLE" "$OUT"
+			fi
+			if [ -n "$ART" ]; then
+				mp4art --add "$ART" "$OUT"
+			fi
+		fi
+		rm "$BASE.chapters.txt" "$BASE.m4a"
+	else
+		if [ -n "$ART" ]; then
+			mp4art --add "$ART" "$BASE.m4a"
+		fi
 	fi
+}
+while [ -n "$1" ]; do
+	convert_it "$1" &
 	shift
 done
+wait
