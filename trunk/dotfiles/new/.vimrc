@@ -79,7 +79,7 @@ inoremap <C-U> <C-G>u<C-U>
 
 " In many terminal emulators the mouse works just fine, thus enable it.
 if has('mouse')
-  set mouse=a
+  set mouse=nv
 endif
 
 " Switch syntax highlighting on, when the terminal has colors
@@ -123,6 +123,10 @@ if has("autocmd")
   autocmd FileType cfg set suffixesadd=.cfg
   autocmd FileType c,cpp setlocal ts=4 | set sw=4 | set et | 
 			  \ set tw=80 | compiler gcc
+  autocmd FileType make if exists("loaded_matchit") |
+			  \ let b:match_words = '^ *\<if\w*\>:^ *\<else\>:^ *\<endif\>' |
+			  \ end
+		
   if has("cscope")
       set nocsverb
       if $CSCOPE_DB != ""
