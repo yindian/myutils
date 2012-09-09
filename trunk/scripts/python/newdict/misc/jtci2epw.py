@@ -21,10 +21,11 @@ c = conn.cursor()
 fields = 'aWRpb21faGlyYWdhbmEsIGlkaW9tX2FuZF9leGFtcGxlX2V4LCB0cmFuc2xhdGlvbg=='
 c.execute('select %s from Idioms' % (fields.decode('base64'),))
 
-sentpat = re.compile(r'@@[0-9]+\^\^')
-parenpat = re.compile(r'\((.*?)\)')
+sentpat = re.compile(r'##[0-9]+\^\^')
+parenpat = re.compile(r'\(+(.*?)\)+')
 stagpat = re.compile(r'<S.*?>(.*?)</S>')
 ttagpat = re.compile(r'<T>(.*?)</T>')
+ktagpat = re.compile(r'<K>(.*?)</K>')
 tagpat = re.compile(r'<.*?>')
 sttagpat = re.compile(r'<S[^>]*<T>[^>]*</T>[^>]*>(.*?)</S>')
 rbsub = lambda m: parenpat.sub(r'<sub>\g<0></sub>', m.group(1))
@@ -71,11 +72,15 @@ def enc(s):
 
 for pron, mean, trans in c:
 	lines = sentpat.split(mean+'^^')[:-1]
-	title = parenpat.sub('', tagpat.sub('', lines[0]))
+	try:
+		title = parenpat.sub('', tagpat.sub('', lines[0]))
+	except:
+		print >> sys.stderr, mean
+		raise
 	if pron == title:
-		print '<dt>%s</dt>' % tuple(map(enc, (pron,)))
+		print '<dt>Åy%sÅz</dt>' % tuple(map(enc, (pron,)))
 	else:
-		s = '%sÅy%sÅz' % tuple(map(enc, (title, pron)))
+		s = '%sÅy%sÅz' % tuple(map(enc, (pron, title, )))
 		if s.find('<X4081>') < 0:
 			print '<dt>%s</dt>' % (s,)
 		else:
@@ -86,6 +91,7 @@ for pron, mean, trans in c:
 		print '<p>'
 		s = ttagpat.sub(r'<b>\g<1></b>', stagpat.sub(rbsub, 
 			sttagpat.sub(rbsub, s)))
+		s = ktagpat.sub(r'\g<1>', s).replace('((', '(').replace('))', ')')
 		print '%s<br>' % (enc(s),)
 		assert set(tagpat.findall(s)) <= set(['<b>', '</b>', '<sub>',
 			'</sub>'])
