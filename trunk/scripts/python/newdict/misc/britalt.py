@@ -16,7 +16,7 @@ lineno = 0
 try:
 	for line in f:
 		lineno += 1
-		word, mean = line.rstrip('\n').split('\t')
+		word, mean = line.rstrip('\n').split('\t', 1)
 		try:
 			ar = word.split(', ')
 			p = -1
