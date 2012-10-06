@@ -145,6 +145,10 @@ if not mergekey: # no need to reorder mean
 		result = []
 		for offset, length, word, syn in findex:
 			if result and result[-1][0] == offset:
+				if result[-1][1] == 0:
+					print >> sys.stderr, 'Empty word %s...' % (result[-1][2],)
+					result.append((offset, length, word, syn))
+					continue
 				assert result[-1][1] == length
 				result[-1][-1].append(word)
 				result[-1][-1].extend(syn)
