@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: sjis -*-
 import sys, os, re
+from htmlentitydefs import name2codepoint
 import pdb
 
-pat = re.compile(r'<dt>Åy(.*)Åz</dt>')
+pat = re.compile(r'<dt[^>]*>Åy(.*)Åz</dt>')
 pat2 = re.compile(r'<key type="(.*?)">(.*?)</key>')
 
 def charref2uni(str):
-	ar = str.split('&#');
+	ar = str.split('&');
 	result = [ar[0]]
 	for s in ar[1:]:
 		p = s.index(';')
-		if s[0] != 'x':
-			result.append('%04X' % (int(s[:p]),))
+		if s.startswith('#x'):
+			result.append('%04X' % (int(s[2:p], 16),))
+		elif s.startswith('#'):
+			result.append('%04X' % (int(s[1:p]),))
 		else:
-			result.append('%04X' % (int(s[1:p], 16),))
+			result.append('%04X' % (name2codepoint[s[:p]],))
 		result.append(s[p+1:])
 	return ''.join(result)
 
