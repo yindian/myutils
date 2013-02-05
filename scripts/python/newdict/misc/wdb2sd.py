@@ -111,11 +111,11 @@ for fname in flist:
 		buf = charrefstripcontrol(buf)
 		words = headwordpat.findall(buf)
 		words = [words[0]] + sorted(list(set(words).difference(set([words[0]]))))
-		if 'a' in words and 'b' in words and len(words[0]) > 1:
+		if '<B>a</B>' in words and len(words[0]) > 1:
 			s = set(words).difference(set([words[0]]))
 			c = 'a'
-			while c in s:
-				s.remove(c)
+			while '<B>%s</B>' % (c,) in s:
+				s.remove('<B>%s</B>' % (c,))
 				c = chr(ord(c) + 1)
 			words = [words[0]] + sorted(list(s))
 		words = [''.join(bpat.findall(charref2uni(s))) for s in words]
