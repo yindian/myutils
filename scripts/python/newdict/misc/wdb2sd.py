@@ -82,6 +82,81 @@ def charrefstripcontrol(str):
 			result.append(s)
 	return ''.join(result)
 
+recognized_fixed_tag = set('''\
+b>
+/b>
+big>
+/big>
+i>
+/i>
+s>
+/s>
+sub>
+/sub>
+sup>
+/sup>
+small>
+/small>
+tt>
+/tt>
+u>
+/u>
+br>
+nl>
+hr>
+/font>
+/a>'''.splitlines())
+
+no_matching_tags = set(['br', 'nl', 'hr'])
+def adjustimgstack(s):
+	ar = s.split('<')
+	result = [ar[0]]
+	stack = []
+	for s in ar[1:]:
+		try:
+			try:
+				p = s.index('>')
+			except:
+				result.append('<')
+				result.append(s)
+				continue
+			tag = s[:p].lower()
+			if tag + '>' in recognized_fixed_tag:
+				if tag not in no_matching_tags:
+					if tag[0] == '/':
+						tag = tag[1:]
+						try:
+							assert stack[-1] == tag
+							del stack[-1]
+						except:
+							while stack and stack[-1] != tag:
+								del stack[-1]
+							if stack and stack[-1] == tag:
+								del stack[-1]
+					else:
+						stack.append(tag)
+			elif tag.startswith('font'):
+				stack.append('font')
+			elif tag.startswith('a '):
+				stack.append('a')
+			if tag.startswith('img'):
+				for t in stack[::-1]:
+					result.append('</%s>' % (t,))
+				result.append('<')
+				result.append(s[:p+1].replace('contents/common-content/wbe-content/di/gf/tx/', ''))
+				for t in stack:
+					result.append('<%s>' % (t,))
+				result.append(s[p+1:])
+			else:
+				result.append('<')
+				result.append(s)
+		except:
+			print >> sys.stderr, stack
+			print >> sys.stderr, tag, s
+			print >> sys.stderr, ''.join(result)
+			raise
+	return ''.join(result)
+
 headwordpat = re.compile(r'<span class="wb-dict-headword">(.*?)</span>')
 bpat = re.compile(r'</?B>(.*?)</?B>')
 ahrefjspat = re.compile(r'''<a href="javascript:showEntry\('([^']*)', '[^']*'\)" target="_top">''')
@@ -120,6 +195,7 @@ for fname in flist:
 			words = [words[0]] + sorted(list(s))
 		words = [''.join(bpat.findall(charref2uni(s))) for s in words]
 		mean = ahrefjspat.sub(r'<a href="bword://\g<1>">', buf.replace('<br/>', '<br>'))
+		mean = adjustimgstack(mean)
 		print '%s\t%s' % ('|'.join(words), mean.replace('\n', '\\n'))
 	except:
 		print >> sys.stderr, 'Error parsing', fname
