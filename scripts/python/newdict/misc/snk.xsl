@@ -2,6 +2,8 @@
 
 <xsl:stylesheet version="1.0"
 xmlns:n="urn:xmlns:notknown"
+xmlns:str="http://exslt.org/strings"
+extension-element-prefixes="str"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:output method="html"/>
@@ -28,9 +30,24 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:apply-templates select="解説部/句項目">
     <xsl:with-param name="kukoumoku" select="'true'"/>
   </xsl:apply-templates>
+  <xsl:apply-templates select="子項目"/>
 </xsl:template>
 
-<xsl:template match="項目/見出部/*">
+<xsl:template match="項目/子項目">
+  <dl>
+    <dt id="{@id}" noindex="1">
+      <xsl:apply-templates select="子見出部"/>
+    </dt>
+    <xsl:apply-templates select="子見出部">
+      <xsl:with-param name="key" select="'true'"/>
+    </xsl:apply-templates>
+    <dd>
+      <xsl:apply-templates select="子解説部"/>
+    </dd>
+  </dl>
+</xsl:template>
+
+<xsl:template match="項目/見出部/* | 項目/子項目/子見出部/*">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -56,16 +73,47 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/表記G">
+<xsl:template match="項目/子項目/子見出部/子見出仮名">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
       <xsl:apply-templates/>
     </xsl:when>
     <xsl:otherwise>
-      <key type="表記">
-        <xsl:call-template name="HYOKI"/>
-      </key>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="項目/見出部/表記G | 項目/子項目/子見出部/表記G">
+  <xsl:param name="key"/>
+  <xsl:choose>
+    <xsl:when test="string-length($key) = 0">
+      <xsl:apply-templates/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="HYOKI"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="//表記G/text()">
+  <xsl:param name="dummy"/>
+  <xsl:choose>
+    <xsl:when test="string-length($dummy) = 0">
+      <xsl:copy/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:variable name="txt">
+        <xsl:copy/>
+      </xsl:variable>
+      <xsl:choose>
+        <xsl:when test="starts-with($txt, ':')">
+          <xsl:value-of select="substring($txt, 2)"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$txt"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -78,16 +126,26 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:variable>
   <xsl:choose>
     <xsl:when test="starts-with($hyoki, '［') and contains($hyoki, '］')">
-      <xsl:value-of select="substring-before(substring($hyoki, 2), '］')"/>
+      <xsl:for-each select="str:tokenize(substring-before(substring($hyoki, 2), '］'), '・')">
+        <key type="表記">
+          <xsl:value-of select="."/>
+        </key>
+      </xsl:for-each>
     </xsl:when>
     <xsl:when test="starts-with($hyoki, '〔←') and contains($hyoki, '〕')">
-      <xsl:value-of select="substring-before(substring($hyoki, 3), '〕')"/>
+      <key type="表記">
+        <xsl:value-of select="substring-before(substring($hyoki, 3), '〕')"/>
+      </key>
     </xsl:when>
     <xsl:when test="starts-with($hyoki, '〔') and contains($hyoki, '〕')">
-      <xsl:value-of select="substring-before(substring($hyoki, 2), '〕')"/>
+      <key type="表記">
+        <xsl:value-of select="substring-before(substring($hyoki, 2), '〕')"/>
+      </key>
     </xsl:when>
     <xsl:when test="substring($hyoki, string-length($hyoki)) = ''">
-      <xsl:value-of select="substring($hyoki, 1, string-length($hyoki) - 1)"/>
+      <key type="表記">
+        <xsl:value-of select="substring($hyoki, 1, string-length($hyoki) - 1)"/>
+      </key>
     </xsl:when>
     <xsl:otherwise>
       ！！！<xsl:value-of select="$hyoki"/>
@@ -95,7 +153,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/品詞G">
+<xsl:template match="項目/見出部/品詞G | 項目/子項目/子見出部/品詞G">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -106,7 +164,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/歴史仮名">
+<xsl:template match="項目/見出部/歴史仮名 | 項目/子項目/子見出部/歴史仮名">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -117,21 +175,19 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/原綴">
+<xsl:template match="項目/見出部/原綴 | 項目/子項目/子見出部/原綴">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
       <xsl:apply-templates/>
     </xsl:when>
     <xsl:otherwise>
-      <key type="表記">
-        <xsl:call-template name="HYOKI"/>
-      </key>
+      <xsl:call-template name="HYOKI"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/語源">
+<xsl:template match="項目/見出部/語源 | 項目/子項目/子見出部/語源">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -142,7 +198,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/見出部/注解">
+<xsl:template match="項目/見出部/注解 | 項目/子項目/子見出部/注解">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -153,7 +209,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="項目/解説部/*">
+<xsl:template match="項目/解説部/* | 項目/子項目/子解説部/*">
   <xsl:param name="key"/>
   <xsl:choose>
     <xsl:when test="string-length($key) = 0">
@@ -193,9 +249,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:apply-templates/>
     </xsl:when>
     <xsl:otherwise>
-        <key type="表記">
-          <xsl:call-template name="HYOKI"/>
-        </key>
+      <xsl:call-template name="HYOKI"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -227,9 +281,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:template>
 
 <xsl:template match="//大語義/語義">
-  <p><a name="{../../../@id}-KO{position()}"><xsl:if test="@num">
+  <p><xsl:if test="@num">
       <xsl:value-of select="@num"/>
-  </xsl:if></a><indent val="2"/><xsl:apply-templates/><indent val="0"/></p>
+  </xsl:if><indent val="2"/><xsl:apply-templates/><indent val="0"/></p>
 </xsl:template>
 
 <xsl:template match="//大語義/見出部要素">
@@ -252,6 +306,10 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <p><xsl:if test="@num">
       <xsl:value-of select="@num"/>
   </xsl:if><indent val="3"/><xsl:apply-templates/><indent val="0"/></p>
+</xsl:template>
+
+<xsl:template match="//大語義/語釈">
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="//自動詞形G">
@@ -299,18 +357,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:template>
 
 <xsl:template match="//ref">
-  <xsl:variable name="ref">
-    <xsl:choose>
-      <xsl:when test="contains(@idref, '-KO')">
-        <!-- <xsl:value-of select="substring-before(@idref, '-KO')"/> -->
-        <xsl:value-of select="concat(substring-before(@idref, '-KO'), '-KO', number(substring-after(@idref, '-KO')))"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="@idref"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:variable>
-  <a href="#{$ref}"><xsl:apply-templates/></a>
+  <a href="#{@idref}"><xsl:apply-templates/></a>
 </xsl:template>
 
 <xsl:template match="//n:*">
@@ -368,7 +415,10 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:template>
 
 <xsl:template match="//n:r">
-  <xsl:apply-templates/>
+  <xsl:param name="dummy"/>
+  <xsl:if test="string-length($dummy) = 0">
+    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="//n:j">
@@ -380,7 +430,15 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:template>
 
 <xsl:template match="//n:g">
-  <xsl:apply-templates/>
+  <xsl:param name="dummy"/>
+  <xsl:choose>
+    <xsl:when test="string-length($dummy) = 0">
+      <strong><xsl:apply-templates/></strong>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet> 
