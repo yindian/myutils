@@ -283,7 +283,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template match="//大語義/語義">
   <p><xsl:if test="@num">
       <xsl:value-of select="@num"/>
-  </xsl:if><indent val="2"/><xsl:apply-templates/><indent val="0"/></p>
+  </xsl:if><indent val="2"/><xsl:apply-templates/><indent val="1"/></p>
 </xsl:template>
 
 <xsl:template match="//大語義/見出部要素">
@@ -305,7 +305,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template match="//大語義/語義/副義">
   <p><xsl:if test="@num">
       <xsl:value-of select="@num"/>
-  </xsl:if><indent val="3"/><xsl:apply-templates/><indent val="0"/></p>
+  </xsl:if><indent val="3"/><xsl:apply-templates/><indent val="2"/></p>
 </xsl:template>
 
 <xsl:template match="//大語義/語釈">

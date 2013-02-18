@@ -4,59 +4,243 @@ import sys, os.path, sqlite3, re
 import os
 import pdb, traceback
 
-tonetransform = {
-	u'a': u'\u0101\u00E1\u01CE\u00E0',
-	u'o': u'\u014D\u00F3\u01D2\u00F2',
-	u'e': u'\u0113\u00E9\u011B\u00E8',
-	u'i': u'\u012B\u00ED\u01D0\u00EC',
-	u'u': u'\u016B\u00FA\u01D4\u00F9',
-	u'\u00FC': u'\u01D6\u01D8\u01DA\u01DC',
-	u'\u00EA': u'\0\u1EBF\0\u1EC1',
-	u'm': u'\0\uE7C7\0\0',
-	u'n': u'\0\u0144\u0148\uE7C8',
-}
-tonedict = {}
-for alpha in tonetransform.iterkeys():
-	for i in xrange(4):
-		if tonetransform[alpha][i]:
-			tonedict[tonetransform[alpha][i]] = (alpha, i+1)
-hatmap = {
-		0x0251: 0x61,
-		0x0261: 0x67,
-		0x012D: 0x01D0,
-		0x0103: 0x01CE,
-		0x0115: 0x011B,
-		0x016D: 0x01D4,
-		0x014F: 0x01D2,
-		}
-def pinyinuntone(s):
-	result = []
-	tone = 0
-	for c in s.translate(hatmap):
-		if c == u'\u00FC':
-			c = u'v'
-		elif ord(c) >= 0x80:
-			c, tone = tonedict[c]
-			if c == u'\u00FC':
-				c = u'v'
-		result.append(c)
-	return u''.join(result) + (tone and `tone` or u'')
-
-def half(s):
-	result = []
-	for c in s:
-		cc = ord(c)
-		if 0xFF00 <= cc < 0xFF5F:
-			result.append(chr(cc - 0xFEE0))
-		else:
-			result.append(c)
-	return u''.join(result)
-
 import codecs
 from htmlentitydefs import codepoint2name, name2codepoint
+supported_entities = set('''\
+lt
+gt
+amp
+quot
+apos
+iexcl
+cent
+pound
+curren
+yen
+brvbar
+sect
+uml
+copy
+ordf
+laquo
+not
+shy
+reg
+macr
+deg
+plusmn
+sup2
+sup3
+acute
+micro
+para
+middot
+cedil
+sup1
+ordm
+raquo
+frac14
+frac12
+frac34
+iquest
+Agrave
+Aacute
+Acirc
+Atilde
+Auml
+Aring
+AElig
+Ccedil
+Egrave
+Eacute
+Ecirc
+Euml
+Igrave
+Iacute
+Icirc
+Iuml
+ETH
+Ntilde
+Ograve
+Oacute
+Ocirc
+Otilde
+Ouml
+times
+Oslash
+Ugrave
+Uacute
+Ucirc
+Uuml
+Yacute
+THORN
+szlig
+agrave
+aacute
+acirc
+atilde
+auml
+aring
+aelig
+ccedil
+egrave
+eacute
+ecirc
+euml
+igrave
+iacute
+icirc
+iuml
+eth
+ntilde
+ograve
+oacute
+ocirc
+otilde
+ouml
+divide
+oslash
+ugrave
+uacute
+ucirc
+uuml
+yacute
+thorn
+yuml
+Amacr
+amacr
+Abreve
+abreve
+Aogon
+aogon
+Cacute
+cacute
+Ccirc
+ccirc
+Cabove
+cabove
+Ccaron
+ccaron
+Dcaron
+dcaron
+Dstrok
+dstrok
+Emacr
+emacr
+Ebreve
+ebreve
+Eabove
+eabove
+Eogon
+eogon
+Ecaron
+ecaron
+Gcirc
+gcirc
+Gbreve
+gbreve
+Gabove
+gabove
+Gcedil
+gcedil
+Hcirc
+hcirc
+Hstrok
+hstrok
+Itilde
+itilde
+Imacr
+imacr
+Ibreve
+ibreve
+Iogon
+iogon
+Iabove
+inodot
+IJlig
+ijlig
+Jcirc
+jcirc
+Kcedil
+kcedil
+kgreen
+Lacute
+lacute
+Lcedil
+lcedil
+Lcaron
+lcaron
+Lmidot
+lmidot
+Lstrok
+lstrok
+Nacute
+nacute
+Ncedil
+ncedil
+Ncaron
+ncaron
+napos
+ENG
+eng
+Omacr
+omacr
+Obreve
+obreve
+Odblac
+odblac
+OElig
+oelig
+Racute
+racute
+Rcedil
+rcedil
+Rcaron
+rcaron
+Sacute
+sacute
+Scirc
+scirc
+Scedil
+scedil
+Scaron
+scaron
+Tcedil
+tcedil
+Tcaron
+tcaron
+Tstrok
+tstrok
+Utilde
+utilde
+Umacr
+umacr
+Ubreve
+ubreve
+Uring
+uring
+Udblac
+udblac
+Uogon
+uogon
+Wcirc
+wcirc
+Ycirc
+ycirc
+Yuml
+Zacute
+zacute
+Zabove
+zabove
+Zcaron
+zcaron
+fnof
+circ
+tilde'''.splitlines())
+mycodepoint2name = dict(zip(supported_entities, map(name2codepoint.get, supported_entities)))
 def html_replace(exc):
 	assert isinstance(exc, (UnicodeEncodeError, UnicodeTranslateError))
-	s = [ u'&%s;' % codepoint2name.get(ord(c), '#x%04X' % (ord(c),))
+	s = [ u'&%s;' % mycodepoint2name.get(ord(c), '#x%04X' % (ord(c),))
 			for c in exc.object[exc.start:exc.end] ]
 	return ''.join(s), exc.end
 codecs.register_error('html_replace', html_replace)
@@ -78,6 +262,7 @@ c = conn.cursor()
 field='entry_id, word, description, rank, homophone, xml'
 c.execute('select %s from entries order by _id ASC' % (field))
 f, g = os.popen2('xsltproc snk.xsl -')
+#f = open('obs.xml', 'w')
 print >> f, '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="snk.xsl"?>
@@ -101,6 +286,8 @@ for entry_id, word, description, rank, homophone, xml in c:
 print >> f, '</root>'
 f.close()
 
+#sys.exit()
+
 f = open('out.htm', 'w')
 print >> f, """\
 <html>
@@ -112,12 +299,20 @@ g.readline()
 buf = g.read()
 g.close()
 buf = html_uncharref(buf.decode('utf-8'))
-f.write(buf.encode('sjis', 'html_replace'))
+buf = buf.replace('<dd> ', '<dd>').replace('<dd> ', '<dd>')
+buf = buf.encode('sjis', 'html_replace')
+f.write(buf)
 
 print >> f, "</html>"
 f.close()
 
 sys.exit()
+
+f = open('out.htm', 'r')
+buf = f.read()
+f.close()
+
+gaijiset = set([int(s, 16) for s in charrefxpat.findall(buf)])
 
 f = open('GaijiMap.xml', 'w')
 print >> f, """\
@@ -136,23 +331,67 @@ for code in sorted(gaijiset):
 print >> f, '</gaijiSet>'
 f.close()
 
+import numpy
+import freetype
+face = freetype.Face('tategaki.ttf')
+face.set_char_size(16*64)
+
+def bits(x):
+	data = []
+	for i in range(8):
+		data.insert(0, int((x & 1) == 1))
+		x = x >> 1
+	return data
+
 f = open('Gaiji.xml', 'w')
 print >> f, """\
-<?xml version="1.0" encoding="Shift_JIS"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <gaijiData xml:space="preserve">
 <fontSet size="%dX16" start="A121">""" % (half and 8 or 16,)
 idx = 0
 for code in sorted(gaijiset):
         if code >= 0x2000 and half:
-                print >> f, '</fontSet><fontSet size="16X16" start="%s">' % (
+                print >> f, '</fontSet>\n<fontSet size="16X16" start="%s">' % (
                                 idx2ebc(idx),
                                 )
                 half = False
-        p = os.popen('fontdumpw "%s" 0x%04X -e=%s%s' % (
-                half and "Tahoma" or "MingLiU", code, idx2ebc(idx),
-                half and ' -x=8' or ''))
-        f.write(p.read())
-        p.close()
+	face.load_char(unichr(code), freetype.FT_LOAD_RENDER | freetype.FT_LOAD_TARGET_MONO)
+	bitmap = face.glyph.bitmap
+	left   = face.glyph.bitmap_left
+	top    = face.glyph.bitmap_top
+	data = []
+	for i in range(bitmap.rows):
+		row = []
+		for j in range(bitmap.pitch):
+			row.extend(bits(bitmap.buffer[i*bitmap.pitch+j]))
+		data.extend(row[:bitmap.width])
+	img = numpy.array(data).reshape(bitmap.rows, bitmap.width)
+	try:
+		if len(img) < 16:
+			img = numpy.vstack([[0] * len(img[0])] * (8 - top) + [img] + [[0] * len(img[0])] * (top + 8 - len(img)))
+		assert len(img) == 16
+		if not half:
+			if len(img[0]) < 16:
+				if len(img[0]) + left > 16:
+					left = 16 - len(img[0]) - (16 - len(img[0])) / 2
+				img = numpy.column_stack([[0] * 16] * (left + (16 - len(img[0]) - left) / 2) + [img] + [[0] * 16] * (16 - len(img[0]) - left - (16 - len(img[0]) - left) / 2))
+			assert len(img[0]) == 16
+		else:
+			if len(img[0]) < 8:
+				img = numpy.column_stack([[0] * 16] * (left + (8 - len(img[0]) - left) / 2) + [img] + [[0] * 16] * (8 - len(img[0]) - left - (8 - len(img[0]) - left) / 2))
+			assert len(img[0]) == 8
+	except:
+		print >> sys.stderr, hex(code), unichr(code), bitmap.rows, bitmap.width, top, left
+		#traceback.print_exc()
+		#raise
+	if not half:
+		img = numpy.rot90(img, -1)
+	print >> f, '<fontData ebcode="%s" unicode="%04X"> <!-- %s -->' % (idx2ebc(idx), code, unichr(code).encode('utf-8'))
+	for row in img:
+		for col in row:
+			f.write(' #'[col])
+		print >> f
+	print >> f, '</fontData>'
         idx += 1
 print >> f, """\
 </fontSet>
