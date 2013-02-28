@@ -6,7 +6,7 @@ import operator
 from htmlentitydefs import name2codepoint
 
 def charref2uni(str):
-	ar = str.split('&');
+	ar = str.decode('utf-8').split('&');
 	result = [ar[0]]
 	for s in ar[1:]:
 		p = s.index(';')
@@ -15,13 +15,13 @@ def charref2uni(str):
 		else:
 			t = s[:p]
 		if t.startswith('#x'):
-			result.append('%04X' % (int(t[2:], 16),))
+			result.append(unichr(int(t[2:], 16),))
 		elif t.startswith('#'):
-			result.append('%04X' % (int(t[1:]),))
+			result.append(unichr(int(t[1:]),))
 		else:
-			result.append('%04X' % (name2codepoint[t],))
+			result.append(unichr(name2codepoint[t],))
 		result.append(s[p+1:])
-	return ''.join(result)
+	return u''.join(result).encode('utf-8')
 
 
 assert __name__ == '__main__'
@@ -31,7 +31,8 @@ if len(sys.argv) < 2:
 	sys.exit(0)
 
 flist = reduce(operator.add, map(glob.glob, sys.argv[1:]))
-ar = [(s[s.index('=')+1:], s) for s in flist]
+recidpat = re.compile(r'recid=([^&]*)', re.I)
+ar = [(recidpat.findall(s)[0].lower(), s) for s in flist]
 ar.sort()
 flist = [t[1] for t in ar]
 del ar
