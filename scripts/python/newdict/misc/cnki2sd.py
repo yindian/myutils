@@ -37,6 +37,7 @@ ar.sort()
 flist = [t[1] for t in ar]
 del ar
 
+tagpat = re.compile(r'<[^>]*>')
 imgpat = re.compile(r'<img[^>]*src="([^"]*)"[^>]*>')
 imgsub = lambda m: '<img src="%s">' % (os.path.basename(m.group(1)),)
 imgpathpat = re.compile(r'<table[^>]*imgpath="([^"]*)"[^>]*>')
@@ -59,12 +60,14 @@ for fname in flist:
 				if line.lstrip().startswith('<!-- content text -->'):
 					if mean:
 						mean = ['<b>%s</b><br>' % (' '.join(mean),)]
+					elif tagpat.findall(word[0]):
+						mean = ['<b>%s</b><br>' % (word[0],)]
 					state = 2
 				elif lastline:
 					line = lastline.rstrip() + line
 					p = line.index('<span id="title')
 					p = line.index('>', p + 15) + 1
-					q = line.index('<', p)
+					q = line.rindex('</span>')
 					lastline = None
 					if q > p:
 						word.append(line[p:q])
@@ -80,7 +83,7 @@ for fname in flist:
 					if p >= 0:
 						p = line.index('>', p + 15) + 1
 						try:
-							q = line.index('<', p)
+							q = line.rindex('</span>')
 						except:
 							lastline = line
 							continue
@@ -124,7 +127,7 @@ for fname in flist:
 			raise
 	f.close()
 	try:
-		print '%s\t%s' % (charref2uni('|'.join(word)), '\\n'.join(mean))
+		print '%s\t%s' % (charref2uni('|'.join(map(lambda s: tagpat.sub('', s), word))), '\\n'.join(mean))
 	except:
 		print >> sys.stderr, 'Error processing', fname
 		raise
