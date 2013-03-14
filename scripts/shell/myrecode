@@ -1,0 +1,15 @@
+#!/bin/sh
+[ -n "$1" ] || exit 1
+FENC=${1%..*}
+TENC=${1#*..}
+[ -n "$FENC" -a -n "$TENC" ] || exit 1
+echo from $FENC to $TENC 
+TMPFILE=`mktemp`
+shift
+for c in "$@"; do
+	uconv -f $FENC -t $TENC "$c" > "$TMPFILE" || exit 2
+	touch -r "$c" "$TMPFILE"
+	cat "$TMPFILE" > "$c"
+	touch -r "$TMPFILE" "$c"
+done
+echo Done.
