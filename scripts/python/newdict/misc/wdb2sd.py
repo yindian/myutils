@@ -36,7 +36,7 @@ def charref2uni(str):
 		if not 0x80 <= code < 0xA0:
 			result.append(unichr(code))
 		else:
-			print >> sys.stderr, 'ignore', code, 'in', s
+			result.append(chr(code).decode('cp1252'))
 		result.append(s[q:])
 	return u''.join(result).encode('utf-8')
 
@@ -67,6 +67,7 @@ def charrefstripcontrol(str):
 		else:
 			code = -1
 		if 0x80 <= code < 0xA0:
+			result.append('&#%d;' % (ord(chr(code).decode('cp1252')),))
 			result.append(s[q:])
 		elif code == 0xA0:
 			result.append('&nbsp;')
@@ -108,6 +109,7 @@ hr>
 /a>'''.splitlines())
 
 no_matching_tags = set(['br', 'nl', 'hr'])
+ignore_tags = set(['p', '/p', 'nobr', '/nobr'])
 def adjustimgstack(s):
 	ar = s.split('<')
 	result = [ar[0]]
@@ -121,6 +123,7 @@ def adjustimgstack(s):
 				result.append(s)
 				continue
 			tag = s[:p].lower()
+			#ignore = False
 			if tag + '>' in recognized_fixed_tag:
 				if tag not in no_matching_tags:
 					if tag[0] == '/':
@@ -133,12 +136,33 @@ def adjustimgstack(s):
 								del stack[-1]
 							if stack and stack[-1] == tag:
 								del stack[-1]
+							#sys.stderr.write('!%s!' % (tag,))
+							pass
 					else:
-						stack.append(tag)
+						stack.append(tag.split()[0])
 			elif tag.startswith('font'):
 				stack.append('font')
 			elif tag.startswith('a '):
 				stack.append('a')
+			elif tag.startswith('img'):
+				pass
+			#elif tag in ignore_tags:
+			#	ignore = True
+			else:
+				if tag[0] == '/':
+					tag = tag[1:]
+					try:
+						assert stack[-1] == tag
+						del stack[-1]
+					except:
+						while stack and stack[-1] != tag:
+							del stack[-1]
+						if stack and stack[-1] == tag:
+							del stack[-1]
+						#sys.stderr.write('!%s!' % (tag,))
+						pass
+				else:
+					stack.append(tag.split()[0])
 			if tag.startswith('img'):
 				for t in stack[::-1]:
 					result.append('</%s>' % (t,))
@@ -147,6 +171,8 @@ def adjustimgstack(s):
 				for t in stack:
 					result.append('<%s>' % (t,))
 				result.append(s[p+1:])
+			#elif ignore:
+			#	result.append(s[p+1:])
 			else:
 				result.append('<')
 				result.append(s)
@@ -178,7 +204,10 @@ for fname in flist:
 				#missing
 				continue
 		p = buf.index('\n', p) + 1
-		q = buf.index('\n</FONT>\n', p)
+		try:
+			q = buf.index('\n</FONT>\n\n', p)
+		except:
+			q = buf.index('\n</FONT>\n', p)
 		buf = buf[p:q].strip()
 		if not buf:
 			#empty
