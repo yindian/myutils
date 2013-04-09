@@ -164,11 +164,16 @@ def adjustimgstack(s):
 				else:
 					stack.append(tag.split()[0])
 			if tag.startswith('img'):
+				revstack = []
 				for t in stack[::-1]:
 					result.append('</%s>' % (t,))
+					revstack.append(t)
+				while revstack and ('/%s>' % (revstack[-1],)) not in recognized_fixed_tag:
+					del revstack[-1]
+					del result[-1]
 				result.append('<')
 				result.append(s[:p+1].replace('contents/common-content/wbe-content/di/gf/tx/', ''))
-				for t in stack:
+				for t in revstack[::-1]:
 					result.append('<%s>' % (t,))
 				result.append(s[p+1:])
 			#elif ignore:
