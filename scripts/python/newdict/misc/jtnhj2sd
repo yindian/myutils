@@ -1,0 +1,7 @@
+#!/bin/sh
+for c in `find . -type f`; do
+	(
+	(sed -n '/midashigo/{s/<[^>]*>//g;p}' $c; sed -n '/AVOID_CROSSLINK/{s/title="\([^"]*\)の意味"/\n>\1\n/g;p}' $c | sed -n '/^>/{s/^>//;p}') | awk '!x[$0]++' | sed ':a;$!N;s/\n/|/;t a'
+	sed -n '/<div class=Jtnhj>/,/<\/div>/{s/<a href="[^">]*" title="\([^">]*\)の意味"[^>]*>/<a href="bword:\/\/\1">/g;p}' "$c" | sed ':a;$!N;s/\n/\\n/;t a';
+	) | sed '1N;s/\n/\t/';
+done

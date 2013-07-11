@@ -163,6 +163,32 @@ encodings._cache['xmlcharref'] = codecs.CodecInfo(
 		streamreader=StreamReader,
 		streamwriter=StreamWriter,
 		)
+try:
+	import json
+except:
+	import simplejson as json
+class Codec(codecs.Codec):
+	def encode(self,input,errors='strict'):
+		return json.dumps(input)[1:-1], len(input)
+	def decode(self,input,errors='strict'):
+		return json.loads('"%s"' % (str(input),)), len(input)
+class IncrementalEncoder(codecs.IncrementalEncoder):
+	def encode(self, input, final=False):
+		return json.dumps(input)[1:-1]
+class IncrementalDecoder(codecs.IncrementalDecoder):
+	def decode(self, input, final=False):
+		return json.loads('"%s"' % (str(input),))
+class StreamWriter(Codec,codecs.StreamWriter): pass
+class StreamReader(Codec,codecs.StreamReader): pass
+encodings._cache['json'] = codecs.CodecInfo(
+		name='json',
+		encode=Codec().encode,
+		decode=Codec().decode,
+		incrementalencoder=IncrementalEncoder,
+		incrementaldecoder=IncrementalDecoder,
+		streamreader=StreamReader,
+		streamwriter=StreamWriter,
+		)
 
 if __name__ == '__main__':
 	argv = win32_utf8_argv() or sys.argv
