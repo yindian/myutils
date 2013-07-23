@@ -1,6 +1,6 @@
 --- /tmp/classes/feedparser.php	2013-05-13 17:34:26.000000000 +0800
-+++ ./classes/feedparser.php	2013-07-19 16:56:46.631454497 +0800
-@@ -16,6 +16,17 @@
++++ ./classes/feedparser.php	2013-07-23 12:19:55.781343698 +0800
+@@ -16,6 +16,16 @@
  		libxml_use_internal_errors(true);
  		libxml_clear_errors();
  		$this->doc = new DOMDocument();
@@ -11,7 +11,6 @@
 +				if ($enc == "gb2312" or $enc == "gbk") {
 +					$enc = "cp936";
 +				}
-+				echo $enc;
 +				$data = preg_replace($pattern, '${1}utf-8"', iconv( $enc, 'utf-8', $data));
 +			}
 +		}
