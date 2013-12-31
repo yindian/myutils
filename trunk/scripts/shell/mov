@@ -1,0 +1,53 @@
+#!/bin/bash
+FIFO="$HOME/.mplayer/fifo"
+INPUTCONF="$HOME/.mplayer/input.conf"
+FNAMEFILE="$HOME/.mplayer/filename"
+TAGFILE="$HOME/.mov"
+
+if [ "$1" = "-do" ]; then
+	echo "get_property filename" > "$FIFO"
+	while true; do
+		FNAME="$(cat "$FNAMEFILE" 2>/dev/null)"
+		if [ $? -eq 0 ]; then
+			rm "$FNAMEFILE"
+			break
+		fi
+		sleep 0.05
+	done
+	TAGS="$(zenity --entry --text="$FNAME")"
+	S=
+	for T in $TAGS; do
+		S="$S	$T"
+	done
+	if [ -n "$S" ]; then
+		echo "$FNAME$S" >> $TAGFILE
+	fi
+	exit
+fi
+parse_log() {
+	while read; do
+		if [ "${REPLY:0:13}" = "ANS_filename=" ]; then
+			echo "${REPLY:13}" > "$FNAMEFILE"
+		else
+			echo "$REPLY"
+		fi
+	done
+}
+rm -f "$FNAMEFILE"
+
+if mkdir -p "$HOME/.mplayer"; then
+	:
+else
+	echo "Cannot make directory $HOME/.mplayer"
+	exit 1
+fi
+if [ ! -p "$FIFO" ]; then
+	rm -f "$FIFO"
+	mkfifo "$FIFO"
+fi
+if grep -w mov "$INPUTCONF" > /dev/null 2>&1; then
+	:
+else
+	echo "Ctrl+m run \"mov -do\"" >> "$INPUTCONF"
+fi
+mplayer -slave -quiet -input "file=$HOME/.mplayer/fifo" "$@" | parse_log
