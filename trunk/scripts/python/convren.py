@@ -86,15 +86,16 @@ def renameit(path, fromenc, toenc):
 			print >> sys.stderr, 'Not of encoding %s: ' % (fromenc), 
 			writeunicode(path, sys.stderr)
 			raise
+	global errors
 	try:
-		dest = unicode(ansi, toenc)
+		dest = unicode(ansi, toenc, errors)
 	except UnicodeDecodeError:
 		print >> sys.stderr, 'Cannot convert from %s to %s: ' % (fromenc,
 				toenc), 
 		writeunicode(path, sys.stderr)
 		raise
 	if os.name != 'nt':
-		dest = dest.encode(fnenc)
+		dest = dest.encode(fnenc, errors)
 	return (path, dest)
 
 todolist = []
@@ -108,13 +109,13 @@ class Codec(codecs.Codec):
 	def encode(self,input,errors='strict'):
 		return urllib.quote(input.encode('utf-8')).encode('ascii'), len(input)
 	def decode(self,input,errors='strict'):
-		return urllib.unquote(str(input)).decode('utf-8'), len(input)
+		return urllib.unquote(str(input)).decode('utf-8', errors), len(input)
 class IncrementalEncoder(codecs.IncrementalEncoder):
 	def encode(self, input, final=False):
 		return urllib.quote(input.encode('utf-8')).encode('ascii')
 class IncrementalDecoder(codecs.IncrementalDecoder):
 	def decode(self, input, final=False):
-		return urllib.unquote(str(input)).decode('utf-8')
+		return urllib.unquote(str(input)).decode('utf-8', errors)
 class StreamWriter(Codec,codecs.StreamWriter): pass
 class StreamReader(Codec,codecs.StreamReader): pass
 encodings._cache['utf-8-url'] = codecs.CodecInfo(
@@ -204,6 +205,11 @@ if __name__ == '__main__':
 	assert ''.encode(fromenc) == ''
 	toenc = argv[2]
 	assert ''.encode(toenc) == ''
+	if argv[3] == '-f':
+		errors = 'ignore'
+		del argv[3]
+	else:
+		errors = 'strict'
 
 	for file in argv[3:]:
 		if os.path.exists(file):
