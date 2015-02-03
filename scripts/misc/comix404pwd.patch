@@ -1,0 +1,114 @@
+diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
+--- comix-4.0.4/src/archive.py	2009-04-04 01:11:43.000000000 +0800
++++ /usr/share/comix/src/archive.py	2015-02-03 23:29:08.884508583 +0800
+@@ -3,7 +3,10 @@
+ import sys
+ import os
+ import re
+-import zipfile
++try:
++    import czipfile as zipfile
++except:
++    import zipfile
+ import tarfile
+ import threading
+ 
+@@ -48,9 +51,31 @@
+         self._stop = False
+         self._extract_thread = None
+         self._condition = threading.Condition()
++        self._rarpass = '-p-'
+ 
+         if self._type == ZIP:
+             self._zfile = zipfile.ZipFile(src, 'r')
++	    need_pass = False
++	    for info in self._zfile.infolist():
++		    if info.flag_bits & 0x1:
++			    need_pass = True
++			    break
++            if need_pass:
++                print >> sys.stderr, "You need password for ", src
++                dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_QUESTION,
++                        gtk.BUTTONS_OK_CANCEL,
++                        _("Enter password:"))
++                entry = gtk.Entry()
++                entry.set_text("")
++                entry.show()
++                dialog.vbox.pack_end(entry)
++                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
++                dialog.set_default_response(gtk.RESPONSE_OK)
++                ret = dialog.run()
++                text = entry.get_text()
++                dialog.destroy()
++                if ret == gtk.RESPONSE_OK:
++			self._zfile.setpassword(text)
+             self._files = self._zfile.namelist()
+         elif self._type in (TAR, GZIP, BZIP2):
+             self._tfile = tarfile.open(src, 'r')
+@@ -69,7 +94,32 @@
+                     dialog.run()
+                     dialog.destroy()
+                     return None
+-            proc = process.Process([_rar_exec, 'vb', '--', src])
++            need_pass = False
++            proc = process.Process([_rar_exec, 'l', '-p-', '--', src])
++            fd = proc.spawn()
++            for line in fd.readlines():
++                if line and line[0] in '*C' and (line.startswith('*') or line.startswith('CRC')):
++                    need_pass = True
++                    break
++            fd.close()
++            proc.wait()
++            if need_pass:
++                print >> sys.stderr, "You need password for ", src
++                dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_QUESTION,
++                        gtk.BUTTONS_OK_CANCEL,
++                        _("Enter password:"))
++                entry = gtk.Entry()
++                entry.set_text("")
++                entry.show()
++                dialog.vbox.pack_end(entry)
++                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
++                dialog.set_default_response(gtk.RESPONSE_OK)
++                ret = dialog.run()
++                text = entry.get_text()
++                dialog.destroy()
++                if ret == gtk.RESPONSE_OK:
++                    self._rarpass = '-p' + text
++            proc = process.Process([_rar_exec, 'vb', self._rarpass, '--', src])
+             fd = proc.spawn()
+             self._files = [name.rstrip(os.linesep) for name in fd.readlines()]
+             fd.close()
+@@ -173,7 +223,7 @@
+                     print '! Non-local tar member:', name, '\n'
+             elif self._type == RAR:
+                 if _rar_exec is not None:
+-                    proc = process.Process([_rar_exec, 'x', '-kb', '-p-',
++                    proc = process.Process([_rar_exec, 'x', '-kb', self._rarpass,
+                         '-o-', '-inul', '--', self._src, name, self._dst])
+                     proc.spawn()
+                     proc.wait()
+diff -ur comix-4.0.4/src/process.py /usr/share/comix/src/process.py
+--- comix-4.0.4/src/process.py	2008-11-10 06:17:46.000000000 +0800
++++ /usr/share/comix/src/process.py	2015-02-03 23:03:34.768534087 +0800
+@@ -27,7 +27,7 @@
+         (NOTE: separate function to make python2.4 exception syntax happy)
+         """
+         try:
+-            self._proc = subprocess.Popen(self._args, stdout=subprocess.PIPE)
++            self._proc = subprocess.Popen(self._args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+             return self._proc.stdout
+         except Exception:
+             return None
+diff -ur comix-4.0.4/src/thumbnail.py /usr/share/comix/src/thumbnail.py
+--- comix-4.0.4/src/thumbnail.py	2008-12-13 00:04:28.000000000 +0800
++++ /usr/share/comix/src/thumbnail.py	2015-02-03 23:04:03.952533601 +0800
+@@ -154,6 +154,8 @@
+ 
+ 
+ def _path_to_thumbpath(path, dst_dir):
++    if type(path) == unicode:
++        path = path.encode('utf-8')
+     uri = 'file://' + pathname2url(os.path.normpath(path))
+     return _uri_to_thumbpath(uri, dst_dir)
+ 
