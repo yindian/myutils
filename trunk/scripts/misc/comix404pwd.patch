@@ -1,6 +1,6 @@
 diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 --- comix-4.0.4/src/archive.py	2009-04-04 01:11:43.000000000 +0800
-+++ /usr/share/comix/src/archive.py	2015-02-07 13:23:53.890581434 +0800
++++ /usr/share/comix/src/archive.py	2015-02-07 13:35:33.386050048 +0800
 @@ -3,17 +3,23 @@
  import sys
  import os
@@ -149,7 +149,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
          else:
              print '! Non-supported archive format:', src
              return None
-@@ -173,12 +279,37 @@
+@@ -173,12 +279,40 @@
                      print '! Non-local tar member:', name, '\n'
              elif self._type == RAR:
                  if _rar_exec is not None:
@@ -172,7 +172,10 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                    while line:
 +                        if line.startswith('Extracting  '):
 +                            self._condition.acquire()
-+                            self._extracted[line[12:-1]] = True
++			    fname = line[12:-1]
++			    if fname.endswith('     Data Error in encrypted file. Wrong password?'):
++				    fname = fname[:-50]
++                            self._extracted[fname] = True
 +                            self._condition.notify()
 +                            self._condition.release()
 +                            if count == 10:
@@ -188,7 +191,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
          except Exception:
              # Better to ignore any failed extractions (e.g. from a corrupt
              # archive) than to crash here and leave the main thread in a
-@@ -296,6 +427,8 @@
+@@ -296,6 +430,8 @@
                  return TAR
              if magic == 'Rar!':
                  return RAR
@@ -197,7 +200,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
      except Exception:
          print '! Error while reading', path
      return None
-@@ -335,3 +468,12 @@
+@@ -335,3 +471,12 @@
          if process.Process([command]).spawn() is not None:
              return command
      return None
