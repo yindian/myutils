@@ -1,7 +1,7 @@
 diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 --- comix-4.0.4/src/archive.py	2009-04-04 01:11:43.000000000 +0800
-+++ /usr/share/comix/src/archive.py	2015-02-03 23:29:08.884508583 +0800
-@@ -3,7 +3,10 @@
++++ /usr/share/comix/src/archive.py	2015-02-07 13:23:53.890581434 +0800
+@@ -3,17 +3,23 @@
  import sys
  import os
  import re
@@ -13,7 +13,20 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
  import tarfile
  import threading
  
-@@ -48,9 +51,31 @@
+ import gtk
+ 
+ import process
++import time
+ 
+ ZIP, RAR, TAR, GZIP, BZIP2 = range(5)
++P7ZIP = 5
+ 
+ _rar_exec = None
++_7z_exec = None
+ 
+ 
+ class Extractor:
+@@ -48,9 +54,31 @@
          self._stop = False
          self._extract_thread = None
          self._condition = threading.Condition()
@@ -45,7 +58,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
              self._files = self._zfile.namelist()
          elif self._type in (TAR, GZIP, BZIP2):
              self._tfile = tarfile.open(src, 'r')
-@@ -69,7 +94,32 @@
+@@ -69,11 +97,89 @@
                      dialog.run()
                      dialog.destroy()
                      return None
@@ -79,7 +92,64 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
              fd = proc.spawn()
              self._files = [name.rstrip(os.linesep) for name in fd.readlines()]
              fd.close()
-@@ -173,7 +223,7 @@
+             proc.wait()
++        elif self._type == P7ZIP:
++            global _7z_exec
++            if _7z_exec is None:
++                _7z_exec = _get_7z_exec()
++                if _7z_exec is None:
++                    print '! Could not find 7z file extractor.'
++                    dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_WARNING,
++                        gtk.BUTTONS_CLOSE,
++                        _("Could not find 7z file extractor!"))
++                    dialog.format_secondary_markup(
++                        _("You need either the <i>7z</i> or the <i>7za</i> program installed in order to read 7z files."))
++                    dialog.run()
++                    dialog.destroy()
++                    return None
++            need_pass = False
++            proc = process.Process([_7z_exec, 'l', '-slt', '-p-', src])
++            fd = proc.spawn()
++            self._files = []
++            for line in fd:
++                if line.startswith('Path = '):
++                    self._files.append(line[7:-1])
++                elif line.startswith('Encrypted = +'):
++                    need_pass = True
++                elif line.endswith('Wrong password?\n'):
++                    need_pass = True
++                    self._files = []
++                    break
++            fd.close()
++            proc.wait()
++            if need_pass:
++                print >> sys.stderr, "You need password for ", src
++                dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_QUESTION,
++                        gtk.BUTTONS_OK_CANCEL,
++                        _("Enter password:"))
++                entry = gtk.Entry()
++                entry.set_text("")
++                entry.show()
++                dialog.vbox.pack_end(entry)
++                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
++                dialog.set_default_response(gtk.RESPONSE_OK)
++                ret = dialog.run()
++                text = entry.get_text()
++                dialog.destroy()
++                if ret == gtk.RESPONSE_OK:
++                    self._rarpass = '-p' + text
++                    if not self._files:
++                        proc = process.Process([_7z_exec, 'l', '-slt', self._rarpass, src])
++                        fd = proc.spawn()
++                        for line in fd:
++                            if line.startswith('Path = '):
++                                self._files.append(line[7:-1])
++                        fd.close()
++                        proc.wait()
+         else:
+             print '! Non-supported archive format:', src
+             return None
+@@ -173,12 +279,37 @@
                      print '! Non-local tar member:', name, '\n'
              elif self._type == RAR:
                  if _rar_exec is not None:
@@ -88,6 +158,58 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
                          '-o-', '-inul', '--', self._src, name, self._dst])
                      proc.spawn()
                      proc.wait()
+                 else:
+                     print '! Could not find RAR file extractor.'
++            elif self._type == P7ZIP:
++                if self.is_ready(name):
++                    return
++                if _7z_exec is not None:
++                    proc = process.Process([_7z_exec, 'x', self._rarpass,
++                        '-y', '-bd', '-o' + self._dst, self._src]) #, name
++                    fd = proc.spawn()
++                    line = fd.readline()
++                    count = 0
++                    while line:
++                        if line.startswith('Extracting  '):
++                            self._condition.acquire()
++                            self._extracted[line[12:-1]] = True
++                            self._condition.notify()
++                            self._condition.release()
++                            if count == 10:
++                                count = 0
++                                time.sleep(0.1)
++                            else:
++                                count += 1
++                        line = fd.readline()
++                    proc.wait()
++                    return
++                else:
++                    print '! Could not find 7z file extractor.'
+         except Exception:
+             # Better to ignore any failed extractions (e.g. from a corrupt
+             # archive) than to crash here and leave the main thread in a
+@@ -296,6 +427,8 @@
+                 return TAR
+             if magic == 'Rar!':
+                 return RAR
++            if magic == '7z\xBC\xAF':
++                return P7ZIP
+     except Exception:
+         print '! Error while reading', path
+     return None
+@@ -335,3 +468,12 @@
+         if process.Process([command]).spawn() is not None:
+             return command
+     return None
++
++def _get_7z_exec():
++    """Return the name of the 7z file extractor executable, or None if
++    no such executable is found.
++    """
++    for command in ('7z', '7za'):
++        if process.Process([command]).spawn() is not None:
++            return command
++    return None
 diff -ur comix-4.0.4/src/process.py /usr/share/comix/src/process.py
 --- comix-4.0.4/src/process.py	2008-11-10 06:17:46.000000000 +0800
 +++ /usr/share/comix/src/process.py	2015-02-03 23:03:34.768534087 +0800
