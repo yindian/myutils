@@ -1,0 +1,25 @@
+#!/bin/bash
+while [ -n "$1" ]; do
+	LAST="${1##*/}"
+	TAIL="${LAST#*.}"
+	LAST="${LAST%%.*}"
+	HEAD="${1%/*}"
+	LOCALHEAD="${HEAD#*://}"
+	FNAME=`mktemp`
+	cat /dev/null > $FNAME
+	for ((i = 1; i <= $LAST; i++)); do
+		if [ -e "$LOCALHEAD/$i.jpg" ]; then
+			echo "$HEAD/$i.jpg" >> $FNAME
+			continue
+		fi
+		if [ -e "$LOCALHEAD/$i.png" ]; then
+			echo "$HEAD/$i.png" >> $FNAME
+			continue
+		fi
+		echo "$HEAD/$i.jpg" >> $FNAME
+		echo "$HEAD/$i.png" >> $FNAME
+	done
+	wget -U '' -i $FNAME -c -x -T 30 -t 0
+	rm $FNAME
+	shift
+done
