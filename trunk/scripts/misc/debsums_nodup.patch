@@ -1,0 +1,11 @@
+--- debsums-2.0.52+deb7u1/debsums	2014-09-02 02:43:58.000000000 +0800
++++ /usr/bin/debsums	2015-02-04 00:17:34.000460286 +0800
+@@ -462,7 +462,7 @@
+ 	    return 0;
+ 	}
+ 
+-	my $correct_package = `dpkg-query "--admindir=$DPKG" -S "$path" | awk -F: '{print \$1}'`;
++	my $correct_package = `dpkg-query "--admindir=$DPKG" -S "/$path" | awk -F: '{print \$1}'`;
+ 	chomp($correct_package);
+ 	if ($pack ne $correct_package) {
+ 	    #print "$pack != $correct_package\n";
