@@ -213,6 +213,96 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +        if process.Process([command]).spawn() is not None:
 +            return command
 +    return None
+diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
+--- comix-4.0.4/src/filehandler.py	2009-01-12 04:54:42.000000000 +0800
++++ /usr/share/comix/src/filehandler.py	2015-05-16 17:10:58.515767591 +0800
+@@ -57,7 +57,7 @@
+         if index not in self._raw_pixbufs:
+             self._wait_on_page(index + 1)
+             try:
+-                self._raw_pixbufs[index] = gtk.gdk.pixbuf_new_from_file(
++                self._raw_pixbufs[index] = gtk.gdk.PixbufAnimation(
+                     self._image_files[index])
+             except Exception:
+                 self._raw_pixbufs[index] = self._get_missing_image()
+diff -ur comix-4.0.4/src/lens.py /usr/share/comix/src/lens.py
+--- comix-4.0.4/src/lens.py	2009-01-12 04:32:30.000000000 +0800
++++ /usr/share/comix/src/lens.py	2015-05-16 17:18:37.618044157 +0800
+@@ -58,6 +58,10 @@
+             else:
+                 l_source_pixbuf, r_source_pixbuf = \
+                     self._window.file_handler.get_pixbufs()
++            if hasattr(l_source_pixbuf, 'get_static_image'):
++                l_source_pixbuf = l_source_pixbuf.get_static_image()
++            if hasattr(r_source_pixbuf, 'get_static_image'):
++                r_source_pixbuf = r_source_pixbuf.get_static_image()
+             l_image_size = self._window.left_image.size_request()
+             r_image_size = self._window.right_image.size_request()
+             self._add_subpixbuf(canvas, x, y, l_image_size, l_source_pixbuf,
+@@ -66,6 +70,8 @@
+                 l_image_size[0], left=False)
+         else:
+             source_pixbuf = self._window.file_handler.get_pixbufs()
++            if hasattr(source_pixbuf, 'get_static_image'):
++                source_pixbuf = source_pixbuf.get_static_image()
+             image_size = self._window.left_image.size_request()
+             self._add_subpixbuf(canvas, x, y, image_size, source_pixbuf)
+         return image.add_border(canvas, 1)
+diff -ur comix-4.0.4/src/main.py /usr/share/comix/src/main.py
+--- comix-4.0.4/src/main.py	2009-02-22 23:50:40.000000000 +0800
++++ /usr/share/comix/src/main.py	2015-05-16 17:21:07.202785914 +0800
+@@ -222,6 +222,10 @@
+ 
+         if self.displayed_double():
+             left_pixbuf, right_pixbuf = self.file_handler.get_pixbufs()
++            if hasattr(left_pixbuf, 'get_static_image'):
++                left_pixbuf = left_pixbuf.get_static_image()
++            if hasattr(right_pixbuf, 'get_static_image'):
++                right_pixbuf = right_pixbuf.get_static_image()
+             if self.is_manga_mode:
+                 right_pixbuf, left_pixbuf = left_pixbuf, right_pixbuf
+             left_unscaled_x = left_pixbuf.get_width()
+@@ -299,7 +303,10 @@
+ 
+             rotation = prefs['rotation']
+             if prefs['auto rotate from exif']:
+-                rotation += image.get_implied_rotation(pixbuf)
++                if hasattr(pixbuf, 'get_static_image'):
++                    rotation += image.get_implied_rotation(pixbuf.get_static_image())
++                else:
++                    rotation += image.get_implied_rotation(pixbuf)
+                 rotation = rotation % 360
+ 
+             if self.zoom_mode == preferences.ZOOM_MODE_MANUAL:
+@@ -309,15 +316,20 @@
+                     scaled_width, scaled_height = scaled_height, scaled_width
+                 scale_up = True
+             
+-            pixbuf = image.fit_in_rectangle(pixbuf, scaled_width,
+-                scaled_height, scale_up=scale_up, rotation=rotation)
+-            if prefs['horizontal flip']:
+-                pixbuf = pixbuf.flip(horizontal=True)
+-            if prefs['vertical flip']:
+-                pixbuf = pixbuf.flip(horizontal=False)
+-            pixbuf = self.enhancer.enhance(pixbuf)
++            if not hasattr(pixbuf, 'is_static_image') or pixbuf.is_static_image():
++                if hasattr(pixbuf, 'get_static_image'):
++                    pixbuf = pixbuf.get_static_image()
++                pixbuf = image.fit_in_rectangle(pixbuf, scaled_width,
++                    scaled_height, scale_up=scale_up, rotation=rotation)
++                if prefs['horizontal flip']:
++                    pixbuf = pixbuf.flip(horizontal=True)
++                if prefs['vertical flip']:
++                    pixbuf = pixbuf.flip(horizontal=False)
++                pixbuf = self.enhancer.enhance(pixbuf)
+ 
+-            self.left_image.set_from_pixbuf(pixbuf)
++                self.left_image.set_from_pixbuf(pixbuf)
++            else:
++                self.left_image.set_from_animation(pixbuf)
+             self.right_image.clear()
+             x_padding = (area_width - pixbuf.get_width()) / 2
+             y_padding = (area_height - pixbuf.get_height()) / 2
 diff -ur comix-4.0.4/src/process.py /usr/share/comix/src/process.py
 --- comix-4.0.4/src/process.py	2008-11-10 06:17:46.000000000 +0800
 +++ /usr/share/comix/src/process.py	2015-02-03 23:03:34.768534087 +0800
