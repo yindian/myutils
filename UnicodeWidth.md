@@ -1,0 +1,9 @@
+# Introduction #
+
+UnicodeWidth was originally written by Markus Kuhn in C, and translated to Python by mothy.org. However, the python module is buggy, and you should apply a patch on it.
+
+# Details #
+
+You can find the patch file in svn repository.
+
+Download location: http://mothy.org/hacks/unicodewidth/UnicodeWidth.html

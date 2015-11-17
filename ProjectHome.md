@@ -1,0 +1,3 @@
+This project simply hosts several utilities for my personal use.
+
+BBS Text Formatter is a text wrapper with punctuation prohibition rules for articles with ANSI escape sequences. It supports custom settings for whether to filter ANSI escape sequences or not, whether to consider punctuation prohibitions, whether to join consecutive non-blank lines, whether to treat CJK ambiguous characters as wide, whether to expand tabs, at what width to wrap, the largest permitted length of a line, the tabsize, file encoding and so on. Third-party python module UnicodeWidth is used to determine the character width.

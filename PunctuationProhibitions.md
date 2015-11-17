@@ -1,0 +1,20 @@
+# Introduction #
+
+(Punctuation) Prohibitions, called (Biǎodiǎn) Jìnzé in Chinese, or Kinsoku Shori in Japanese, determines whether or not a line break can be issued before or after certain punctuations or other special characters.
+
+
+# Details #
+
+This article only covers punctuation prohibitions in Chinese.
+
+**Line start forbiddens:** Comma, period and alike, as well as all kinds of closing brackets and quotes. They cannot be placed at the start of the line.
+
+> The ones considered here: ,.!?)]}>»％、。，．：；！？·）｝〕〉》」』】〗’”
+
+**Line end forbiddens:** All kinds of opening brackets and quotes. They cannot appear at the end of the line.
+
+> The ones considered here: ([{<«$（｛〔〈《「『【〖‘“
+
+**Inter-character forbiddens:** Long-dash (pòzhéhào) and ellipsis. They consist of two CJK characters, and cannot break in between.
+
+> The ones considered here: —…‥
