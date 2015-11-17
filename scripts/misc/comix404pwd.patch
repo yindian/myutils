@@ -1,7 +1,7 @@
 diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 --- comix-4.0.4/src/archive.py	2009-04-04 01:11:43.000000000 +0800
-+++ /usr/share/comix/src/archive.py	2015-02-07 13:35:33.386050048 +0800
-@@ -3,17 +3,23 @@
++++ /usr/share/comix/src/archive.py	2015-09-28 15:58:10.747196061 +0800
+@@ -3,17 +3,24 @@
  import sys
  import os
  import re
@@ -23,14 +23,16 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
  
  _rar_exec = None
 +_7z_exec = None
++_last_pass = ""
  
  
  class Extractor:
-@@ -48,9 +54,31 @@
+@@ -48,9 +55,33 @@
          self._stop = False
          self._extract_thread = None
          self._condition = threading.Condition()
 +        self._rarpass = '-p-'
++	global _last_pass
  
          if self._type == ZIP:
              self._zfile = zipfile.ZipFile(src, 'r')
@@ -45,7 +47,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                        gtk.BUTTONS_OK_CANCEL,
 +                        _("Enter password:"))
 +                entry = gtk.Entry()
-+                entry.set_text("")
++                entry.set_text(_last_pass)
 +                entry.show()
 +                dialog.vbox.pack_end(entry)
 +                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
@@ -55,10 +57,11 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                dialog.destroy()
 +                if ret == gtk.RESPONSE_OK:
 +			self._zfile.setpassword(text)
++			_last_pass = text
              self._files = self._zfile.namelist()
          elif self._type in (TAR, GZIP, BZIP2):
              self._tfile = tarfile.open(src, 'r')
-@@ -69,11 +97,89 @@
+@@ -69,11 +100,91 @@
                      dialog.run()
                      dialog.destroy()
                      return None
@@ -67,7 +70,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +            proc = process.Process([_rar_exec, 'l', '-p-', '--', src])
 +            fd = proc.spawn()
 +            for line in fd.readlines():
-+                if line and line[0] in '*C' and (line.startswith('*') or line.startswith('CRC')):
++                if line and line[0] in '*C' and (line.startswith('*') or line.startswith('CRC') or line.startswith('Checksum')):
 +                    need_pass = True
 +                    break
 +            fd.close()
@@ -78,7 +81,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                        gtk.BUTTONS_OK_CANCEL,
 +                        _("Enter password:"))
 +                entry = gtk.Entry()
-+                entry.set_text("")
++                entry.set_text(_last_pass)
 +                entry.show()
 +                dialog.vbox.pack_end(entry)
 +                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
@@ -88,6 +91,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                dialog.destroy()
 +                if ret == gtk.RESPONSE_OK:
 +                    self._rarpass = '-p' + text
++		    _last_pass = text
 +            proc = process.Process([_rar_exec, 'vb', self._rarpass, '--', src])
              fd = proc.spawn()
              self._files = [name.rstrip(os.linesep) for name in fd.readlines()]
@@ -128,7 +132,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                        gtk.BUTTONS_OK_CANCEL,
 +                        _("Enter password:"))
 +                entry = gtk.Entry()
-+                entry.set_text("")
++                entry.set_text(_last_pass)
 +                entry.show()
 +                dialog.vbox.pack_end(entry)
 +                entry.connect('activate', lambda _: dialog.response(gtk.RESPONSE_OK))
@@ -138,6 +142,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +                dialog.destroy()
 +                if ret == gtk.RESPONSE_OK:
 +                    self._rarpass = '-p' + text
++		    _last_pass = text
 +                    if not self._files:
 +                        proc = process.Process([_7z_exec, 'l', '-slt', self._rarpass, src])
 +                        fd = proc.spawn()
@@ -149,7 +154,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
          else:
              print '! Non-supported archive format:', src
              return None
-@@ -173,12 +279,40 @@
+@@ -173,12 +284,40 @@
                      print '! Non-local tar member:', name, '\n'
              elif self._type == RAR:
                  if _rar_exec is not None:
@@ -191,7 +196,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
          except Exception:
              # Better to ignore any failed extractions (e.g. from a corrupt
              # archive) than to crash here and leave the main thread in a
-@@ -296,6 +430,8 @@
+@@ -296,6 +435,8 @@
                  return TAR
              if magic == 'Rar!':
                  return RAR
@@ -200,7 +205,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
      except Exception:
          print '! Error while reading', path
      return None
-@@ -335,3 +471,12 @@
+@@ -335,3 +476,12 @@
          if process.Process([command]).spawn() is not None:
              return command
      return None
@@ -215,7 +220,16 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +    return None
 diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
 --- comix-4.0.4/src/filehandler.py	2009-01-12 04:54:42.000000000 +0800
-+++ /usr/share/comix/src/filehandler.py	2015-05-16 17:10:58.515767591 +0800
++++ /usr/share/comix/src/filehandler.py	2015-09-05 15:15:53.811243262 +0800
+@@ -47,7 +47,7 @@
+         self._name_table = {}
+         self._extractor = archive.Extractor()
+         self._condition = None
+-        self._image_re = re.compile(r'\.(jpg|jpeg|png|gif|tif|tiff)\s*$', re.I)
++        self._image_re = re.compile(r'\.(jpg|jpeg|png|gif|bmp|tif|tiff)\s*$', re.I)
+         self.update_comment_extensions()
+ 
+     def _get_pixbuf(self, index):
 @@ -57,7 +57,7 @@
          if index not in self._raw_pixbufs:
              self._wait_on_page(index + 1)
@@ -225,6 +239,30 @@ diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
                      self._image_files[index])
              except Exception:
                  self._raw_pixbufs[index] = self._get_missing_image()
+@@ -278,7 +278,8 @@
+                 fpath = os.path.join(self._base_path, f)
+                 if is_image_file(fpath):
+                     self._image_files.append(fpath)
+-            self._image_files.sort(locale.strcoll)
++            #self._image_files.sort(locale.strcoll)
++            alphanumeric_sort(self._image_files)
+             self._current_image_index = self._image_files.index(path)
+ 
+         if not self._image_files:
+@@ -554,6 +555,12 @@
+         if s.isdigit():
+             return int(s)
+         return s.lower()
++    def _convert_utf8(s):
++        if type(s) == unicode:
++            return s.encode('utf-8')
++        return s
+ 
+     rec = re.compile("\d+|\D+")
+-    filenames.sort(key=lambda s: map(_format_substring, rec.findall(s)))
++    prefix = os.path.commonprefix([_convert_utf8(s) for s in filenames])
++    prefixlen = len(prefix)
++    filenames.sort(key=lambda s: map(_format_substring, rec.findall(_convert_utf8(s)[prefixlen:])))
 diff -ur comix-4.0.4/src/lens.py /usr/share/comix/src/lens.py
 --- comix-4.0.4/src/lens.py	2009-01-12 04:32:30.000000000 +0800
 +++ /usr/share/comix/src/lens.py	2015-05-16 17:18:37.618044157 +0800
