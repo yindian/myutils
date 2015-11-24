@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+ALBUMS=`sed -n '/string/{s/^.*<string>//;s/<.*//;p}' AlbumsMetadata/0.albumlistmetadata`
+if [ -n "$1" ]; then
+	PREFIX="${1%/}/"
+fi
+i=1
+for album in $ALBUMS; do
+	if [ ! -e AlbumsMetadata/$album.albummetadata ]; then
+		continue
+	fi
+	title=`sqlite3 Photos.sqlite "select ZTITLE from ZGENERICALBUM where hex(ZUUID) = '${album//-/}'"`
+	idx=$((i++))
+	outdir=`printf "%02d %s" $idx $title`
+	echo mkdir -p \""$PREFIX$outdir"\"
+	ASSETS=`plistutil -i AlbumsMetadata/$album.albummetadata | sed -n '/<data>/,/<\/data>/p' | tail -n +2 | head -n -1 | tr -d '[:space:]' | base64 -d | od -A n -t xC | sed 's/ //g' | tr '[:lower:]' '[:upper:]'`
+	for asset in $ASSETS; do
+		path=`sqlite3 Photos.sqlite "select ZDIRECTORY, ZFILENAME from ZGENERICASSET where hex(ZUUID) = '$asset'" | sed 's/|/\//'`
+		echo cp -pv \""$path"\" \""$PREFIX$outdir/"`sed 's/^DCIM\///;s/\//-/g' <<< "$path"`\"
+	done
+done
