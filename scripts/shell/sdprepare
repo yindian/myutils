@@ -1,0 +1,2 @@
+rsync -aP --link-dest=../dic.all dic.all/ dic.noidxdict --exclude='**.idx*' --exclude='**.dict*' --exclude='**.syn*' --exclude='**.ifo'
+rsync -aP --link-dest=../dic.all dic.all/ dic.idxdict --include='**.idx*' --include='**.dict*' --include='**.syn*' --include='**.ifo' --exclude='**/res' --include='**/' --exclude='*'

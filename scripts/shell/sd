@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+SDPREFIX=$HOME/.stardict/dic
+[ -e $SDPREFIX.idxdict ]
+[ -e $SDPREFIX.noidxdict ]
+if grep $SDPREFIX.tmpfs /proc/mounts; then
+	#umount $SDPREFIX.aufs
+	sudo umount $SDPREFIX.tmpfs
+	exit
+fi
+mkdir -p $SDPREFIX.tmpfs
+#mkdir -p $SDPREFIX.aufs
+sudo mount -t tmpfs -o size=2684354560 none $SDPREFIX.tmpfs 
+rsync -a $SDPREFIX.idxdict/* $SDPREFIX.tmpfs
+#mount -t aufs -o br:$SDPREFIX.noidxdict=ro:$SDPREFIX.tmpfs=ro none $SDPREFIX.aufs
+cd $SDPREFIX.noidxdict
+find . -type d -name res -exec ln -s $SDPREFIX.noidxdict/{} $SDPREFIX.tmpfs/{} \;
