@@ -1,0 +1,12 @@
+#!/bin/bash
+while [ -n "$1" ]; do
+	UP=`tr '[:lower:]' '[:upper:]' <<< "${1%%&*}" | sed 's/^.*BTIH://;s/:.*//'`
+	if [ "${#UP}" -ne 40 -o -n "$(tr -d '[0-9A-F]' <<< "$UP")" ]; then
+		echo "Invalid address $1" 1>&2
+		shift
+		continue
+	fi
+	URL="http://bt.box.n0808.com/${UP:0:2}/${UP: -2}/$UP.torrent"
+	echo $URL
+	shift
+done | wget -c -T 30 -t 0 -i -
