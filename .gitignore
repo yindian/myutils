@@ -1,0 +1,9 @@
+.*.swp
+*.swp
+*~
+*.orig
+*.rej
+*.bak
+*.tmp
+
+.svn
