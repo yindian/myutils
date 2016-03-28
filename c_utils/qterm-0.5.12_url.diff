@@ -1,0 +1,87 @@
+diff -ur qterm-0.5.12.bak/src/qtermbbs.cpp qterm-0.5.12/src/qtermbbs.cpp
+--- qterm-0.5.12.bak/src/qtermbbs.cpp	2010-06-14 15:36:10.000000000 +0800
++++ qterm-0.5.12/src/qtermbbs.cpp	2016-03-28 16:20:34.375984157 +0800
+@@ -534,6 +534,7 @@
+                 int urlBegin = i*m_pBuffer->columns() + lineBegin->beginIndex(index);
+                 int index2 = checkUrlEnd(lineBegin->getText(), index);
+                 bool multiline = false;
++                int oldI = i;
+                 if (index2 == -1) {
+                     while (m_pBuffer->screen(i+1) != NULL&&index2 == -1&&i < m_pBuffer->line()) {
+                         i++;
+@@ -548,8 +549,10 @@
+                 int urlEnd = i*m_pBuffer->columns() + m_pBuffer->screen(i)->beginIndex(index2);
+                 if (verifyUrl(urlBegin, urlEnd))
+                     m_urlPosList.append(qMakePair(urlBegin, urlEnd));
+-                if (multiline)
++                if (multiline) {
++                    i = oldI;
+                     break;
++                }
+                 j = index2;
+             }
+         }
+diff -ur qterm-0.5.12.bak/src/qtermcanvas.cpp qterm-0.5.12/src/qtermcanvas.cpp
+--- qterm-0.5.12.bak/src/qtermcanvas.cpp	2010-06-11 22:27:32.000000000 +0800
++++ qterm-0.5.12/src/qtermcanvas.cpp	2016-03-28 18:46:10.219991672 +0800
+@@ -12,6 +12,7 @@
+ #include <QMessageBox>
+ #include <QLabel>
+ #include <QMatrix>
++#include <QImageReader>
+ 
+ namespace QTerm
+ {
+@@ -121,8 +122,11 @@
+ 
+ void Canvas::loadImage(QString name)
+ {
+-    img.load(name);
++    QImageReader reader(name);
++    reader.setDecideFormatFromContent(true);
++    img = reader.read();
+     if (!img.isNull()) {
++        mov.stop();
+ 
+         strFileName = name;
+         setWindowTitle(QFileInfo(name).fileName());
+@@ -146,6 +150,11 @@
+         if (bEmbed)
+             fitWin(true);
+ 
++        if (!reader.read().isNull()) {
++            mov.setFileName(name);
++            mov.start();
++            label->setMovie(&mov);
++        }
+     } else
+         qWarning("cant load image");
+ }
+@@ -239,7 +248,7 @@
+ 
+ QPixmap Canvas::scaleImage(const QSize& sz)
+ {
+-    return QPixmap::fromImage(img.scaled(sz));
++    return QPixmap::fromImage(img.scaled(sz, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+ }
+ 
+ void Canvas::moveImage(double dx, double dy)
+diff -ur qterm-0.5.12.bak/src/qtermcanvas.h qterm-0.5.12/src/qtermcanvas.h
+--- qterm-0.5.12.bak/src/qtermcanvas.h	2010-06-11 22:43:20.000000000 +0800
++++ qterm-0.5.12/src/qtermcanvas.h	2016-03-28 17:39:21.931986319 +0800
+@@ -4,6 +4,7 @@
+ //Added by qt3to4:
+ #include <QScrollArea>
+ #include <QImage>
++#include <QMovie>
+ // #include <QResizeEvent>
+ // #include <QCloseEvent>
+ 
+@@ -55,6 +56,7 @@
+     QSize szImage;
+     QString strFileName;
+     QImage img;
++    QMovie mov;
+     QMenu *m_pMenu;
+     QAction * m_fitAction;
+ 
