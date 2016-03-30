@@ -1,0 +1,77 @@
+#!/bin/bash
+S=2
+R1=2
+R2=3
+A=1
+proportional() {
+	# return true if $1 / $2 =~= $3 / $4
+	# $1 * $4 - $2 * $3
+	_D=$(($1 * $4 - $2 * $3))
+	if [ $_D -lt 0 ]; then
+		_D=$((-$_D))
+	fi
+	if [ $_D -lt $(($2 * $4 / 10)) ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+die() {
+	echo "$@" 1>&2
+	exit 1
+}
+
+while true; do
+	L=`echo ${A}_${S}_*`
+	if [ "$L" != "${L%\*}" ]; then
+		break
+	fi
+	N=`wc -w <<< "$L"`
+	if [ $N -eq 1 ]; then
+		cp -p $L ${A}_${S}.jpg
+	else
+		G=`identify $L | head -1 | cut -d ' ' -f 3`
+		W=${G%x*}
+		H=${G#*x}
+		case $N in
+			2)
+				if proportional $(($W * 2)) $H $R1 $R2; then
+					montage $L -tile 2x1 -geometry +0+0 ${A}_${S}.jpg
+				elif proportional $W $(($H * 2)) $R1 $R2; then
+					montage $L -tile 1x2 -geometry +0+0 ${A}_${S}.jpg
+				else
+					die "Wrong dimensions $W, $H for $A"
+				fi
+				;;
+			4)
+				if proportional $(($W * 2)) $(($H * 2)) $R1 $R2; then
+					montage $L -tile 2x2 -geometry +0+0 ${A}_${S}.jpg
+				else
+					die "Wrong dimensions $W, $H for $A"
+				fi
+				;;
+			6)
+				if proportional $(($W * 2)) $(($H * 3)) $R1 $R2; then
+					montage $L -tile 2x3 -geometry +0+0 ${A}_${S}.jpg
+				else
+					die "Wrong dimensions $W, $H for $A"
+				fi
+				;;
+			8)
+				if proportional $(($W * 2)) $(($H * 4)) $R1 $R2; then
+					montage $L -tile 2x4 -geometry +0+0 ${A}_${S}.jpg
+				elif proportional $(($W * 4)) $(($H * 2)) $R1 $R2; then
+					montage $L -tile 4x2 -geometry +0+0 ${A}_${S}.jpg
+				else
+					die "Wrong dimensions $W, $H for $A"
+				fi
+				;;
+			*)
+				die "Unexpected number of fragments for $A: $N"
+				;;
+		esac
+	fi
+	echo -n .
+	A=$((A + 1))
+done
