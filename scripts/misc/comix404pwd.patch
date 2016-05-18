@@ -220,7 +220,7 @@ diff -ur comix-4.0.4/src/archive.py /usr/share/comix/src/archive.py
 +    return None
 diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
 --- comix-4.0.4/src/filehandler.py	2009-01-12 04:54:42.000000000 +0800
-+++ /usr/share/comix/src/filehandler.py	2015-09-05 15:15:53.811243262 +0800
++++ /usr/share/comix/src/filehandler.py	2016-05-18 23:34:05.154694631 +0800
 @@ -47,7 +47,7 @@
          self._name_table = {}
          self._extractor = archive.Extractor()
@@ -249,7 +249,7 @@ diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
              self._current_image_index = self._image_files.index(path)
  
          if not self._image_files:
-@@ -554,6 +555,12 @@
+@@ -554,6 +555,15 @@
          if s.isdigit():
              return int(s)
          return s.lower()
@@ -262,6 +262,9 @@ diff -ur comix-4.0.4/src/filehandler.py /usr/share/comix/src/filehandler.py
 -    filenames.sort(key=lambda s: map(_format_substring, rec.findall(s)))
 +    prefix = os.path.commonprefix([_convert_utf8(s) for s in filenames])
 +    prefixlen = len(prefix)
++    prefix2 = os.path.commonprefix([_convert_utf8(s)[prefixlen+1:] for s in filenames])
++    if len(prefix2) >= 4:
++        prefixlen = len(prefix) + 1 + len(prefix2)
 +    filenames.sort(key=lambda s: map(_format_substring, rec.findall(_convert_utf8(s)[prefixlen:])))
 diff -ur comix-4.0.4/src/lens.py /usr/share/comix/src/lens.py
 --- comix-4.0.4/src/lens.py	2009-01-12 04:32:30.000000000 +0800
