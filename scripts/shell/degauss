@@ -1,0 +1,12 @@
+#!/bin/bash
+LANG=C demagnetize "$@" |& while read; do
+echo "$REPLY"
+if [ -n "$REPLY" -a -z "${REPLY/* - * saved \[*\]/}" ]; then
+	FN="${REPLY/? saved \[*\]/}"
+	FN="${FN/* - ?/}"
+	if [ -f "$FN" ]; then
+		TITLE="$(aria2c -S "$FN" | sed -n '/^Name: /{s/^Name: //;p}')"
+		mv -iv "$FN" "$TITLE.torrent"
+	fi
+fi
+done
