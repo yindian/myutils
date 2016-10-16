@@ -1,0 +1,91 @@
+#!/bin/bash
+get_ts_from_list()
+{
+	grep -v "^#" <<< "$1" | while read; do
+	if [ "${REPLY:0:4}" != "http" ]; then
+		echo "${URL%/*}/$REPLY"
+	else
+		echo "$REPLY"
+	fi
+	done | wget -T 30 -t 0 -q -i -
+}
+
+SED=gsed
+if ! which $SED > /dev/null; then
+	SED=sed
+fi
+
+DURATION=1
+OUTDIR=out
+while [ -n "$1" -a "${1:0:1}" = "-" ]; do
+	if [ "$1" = "-t" ]; then
+		DURATION=$2
+		shift 2
+	elif [ "$1" = "-d" ]; then
+		OUTDIR=$2
+		shift 2
+	fi
+done
+if [ -z "$1" ]; then
+	echo "Usage: $0 [-t duration] [-d directory] m3u8_url"
+	exit
+fi
+INDEX="$(curl -s "$1")"
+URL="$1"
+LIST=
+if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
+	if grep -q "#EXT-X-STREAM-INF" <<< "$INDEX"; then
+		INDEX="$(tr -d '\r' <<< "$INDEX" | $SED -n '/^#EXT-X-STREAM-INF/,/^[^#]/{/^#/H;/^[^#]/{G;s/\n/ /g;s/BANDWIDTH=/& /;p;s/.*//;h}}' | sort -n -k 3 -r)"
+		while read M3U8 _; do
+			if [ "${M3U8:0:4}" != "http" ]; then
+				M3U8="${URL%/*}/$M3U8"
+			fi
+			echo "Trying $M3U8"
+			LIST="$(curl -s "$M3U8")"
+			if [ -n "$LIST" -a "${LIST:0:7}" = "#EXTM3U" ]; then
+				URL="$M3U8"
+				echo "Selected $M3U8"
+				break
+			fi
+		done <<< "$INDEX"
+	else
+		LIST="$INDEX"
+	fi
+else
+	echo "Invalid source $1"
+	exit 1
+fi
+LIST="$(tr -d '\r' <<< "$LIST")"
+STEP=1
+if grep -q "#EXT-X-TARGETDURATION" <<< "$LIST"; then
+	STEP="$($SED -n '/^#EXT-X-TARGETDURATION/{s/^.*: *//;p}' <<< "$LIST")"
+	if [ "$STEP" -gt 2 ]; then
+		STEP=$(($STEP - 1))
+	else
+		STEP=1
+	fi
+fi
+echo "Duration $DURATION, step $STEP"
+mkdir -p "$OUTDIR"
+cd "$OUTDIR"
+if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
+	LASTN="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
+	OLDLIST=
+	while [ "$DURATION" -gt 0 ]; do
+		echo "Downloading sequence $LASTN, left duration $DURATION"
+		get_ts_from_list "$(diff <(cat <<< "$OLDLIST") <(cat <<< "$LIST") | $SED -n '/^> /{s/^> //;p}')"
+		OLDLIST="$LIST"
+		DURATION=$(($DURATION - $STEP))
+		LIST="$(curl -s "$URL" | tr -d '\r')"
+		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
+		while [ $N -eq $LASTN ]; do
+			sleep 1
+			LIST="$(curl -s "$URL" | tr -d '\r')"
+			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
+		done
+		LASTN="$N"
+	done
+else
+	echo "No sequence. Download only once."
+	get_ts_from_list "$LIST"
+fi
