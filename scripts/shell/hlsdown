@@ -14,6 +14,7 @@ SED=gsed
 if ! which $SED > /dev/null; then
 	SED=sed
 fi
+CURL_W_OPT="curl --retry 3 -s"
 
 DURATION=1
 OUTDIR=out
@@ -30,7 +31,7 @@ if [ -z "$1" ]; then
 	echo "Usage: $0 [-t duration] [-d directory] m3u8_url"
 	exit
 fi
-INDEX="$(curl -s "$1")"
+INDEX="$($CURL_W_OPT "$1")"
 URL="$1"
 LIST=
 if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
@@ -41,7 +42,7 @@ if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
 				M3U8="${URL%/*}/$M3U8"
 			fi
 			echo "Trying $M3U8"
-			LIST="$(curl -s "$M3U8")"
+			LIST="$($CURL_W_OPT "$M3U8")"
 			if [ -n "$LIST" -a "${LIST:0:7}" = "#EXTM3U" ]; then
 				URL="$M3U8"
 				echo "Selected $M3U8"
@@ -76,11 +77,11 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 		get_ts_from_list "$(diff <(cat <<< "$OLDLIST") <(cat <<< "$LIST") | $SED -n '/^> /{s/^> //;p}')"
 		OLDLIST="$LIST"
 		DURATION=$(($DURATION - $STEP))
-		LIST="$(curl -s "$URL" | tr -d '\r')"
+		LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
-		while [ $N -eq $LASTN ]; do
+		while [ "$N" = "$LASTN" ]; do
 			sleep 1
-			LIST="$(curl -s "$URL" | tr -d '\r')"
+			LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
 		done
 		LASTN="$N"
