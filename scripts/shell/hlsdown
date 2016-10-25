@@ -103,6 +103,11 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 		THIS_STEP="${LIST#*#EXTINF:}"
 		if [ "$THIS_STEP" != "$LIST" ]; then
 			THIS_STEP=$($SED -n '1{s/,.*//;p}' <<< "$THIS_STEP")
+			if [ "$THIS_STEP" -gt 2 ]; then
+				THIS_STEP=$(($THIS_STEP - 1))
+			else
+				THIS_STEP=1
+			fi
 		else
 			THIS_STEP=
 		fi
@@ -112,7 +117,7 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 		DURATION=$(($DURATION - ${THIS_STEP:-$STEP}))
 		LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
-		while [ "$N" = "$LASTN" ]; do
+		while [ "$N" = "$LASTN" -o -z "$N" ]; do
 			sleep 1
 			LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
