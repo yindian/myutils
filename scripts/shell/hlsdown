@@ -40,6 +40,19 @@ fi
 INDEX="$($CURL_W_OPT "$1")"
 URL="$1"
 LIST=
+if [ -z "$INDEX" -a -n "$URL" -a ${#URL} -le 2 ]; then
+	URL="$(xxd -ps -c 70 -r <<< 687474703a2f2f76646e2e6c6976652e636e74762e636e2f617069322f6c69766548746d6c352e646f3f6368616e6e656c3d70613a2f2f636374765f7032705f686463637476)$URL&client=html5"
+	INDEX="$($CURL_W_OPT "$URL")"
+fi
+if [ -n "$INDEX" -a "${INDEX:0:18}" = "var html5VideoData" ]; then
+	URL="${INDEX#*\"hls2\":\"}"
+	if [ "$URL" != "$INDEX" ]; then
+		echo "Resolving html5VideoData"
+		URL="${URL%%\"*}"
+		INDEX="$($CURL_W_OPT "$URL")"
+		echo "$URL"
+	fi
+fi
 if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
 	if grep -q "#EXT-X-STREAM-INF" <<< "$INDEX"; then
 		INDEX="$(tr -d '\r' <<< "$INDEX" | $SED -n '/^#EXT-X-STREAM-INF/,/^[^#]/{/^#/H;/^[^#]/{G;s/\n/ /g;s/BANDWIDTH=/& /;p;s/.*//;h}}' | sort -n -k 3 -r)"
