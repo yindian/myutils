@@ -2,8 +2,14 @@
 get_ts_from_list()
 {
 	grep -v "^#" <<< "$1" | while read; do
-	if [ "${REPLY:0:4}" != "http" ]; then
-		echo "${URL%/*}/$REPLY"
+	if [ "${REPLY:0:1}" = "/" ]; then
+		URL_SCHEMA="${URL%%://*}"
+		URL_WO_SCHEMA="${URL#$URL_SCHEMA://}"
+		URL_HOST="${URL_WO_SCHEMA%%/*}"
+		echo "$URL_SCHEMA://$URL_HOST$REPLY"
+	elif [ "${REPLY:0:4}" != "http" ]; then
+		URL_BASE="${URL%%\?*}"
+		echo "${URL_BASE%/*}/$REPLY"
 	else
 		echo "$REPLY"
 	fi
@@ -38,8 +44,14 @@ if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
 	if grep -q "#EXT-X-STREAM-INF" <<< "$INDEX"; then
 		INDEX="$(tr -d '\r' <<< "$INDEX" | $SED -n '/^#EXT-X-STREAM-INF/,/^[^#]/{/^#/H;/^[^#]/{G;s/\n/ /g;s/BANDWIDTH=/& /;p;s/.*//;h}}' | sort -n -k 3 -r)"
 		while read M3U8 _; do
-			if [ "${M3U8:0:4}" != "http" ]; then
-				M3U8="${URL%/*}/$M3U8"
+			if [ "${M3U8:0:1}" = "/" ]; then
+				URL_SCHEMA="${URL%%://*}"
+				URL_WO_SCHEMA="${URL#$URL_SCHEMA://}"
+				URL_HOST="${URL_WO_SCHEMA%%/*}"
+				M3U8="$URL_SCHEMA://$URL_HOST$M3U8"
+			elif [ "${M3U8:0:4}" != "http" ]; then
+				URL_BASE="${URL%%\?*}"
+				M3U8="${URL_BASE%/*}/$M3U8"
 			fi
 			echo "Trying $M3U8"
 			LIST="$($CURL_W_OPT "$M3U8")"
