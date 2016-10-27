@@ -1,0 +1,43 @@
+#/bin/bash
+set -e
+SED=gsed
+if ! which $SED > /dev/null; then
+	SED=sed
+fi
+DIR=tmp
+while [ -e $DIR ]; do
+	DIR=`mktemp -d -u tmpXXX`
+done
+mkdir $DIR
+echo "tmp dir: $DIR"
+while [ -n "$1" ]; do
+	CSV="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1")"
+	ffmpeg -loglevel 24 -i "$1" -vf select='eq(pict_type\,I)' -vsync 2 -f image2 $DIR/%d.jpg
+	START_TIME=`$SED -n "1p" <<< "$CSV" | cut -f 2 -d ,`
+	echo "time start at $START_TIME"
+	KCSV="$(grep -nw I <<< "$CSV")"
+	echo "$(wc -l <<< "$KCSV") key frames extracted to $DIR"
+	read -p "Select key frame index to begin with:"
+	SEL_TIME=`$SED -n "${REPLY}p" <<< "$KCSV" | cut -f 2 -d ,`
+	NEXT_TIME=`$SED -n "$(($REPLY + 1))p" <<< "$KCSV" | cut -f 2 -d ,`
+	SEL_IDX=`$SED -n "${REPLY}{s/:.*//;p}" <<< "$KCSV"`
+	echo "You selected frame $SEL_IDX [$SEL_TIME..$NEXT_TIME]"
+	rm -f $DIR/*
+	if [ -z "$NEXT_TIME" ]; then
+		ffmpeg -loglevel 24 -i "$1" -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -f image2 $DIR/%d.jpg
+	else
+		ffmpeg -loglevel 24 -i "$1" -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -t $(echo $NEXT_TIME - $SEL_TIME | bc | sed 's/^\./0&/') -f image2 $DIR/%d.jpg
+	fi
+	read -p "Select frame index to begin with:"
+	LINE=`$SED -n "$(($SEL_IDX + $REPLY - 1))p" <<< "$CSV"`
+	echo $LINE
+	rm -f $DIR/*
+	ffmpeg -loglevel 24 -i "$1" -ss $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -t $(cut -f 3 -d , <<< "$LINE") -f image2 $DIR/%d.jpg
+	read -p "Confirm and proceed."
+	echo ffmpeg -loglevel 24 -i "$(printf %q "$1")" -ss $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -c copy -y tmp-0.ts
+	echo ffmpeg -loglevel 24 -i "$(printf %q "$1")" -t $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -c copy -y tmp-1.ts
+	shift
+done
+rm -f $DIR/*
+rmdir $DIR
+echo Done
