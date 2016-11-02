@@ -118,7 +118,7 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 		DURATION=$(($DURATION - ${THIS_STEP:-$STEP}))
 		LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
-		while [ "$N" = "$LASTN" -o -z "$N" ]; do
+		while [ "$N" = "$LASTN" -o -z "$N" -o "$N" -le "$LASTN" ]; do
 			sleep 1
 			LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
 			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
