@@ -5,6 +5,7 @@ else
 	STATSIZE="stat -f %z"
 fi
 mkdir -p rid
+declare -A pa
 for c in *.ts*; do
 	if [ "${c%.[1-9]}" != "$c" -o "${c%.[1-9][0-9]}" != "$c" ]; then
 		b="${c%.[1-9][0-9]}"
@@ -12,17 +13,34 @@ for c in *.ts*; do
 			b="${c%.[1-9]}"
 		fi
 		if [ -e "$b" ]; then
-			sb="$($STATSIZE "$b")"
-			sc="$($STATSIZE "$c")"
+			sb="$($STATSIZE -L "$b")"
+			sc="$($STATSIZE -L "$c")"
 			if [ "$sb" -eq "$sc" ]; then
 				mv -i "$c" rid/
 			else
 				#echo "$b size $sb mismatch $c size $sc"
-				pb="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$b")"
+				if [ -n "${pa[$b]}" ]; then
+					pb="${pa[$b]}"
+				else
+					pb="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$b")"
+					pa[$b]="$pb"
+				fi
 				pc="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$c")"
 				if [ "$pb" != "$pc" ]; then
 					echo "$b size $sb mismatch $c size $sc"
-					diff <(cat <<< "$pb") <(cat <<< "$pc")
+					#diff <(cat <<< "$pb") <(cat <<< "$pc")
+					if [ "$(wc -l <<< "$pb")" -lt "$(wc -l <<< "$pc")" ]; then
+						if [ -h "$b" ]; then
+							rm -f "$b"
+						else
+							mv -i "$b" rid/
+						fi
+						ln -sf "$c" "$b"
+						pa[$b]="$pc"
+						echo "updated $b"
+					else
+						mv -i "$c" rid/
+					fi
 				else
 					mv -i "$c" rid/
 				fi
