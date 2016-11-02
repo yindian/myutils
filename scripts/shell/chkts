@@ -6,6 +6,9 @@ else
 fi
 mkdir -p rid
 declare -A pa
+lastc=
+lasttime=
+lastduration=
 for c in *.ts*; do
 	if [ "${c%.[1-9]}" != "$c" -o "${c%.[1-9][0-9]}" != "$c" ]; then
 		b="${c%.[1-9][0-9]}"
@@ -16,7 +19,9 @@ for c in *.ts*; do
 			sb="$($STATSIZE -L "$b")"
 			sc="$($STATSIZE -L "$c")"
 			if [ "$sb" -eq "$sc" ]; then
-				mv -i "$c" rid/
+				if [ ! -h "$b" -o "$(readlink "$b")" != "$c" ]; then
+					mv -i "$c" rid/
+				fi
 			else
 				#echo "$b size $sb mismatch $c size $sc"
 				if [ -n "${pa[$b]}" ]; then
@@ -38,6 +43,15 @@ for c in *.ts*; do
 						ln -sf "$c" "$b"
 						pa[$b]="$pc"
 						echo "updated $b"
+						if [ -n "$lasttime" -a -n "$lastduration" ]; then
+							firstline="$(head -1 <<< "$pc")"
+							firsttime="$(cut -d , -f 2 <<< "$firstline")"
+							if [ "$(echo $lasttime + $lastduration - $firsttime | bc)" == 0 ]; then
+								echo "updated consecutive: $lasttime + $lastduration == $firsttime"
+							else
+								echo "updated inconsecutive: $lasttime + $lastduration != $firsttime"
+							fi
+						fi
 					else
 						mv -i "$c" rid/
 					fi
@@ -48,5 +62,31 @@ for c in *.ts*; do
 		else
 			echo "$b not exists for $c"
 		fi
+	elif [ -n "$lastc" ]; then
+		b="${lastc%.[1-9][0-9]}"
+		if [ "$b" = "$lastc" ]; then
+			b="${lastc%.[1-9]}"
+		fi
+		if [ -e "$b" ]; then
+			if [ -n "${pa[$b]}" ]; then
+				pb="${pa[$b]}"
+			else
+				pb="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$b")"
+				pa[$b]="$pb"
+			fi
+			pc="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$c")"
+			pa[$c]="$pc"
+			lastline="$(tail -1 <<< "$pb")"
+			lasttime="$(cut -d , -f 2 <<< "$lastline")"
+			lastduration="$(cut -d , -f 3 <<< "$lastline")"
+			firstline="$(head -1 <<< "$pc")"
+			firsttime="$(cut -d , -f 2 <<< "$firstline")"
+			if [ "$(echo $lasttime + $lastduration - $firsttime | bc)" != 0 ]; then
+				echo "inconsecutive $b to $c: $lasttime + $lastduration != $firsttime"
+			fi
+		else
+			echo "$b not exists for last $lastc"
+		fi
 	fi
+	lastc="$c"
 done
