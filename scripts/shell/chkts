@@ -1,0 +1,34 @@
+#!/bin/bash
+if stat --version >/dev/null 2>&1; then
+	STATSIZE="stat -c %s"
+else
+	STATSIZE="stat -f %z"
+fi
+mkdir -p rid
+for c in *.ts*; do
+	if [ "${c%.[1-9]}" != "$c" -o "${c%.[1-9][0-9]}" != "$c" ]; then
+		b="${c%.[1-9][0-9]}"
+		if [ "$b" = "$c" ]; then
+			b="${c%.[1-9]}"
+		fi
+		if [ -e "$b" ]; then
+			sb="$($STATSIZE "$b")"
+			sc="$($STATSIZE "$c")"
+			if [ "$sb" -eq "$sc" ]; then
+				mv -i "$c" rid/
+			else
+				#echo "$b size $sb mismatch $c size $sc"
+				pb="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$b")"
+				pc="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time -of csv "$c")"
+				if [ "$pb" != "$pc" ]; then
+					echo "$b size $sb mismatch $c size $sc"
+					diff <(cat <<< "$pb") <(cat <<< "$pc")
+				else
+					mv -i "$c" rid/
+				fi
+			fi
+		else
+			echo "$b not exists for $c"
+		fi
+	fi
+done
