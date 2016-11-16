@@ -103,7 +103,7 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 	while [ "$DURATION" -gt 0 ]; do
 		THIS_STEP="${LIST#*#EXTINF:}"
 		if [ "$THIS_STEP" != "$LIST" ]; then
-			THIS_STEP=$($SED -n '1{s/,.*//;p}' <<< "$THIS_STEP")
+			THIS_STEP=$($SED -n '1{s/[,.].*//;p}' <<< "$THIS_STEP")
 			if [ "$THIS_STEP" -gt 2 ]; then
 				THIS_STEP=$(($THIS_STEP - 1))
 			else
