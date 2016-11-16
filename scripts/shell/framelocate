@@ -10,10 +10,12 @@ while [ -e $DIR ]; do
 done
 mkdir $DIR
 echo "tmp dir: $DIR"
+MIN_TIME=${MIN_TIME:-0}
+MAX_DUR=${MAX_DUR:-20}
 while [ -n "$1" ]; do
-	CSV="$(ffprobe -loglevel 24 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1")"
-	ffmpeg -loglevel 24 -i "$1" -vf select='eq(pict_type\,I)' -vsync 2 -f image2 $DIR/%d.jpg
-	START_TIME=`$SED -n "1p" <<< "$CSV" | cut -f 2 -d ,`
+	CSV="$(ffprobe -loglevel 24 -read_intervals $MIN_TIME%+$MAX_DUR -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1")"
+	ffmpeg -loglevel 24 -ss $MIN_TIME -i "$1" -t $MAX_DUR -vf select='eq(pict_type\,I)' -vsync 2 -f image2 $DIR/%d.jpg
+	START_TIME=`ffprobe -loglevel 24 -read_intervals %+1 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1" | head -1 | cut -f 2 -d ,`
 	echo "time start at $START_TIME"
 	KCSV="$(grep -nw I <<< "$CSV")"
 	echo "$(wc -l <<< "$KCSV") key frames extracted to $DIR"
@@ -24,15 +26,15 @@ while [ -n "$1" ]; do
 	echo "You selected frame $SEL_IDX [$SEL_TIME..$NEXT_TIME]"
 	rm -f $DIR/*
 	if [ -z "$NEXT_TIME" ]; then
-		ffmpeg -loglevel 24 -i "$1" -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -f image2 $DIR/%d.jpg
+		ffmpeg -loglevel 24 -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -i "$1" -t $MAX_DUR -f image2 $DIR/%d.jpg
 	else
-		ffmpeg -loglevel 24 -i "$1" -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -t $(echo $NEXT_TIME - $SEL_TIME | bc | sed 's/^\./0&/') -f image2 $DIR/%d.jpg
+		ffmpeg -loglevel 24 -ss $(echo $SEL_TIME - $START_TIME | bc | sed 's/^\./0&/') -i "$1" -t $(echo $NEXT_TIME - $SEL_TIME | bc | sed 's/^\./0&/') -f image2 $DIR/%d.jpg
 	fi
 	read -p "Select frame index to begin with:"
 	LINE=`$SED -n "$(($SEL_IDX + $REPLY - 1))p" <<< "$CSV"`
 	echo $LINE
 	rm -f $DIR/*
-	ffmpeg -loglevel 24 -i "$1" -ss $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -t $(cut -f 3 -d , <<< "$LINE") -f image2 $DIR/%d.jpg
+	ffmpeg -loglevel 24 -ss $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -i "$1" -t $(cut -f 3 -d , <<< "$LINE") -f image2 $DIR/%d.jpg
 	read -p "Confirm and proceed."
 	echo ffmpeg -loglevel 24 -i "$(printf %q "$1")" -ss $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -c copy -y tmp-0.ts
 	echo ffmpeg -loglevel 24 -i "$(printf %q "$1")" -t $(echo $(cut -f 2 -d , <<< "$LINE") - $START_TIME | bc | sed 's/^\./0&/') -c copy -y tmp-1.ts
