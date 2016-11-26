@@ -1,0 +1,78 @@
+#!/bin/bash
+set -e
+MNTPNT=/mnt
+if [ -z "$1" -o -z "$2" ]; then
+	echo "Usage: $0 input.iso output_dir"
+exit
+fi
+if [ ! -e "$1" ]; then
+	echo "$1 not exists"
+	exit 1
+elif ! sudo mount -o loop,ro "$1" $MNTPNT; then
+	echo "$1 failed to mount"
+	exit 1
+fi
+CHAPTERS=`mplayer -identify -frames 0 $MNTPNT/VIDEO_TS/VIDEO_TS.IFO 2>/dev/null | sed -n '/^CHAPTERS: /p' | awk '{print $2}' | sed 's/,/\n/g'`
+mkdir -p "$2"
+SRC=
+for c in $MNTPNT/VIDEO_TS/VTS*.VOB; do
+	if [ ! -e "$c" ]; then
+		break
+	elif [ -z "$SRC" ]; then
+		# ignore first VOB
+		SRC="concat:"
+	else
+		SRC="$SRC$c|"
+	fi
+done
+if [ -z "$SRC" ]; then
+	echo "No VOB found in $1"
+	sudo umount $MNTPNT
+	exit 1
+fi
+SRC="${SRC:0:-1}"
+FFMPEG="ffmpeg -loglevel 24"
+FFPARAM="-vf yadif -c:v libx264 -preset superfast -profile:v baseline -b:v 1856k -c:a copy"
+#FFPARAM="-c copy"
+FFEXT=mp4
+TMPF="$(mktemp --suffix=.mpg)"
+$FFMPEG -i "$SRC" -c copy -y "$TMPF"
+sudo umount $MNTPNT
+
+ts_get_msec()
+{
+	read -r h m s ms <<< $(echo $1 | tr '.:' ' ' )
+	echo $((($((10#$h))*60*60*1000)+($((10#$m))*60*1000)+($((10#$s))*1000)+$((10#$ms))))
+}
+msec_get_ts()
+{
+	h=$(($1/(60*60*1000)))
+	m=$(($1%(60*60*1000)/(60*1000)))
+	s=$((($1%(60*1000))/1000))
+	ms=$((($1%(60*1000))%1000))
+	printf "%02d:%02d:%02d.%03d\n" $h $m $s $ms
+}
+
+LAST_TIME=
+N=0
+for c in $CHAPTERS; do
+	echo "Line: $c"
+	THIS_TIME=`ts_get_msec $c`
+	if [ -n "$LAST_TIME" ]; then
+		echo "LAST_TIME $LAST_TIME `msec_get_ts $LAST_TIME` THIS_TIME $THIS_TIME `msec_get_ts $THIS_TIME` DELTA $((THIS_TIME - LAST_TIME)) `msec_get_ts $((THIS_TIME - LAST_TIME))`"
+		if [ $THIS_TIME -eq 0 ]; then
+			echo $FFMPEG -ss `msec_get_ts $LAST_TIME` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+			$FFMPEG -ss `msec_get_ts $LAST_TIME` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+		else
+			echo $FFMPEG -ss `msec_get_ts $LAST_TIME` -t `msec_get_ts $((THIS_TIME - LAST_TIME))` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+			$FFMPEG -ss `msec_get_ts $LAST_TIME` -t `msec_get_ts $((THIS_TIME - LAST_TIME))` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+		fi
+	fi
+	LAST_TIME=$THIS_TIME
+	N=$((N+1))
+done
+if [ 0$LAST_TIME -ne 0 ]; then
+	echo $FFMPEG -ss `msec_get_ts $LAST_TIME` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+	$FFMPEG -ss `msec_get_ts $LAST_TIME` -i "$TMPF" $FFPARAM -y "$2/$N.$FFEXT"
+fi
+rm -f "$TMPF"
