@@ -46,6 +46,10 @@ if [ -z "$INDEX" -a -n "$URL" -a ${#URL} -le 2 ]; then
 	echo "$URL"
 	INDEX="$($CURL_W_OPT "$URL")"
 fi
+if [ -z "$INDEX" -a -n "$($CURL_W_OPT -L "$1")" ]; then
+URL="$($CURL_W_OPT -L -o /dev/null -w %{url_effective} "$1")"
+INDEX="$($CURL_W_OPT "$URL")"
+fi
 if [ -n "$INDEX" -a "${INDEX:0:18}" = "var html5VideoData" ]; then
 	URL="${INDEX#*\"hls2\":\"}"
 	if [ "$URL" != "$INDEX" ]; then
