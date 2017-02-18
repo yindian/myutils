@@ -2,10 +2,11 @@
 FIFO="$HOME/.mplayer/fifo"
 INPUTCONF="$HOME/.mplayer/input.conf"
 FNAMEFILE="$HOME/.mplayer/filename"
+STREAMPOS="$HOME/.mplayer/stream_pos"
 TAGFILE="$HOME/.mov"
 
 if [ "$1" = "-do" ]; then
-	echo "get_property filename" > "$FIFO"
+	echo "pausing_keep_force run \"echo \\\"\${filename}\\\" > $FNAMEFILE\"" > "$FIFO"
 	while true; do
 		FNAME="$(cat "$FNAMEFILE" 2>/dev/null)"
 		if [ $? -eq 0 ]; then
@@ -14,7 +15,16 @@ if [ "$1" = "-do" ]; then
 		fi
 		sleep 0.05
 	done
-	TAGS="$(zenity --entry --text="$FNAME")"
+	echo "pausing_keep_force run \"echo \${stream_pos} > $STREAMPOS\"" > "$FIFO"
+	while true; do
+		SPOS="$(cat "$STREAMPOS" 2>/dev/null)"
+		if [ $? -eq 0 ]; then
+			rm "$STREAMPOS"
+			break
+		fi
+		sleep 0.05
+	done
+	TAGS="$(zenity --entry --text="$FNAME @$SPOS")"
 	S=
 	for T in $TAGS; do
 		S="$S	$T"
@@ -24,16 +34,8 @@ if [ "$1" = "-do" ]; then
 	fi
 	exit
 fi
-parse_log() {
-	while read; do
-		if [ "${REPLY:0:13}" = "ANS_filename=" ]; then
-			echo "${REPLY:13}" > "$FNAMEFILE"
-		else
-			echo "$REPLY"
-		fi
-	done
-}
 rm -f "$FNAMEFILE"
+rm -f "$STREAMPOS"
 
 if mkdir -p "$HOME/.mplayer"; then
 	:
@@ -50,4 +52,4 @@ if grep -w mov "$INPUTCONF" > /dev/null 2>&1; then
 else
 	echo "Ctrl+m run \"mov -do\"" >> "$INPUTCONF"
 fi
-mplayer -slave -quiet -input "file=$HOME/.mplayer/fifo" "$@" | parse_log
+mplayer -slave -quiet -input "file=$HOME/.mplayer/fifo" "$@"
