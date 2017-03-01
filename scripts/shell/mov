@@ -24,7 +24,7 @@ if [ "$1" = "-do" ]; then
 		fi
 		sleep 0.05
 	done
-	TAGS="$(zenity --entry --text="$FNAME @$SPOS")"
+	TAGS="$(zenity --entry --text="$FNAME" --entry-text="$SPOS")"
 	S=
 	for T in $TAGS; do
 		S="$S	$T"
