@@ -50,6 +50,6 @@ fi
 if grep -w mov "$INPUTCONF" > /dev/null 2>&1; then
 	:
 else
-	echo "Ctrl+m run \"mov -do\"" >> "$INPUTCONF"
+	echo "Ctrl+m pausing_keep_force run \"mov -do\"" >> "$INPUTCONF"
 fi
 mplayer -slave -quiet -input "file=$HOME/.mplayer/fifo" "$@"
