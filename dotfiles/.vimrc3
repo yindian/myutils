@@ -38,14 +38,18 @@ set showmatch
 vmap <silent> <F2> "+y
 nmap <silent> <F2> :up<cr>
 imap <silent> <F2> <c-o>:up<cr>
+nmap <silent> <F5> :up<cr>:mak run<cr>
 vmap ,/ "zy/<C-R>=substitute(escape(@z, '[].*~/\\!'), '\n', '\\n', 'g')<CR><CR>
 vmap ./ "zy/<C-R>/\\|<C-R>=substitute(escape(@z, '[].*~/\\!'), '\n', '\\n', 'g')<CR><CR>
 nmap <silent> & "zyiw/<C-R>/\\|<C-R>=escape(@z, '[].*~/\\!')<CR><CR>
-set ambw=single
-set fencs=ucs-bom,utf-8,cp932,gb18030
+set ambw=double
+set fencs=ucs-bom,utf-8,cp932,gb18030,cp1252
 "set fencs=cp936,utf-8,utf-16le,sjis,euc-jp
 let g:fencview_autodetect = 0
 set cino+=l1,t0,(0,w1,W2s,M1
+compiler gcc
+set efm-=%f\:%l\:%m
+set efm+=%A\ %#[%*\\w]\ %*\\w\:\ %f\:%l\:\ %m,%A\ %#[%*\\w]\ %f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,%f\:%l\:%m:
 if &term != "gui" && &term != "builtin_gui" && !has("gui_running")
 set bg=dark
 else
@@ -134,7 +138,7 @@ if has("autocmd")
 """""""""""""""""""""""""""""""""""""""""""""
   autocmd FileType cfg set suffixesadd=.cfg
   autocmd FileType c,cpp setlocal ts=4 | set sw=4 | set et | 
-			  \ set tw=80 | compiler gcc
+			  \ set tw=80
   autocmd FileType make if exists("loaded_matchit") |
 			  \ let b:match_words = '^ *\<if\w*\>:^ *\<else\>:^ *\<endif\>' |
 			  \ end
