@@ -49,7 +49,7 @@ let g:fencview_autodetect = 0
 set cino+=l1,t0,(0,w1,W2s,M1
 compiler gcc
 set efm-=%f\:%l\:%m
-set efm+=%A\ %#[%*\\w]\ %*\\w\:\ %f\:%l\:\ %m,%A\ %#[%*\\w]\ %f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,%f\:%l\:%m:
+set efm+=%A\ %#[%*\\w]%.%#\ %f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,%f\:%l\:%m:
 if &term != "gui" && &term != "builtin_gui" && !has("gui_running")
 set bg=dark
 else
