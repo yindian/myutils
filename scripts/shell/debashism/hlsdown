@@ -1,13 +1,16 @@
-#!/bin/bash
+#!/bin/dash
 get_ts_from_list()
 {
-	grep -v "^#" <<< "$1" | while read; do
-	if [ "${REPLY:0:1}" = "/" ]; then
+	grep -v "^#" << _EOF | while read REPLY
+$1
+_EOF
+do
+	if [ "$(echo "$REPLY" | gawk '{print substr($0,0+1,1); exit}')" = "/" ]; then
 		URL_SCHEMA="${URL%%://*}"
 		URL_WO_SCHEMA="${URL#$URL_SCHEMA://}"
 		URL_HOST="${URL_WO_SCHEMA%%/*}"
 		echo "$URL_SCHEMA://$URL_HOST$REPLY"
-	elif [ "${REPLY:0:4}" != "http" ]; then
+	elif [ "$(echo "$REPLY" | gawk '{print substr($0,0+1,4); exit}')" != "http" ]; then
 		URL_BASE="${URL%%\?*}"
 		echo "${URL_BASE%/*}/$REPLY"
 	else
@@ -17,14 +20,18 @@ get_ts_from_list()
 }
 
 SED=gsed
-if ! which $SED > /dev/null; then
+if ! which $SED > /dev/null 2>&1; then
 	SED=sed
+fi
+SORT=gsort
+if ! which $SORT > /dev/null 2>&1; then
+	SORT=sort
 fi
 CURL_W_OPT="curl --retry 3 -m 3 -s"
 
 DURATION=1
 OUTDIR=out
-while [ -n "$1" -a "${1:0:1}" = "-" ]; do
+while [ -n "$1" -a "$(echo "$1" | gawk '{print substr($0,0+1,1); exit}')" = "-" ]; do
 	if [ "$1" = "-t" ]; then
 		DURATION=$2
 		shift 2
@@ -41,8 +48,11 @@ INDEX="$($CURL_W_OPT "$1")"
 URL="$1"
 LIST=
 if [ -z "$INDEX" -a -n "$URL" -a ${#URL} -le 2 ]; then
-	URL="$(xxd -ps -c 70 -r <<< 687474703a2f2f76646e2e6c6976652e636e74762e636e2f617069322f6c69766548746d6c352e646f3f6368616e6e656c3d70613a2f2f636374765f7032705f686463637476)$URL&client=html5"
-	URL="${URL/cctvah/anhui}"
+	URL="$(xxd -ps -c 70 -r << _EOF
+687474703a2f2f76646e2e6c6976652e636e74762e636e2f617069322f6c69766548746d6c352e646f3f6368616e6e656c3d70613a2f2f636374765f7032705f686463637476
+_EOF
+)$URL&client=html5"
+	URL="$(echo "$URL" | $SED 's/cctvah/anhui/')"
 	echo "$URL"
 	INDEX="$($CURL_W_OPT "$URL")"
 fi
@@ -50,37 +60,49 @@ if [ -z "$INDEX" -a -n "$($CURL_W_OPT -L "$1")" ]; then
 URL="$($CURL_W_OPT -L -o /dev/null -w %{url_effective} "$1")"
 INDEX="$($CURL_W_OPT "$URL")"
 fi
-if [ -n "$INDEX" -a "${INDEX:0:18}" = "var html5VideoData" ]; then
+if [ -n "$INDEX" -a "$(echo "$INDEX" | gawk '{print substr($0,0+1,18); exit}')" = "var html5VideoData" ]; then
 	URL="${INDEX#*\"hls2\":\"}"
 	if [ "$URL" != "$INDEX" ]; then
 		echo "Resolving html5VideoData"
 		URL="${URL%%\"*}"
-		URL="$($SED 's/wscdns.com/cloudcdn.net/' <<< "$URL")"
+		URL="$($SED 's/wscdns.com/cloudcdn.net/' << _EOF
+$URL
+_EOF
+)"
 		INDEX="$($CURL_W_OPT "$URL")"
 		echo "$URL"
 	fi
 fi
-if [ -n "$INDEX" -a "${INDEX:0:7}" = "#EXTM3U" ]; then
-	if grep -q "#EXT-X-STREAM-INF" <<< "$INDEX"; then
-		INDEX="$(tr -d '\r' <<< "$INDEX" | $SED -n '/^#EXT-X-STREAM-INF/,/^[^#]/{/^#/H;/^[^#]/{G;s/\n/ /g;s/BANDWIDTH=/& /;p;s/.*//;h}}' | sort -n -k 3 -r)"
+if [ -n "$INDEX" -a "$(echo "$INDEX" | gawk '{print substr($0,0+1,7); exit}')" = "#EXTM3U" ]; then
+	if grep -q "#EXT-X-STREAM-INF" << _EOF
+$INDEX
+_EOF
+then
+		INDEX="$(tr -d '\r' << _EOF | $SED -n '/^#EXT-X-STREAM-INF/,/^[^#]/{/^#/H;/^[^#]/{G;s/\n/ /g;s/BANDWIDTH=/& /;p;s/.*//;h}}' | $SORT -n -k 3 -r
+$INDEX
+_EOF
+)"
 		while read M3U8 _; do
-			if [ "${M3U8:0:1}" = "/" ]; then
+			if [ "$(echo "$M3U8" | gawk '{print substr($0,0+1,1); exit}')" = "/" ]; then
 				URL_SCHEMA="${URL%%://*}"
 				URL_WO_SCHEMA="${URL#$URL_SCHEMA://}"
 				URL_HOST="${URL_WO_SCHEMA%%/*}"
 				M3U8="$URL_SCHEMA://$URL_HOST$M3U8"
-			elif [ "${M3U8:0:4}" != "http" ]; then
+			elif [ "$(echo "$M3U8" | gawk '{print substr($0,0+1,4); exit}')" != "http" ]; then
 				URL_BASE="${URL%%\?*}"
 				M3U8="${URL_BASE%/*}/$M3U8"
 			fi
 			echo "Trying $M3U8"
 			LIST="$($CURL_W_OPT "$M3U8")"
-			if [ -n "$LIST" -a "${LIST:0:7}" = "#EXTM3U" ]; then
+			if [ -n "$LIST" -a "$(echo "$LIST" | gawk '{print substr($0,0+1,7); exit}')" = "#EXTM3U" ]; then
 				URL="$M3U8"
 				echo "Selected $M3U8"
 				break
 			fi
-		done <<< "$INDEX"
+		done << _EOF
+$INDEX
+_EOF
+
 	else
 		LIST="$INDEX"
 	fi
@@ -88,10 +110,19 @@ else
 	echo "Invalid source $1"
 	exit 1
 fi
-LIST="$(tr -d '\r' <<< "$LIST")"
+LIST="$(tr -d '\r' << _EOF
+$LIST
+_EOF
+)"
 STEP=1
-if grep -q "#EXT-X-TARGETDURATION" <<< "$LIST"; then
-	STEP="$($SED -n '/^#EXT-X-TARGETDURATION/{s/^.*: *//;p}' <<< "$LIST")"
+if grep -q "#EXT-X-TARGETDURATION" << _EOF
+$LIST
+_EOF
+then
+	STEP="$($SED -n '/^#EXT-X-TARGETDURATION/{s/^.*: *//;p}' << _EOF
+$LIST
+_EOF
+)"
 	if [ "$STEP" -gt 2 ]; then
 		STEP=$(($STEP - 1))
 	else
@@ -101,13 +132,22 @@ fi
 echo "Duration $DURATION, step $STEP"
 mkdir -p "$OUTDIR"
 cd "$OUTDIR"
-if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
-	LASTN="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
+if grep -q "#EXT-X-MEDIA-SEQUENCE" << _EOF
+$LIST
+_EOF
+then
+	LASTN="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' << _EOF
+$LIST
+_EOF
+)"
 	OLDLIST=
 	while [ "$DURATION" -gt 0 ]; do
 		THIS_STEP="${LIST#*#EXTINF:}"
 		if [ "$THIS_STEP" != "$LIST" ]; then
-			THIS_STEP=$($SED -n '1{s/[,.].*//;p}' <<< "$THIS_STEP")
+			THIS_STEP=$($SED -n '1{s/[,.].*//;p}' << _EOF
+$THIS_STEP
+_EOF
+)
 			if [ "$THIS_STEP" -gt 2 ]; then
 				THIS_STEP=$(($THIS_STEP - 1))
 			else
@@ -117,15 +157,30 @@ if grep -q "#EXT-X-MEDIA-SEQUENCE" <<< "$LIST"; then
 			THIS_STEP=
 		fi
 		echo "Downloading sequence $LASTN, left duration $DURATION, step ${THIS_STEP:-$STEP}"
-		get_ts_from_list "$(diff <(cat <<< "$OLDLIST") <(cat <<< "$LIST") | $SED -n '/^> /{s/^> //;p}')"
+		FA=`mktemp`
+		FB=`mktemp`
+		cat << _EOF > $FA
+$OLDLIST
+_EOF
+		cat << _EOF > $FB
+$LIST
+_EOF
+		get_ts_from_list "$(diff $FA $FB | $SED -n '/^> /{s/^> //;p}')"
+		rm -f $FA $FB
 		OLDLIST="$LIST"
 		DURATION=$(($DURATION - ${THIS_STEP:-$STEP}))
 		LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
-		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST" | head -1)"
+		N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' << _EOF | head -1
+$LIST
+_EOF
+)"
 		while [ "$N" = "$LASTN" -o -z "$N" -o "0$N" -le "0$LASTN" ]; do
 			sleep 1
 			LIST="$($CURL_W_OPT "$URL" | tr -d '\r')"
-			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' <<< "$LIST")"
+			N="$($SED -n '/^#EXT-X-MEDIA-SEQUENCE/{s/^.*: *//;p}' << _EOF
+$LIST
+_EOF
+)"
 		done
 		LASTN="$N"
 	done

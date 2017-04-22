@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/dash
 #
 # findilos - Search a local network segment for iLOs
 #            The iLO is the Integrated Lights-Out management processor
@@ -28,10 +28,10 @@ scriptname="findilos"
 iloips="/tmp/tmpilos.$$"
 iloxml="/tmp/tmpiloxml.$$"
 ilohwvers="/tmp/tmpilohwvers.$$"
-declare -i ilosfound=0
+ilosfound=0
 # FUNCTIONS
-function parseiloxml {
-  fgrep "$1" $iloxml > /dev/null 2>&1
+parseiloxml() {
+  grep -F "$1" $iloxml > /dev/null 2>&1
   if [ $? -ne 0 ]
   then
     # tag not found in xml output, return empty string
@@ -43,7 +43,7 @@ function parseiloxml {
     parsedstring=`expr match "$tempstring" '&#91; \t&#93;*\(.*&#91;^ \t&#93;\)&#91; \t&#93;*$'`
   fi
 }
-function is_installed {
+is_installed() {
   which $1 > /dev/null 2>&1
   if [ $? -ne 0 ]
   then
@@ -85,7 +85,7 @@ EOF
 # open tcp port 17988 (the iLO virtual media port)
 #
 printf "Scanning..."
-nmap -n -P0 -sS -p 17988 -oG - $iprange | fgrep /open/ | awk '{print $2}' > $iloips
+nmap -n -P0 -sS -p 17988 -oG - $iprange | grep -F /open/ | gawk '{print $2}' > $iloips
 printf "\n\n"
 #
 # open and read the list of IP addresses one at a time
@@ -95,7 +95,7 @@ echo "--------------- ------ -------- ------------ ------------------------- ---
 echo "iLO IP Address  iLO HW iLO FW   Server S/N   Server Model              iLO Edition          iLO Licence Key"
 echo "--------------- ------ -------- ------------ ------------------------- -------------------- -----------------------------"
 while read iloip <&3 ; do
-  ilosfound=$ilosfound+1
+  ilosfound=`expr $ilosfound + 1`
   #
   # attempt to read the xmldata from iLO, no password required
   #
@@ -109,11 +109,11 @@ while read iloip <&3 ; do
   parseiloxml PN;   ilotype=$parsedstring
   parseiloxml FWRI; ilofirmware=$parsedstring
   parseiloxml HWRI; ilohardware=$parsedstring
-  ilohwver=$(grep "$ilohardware" $ilohwvers|awk '{print $1}')
-  if [ "$ilohwver" == "" ]; then
+  ilohwver=$(grep "$ilohardware" $ilohwvers|gawk '{print $1}')
+  if [ "$ilohwver" = "" ]; then
     ilohwver="N/A"
   fi
-  if [ "$sernum" == "" ]; then
+  if [ "$sernum" = "" ]; then
     sernum="N/A"
   fi
   # add start
