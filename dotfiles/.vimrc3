@@ -47,14 +47,23 @@ set fencs=ucs-bom,utf-8,cp932,gb18030,cp1252
 "set fencs=cp936,utf-8,utf-16le,sjis,euc-jp
 let g:fencview_autodetect = 0
 set cino+=l1,t0,(0,w1,W2s,M1
-compiler gcc
+compiler! gcc
 set efm-=%f\:%l\:%m
 set efm+=%A\ %#[%*\\w]%.%#%[\ \	]%f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,%f\:%l\:%m:
+set efm+=\
+      \%D%*\\a[%*\\d]:\ Entering\ directory\ %[`']%f',
+      \%X%*\\a[%*\\d]:\ Leaving\ directory\ %[`']%f',
+      \%D%*\\a:\ Entering\ directory\ %[`']%f',
+      \%X%*\\a:\ Leaving\ directory\ %[`']%f'
 if &term != "gui" && &term != "builtin_gui" && !has("gui_running")
 set bg=dark
 else
 set bg=light
 endif
+
+set backupdir=~/.vim/backup/
+set directory=~/.vim/swap/
+set undodir=~/.vim/undo/
 
 let g:sql_type_default = "mysql"
 
@@ -155,7 +164,7 @@ if has("autocmd")
       else
 	  let g:CScopeOut=findfile("cscope.out", ".;")
 	  if g:CScopeOut != ""
-		  exe "cs add" g:CScopeOut strpart(g:CScopeOut, 0, match(g:CScopeOut, "/cscope.out$"))
+		  exe "cs add" g:CScopeOut strpart(g:CScopeOut, 0, match(g:CScopeOut, "cscope.out$")-1)
 	  endif
       endif
       set csverb
