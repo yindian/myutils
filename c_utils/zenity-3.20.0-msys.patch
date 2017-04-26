@@ -1,0 +1,47 @@
+diff -ur zenity-3.20.0.bak\src\util.c zenity-3.20.0\src\util.c
+--- zenity-3.20.0.bak\src\util.c	Fri Oct 02 19:39:18 2015
++++ zenity-3.20.0\src\util.c	Wed Apr 26 23:50:50 2017
+@@ -38,6 +38,8 @@
+ #include "config.h"
+ #include "util.h"
+ #include "zenity.h"
++#include <glib/gstdio.h>
++#include <unistd.h>
+ 
+ #ifdef GDK_WINDOWING_X11
+ #include <gdk/gdkx.h>
+@@ -58,6 +60,7 @@
+   GtkBuilder *builder = gtk_builder_new ();
+   GError *error = NULL;
+   gchar  **objects;
++  gchar  *pwd;
+   guint result = 0;
+ 
+   gtk_builder_set_translation_domain (builder, GETTEXT_PACKAGE);
+@@ -81,12 +84,25 @@
+   g_ptr_array_add (ptrarray, NULL);
+   objects = (gchar**) g_ptr_array_free (ptrarray, FALSE);
+   
++  pwd = g_get_current_dir();
++  {
++    static char buf[1024];
++    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf));
++    while (len > 0 && buf[--len] != '/') {
++      (void)0;
++    }
++    if (len >= 0) {
++      buf[len + 1] = 0;
++      chdir(buf);
++    }
++  }
+   if (g_file_test (ZENITY_UI_FILE_RELATIVEPATH, G_FILE_TEST_EXISTS)) {
+     /* Try current dir, for debugging */
+     result = gtk_builder_add_objects_from_file (builder,
+     						ZENITY_UI_FILE_RELATIVEPATH,
+ 						objects, NULL);
+   }
++  g_chdir(pwd);
+ 
+   if (result == 0)
+     result = gtk_builder_add_objects_from_file (builder,
+
