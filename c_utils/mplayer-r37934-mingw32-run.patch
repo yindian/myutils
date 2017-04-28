@@ -1,0 +1,52 @@
+diff --git a/command.c b/command.c
+index f8226b0..72f2513 100644
+--- a/command.c
++++ b/command.c
+@@ -23,6 +23,9 @@
+ #include <unistd.h>
+ #include <string.h>
+ #include <strings.h>
++#ifdef __MINGW32__
++#include <windows.h>
++#endif
+ 
+ #include "config.h"
+ #include "command.h"
+@@ -3389,6 +3392,37 @@ int run_command(MPContext *mpctx, mp_cmd_t *cmd)
+                 }
+                 exit(0);
+             }
++#else
++            {
++                char *exp_cmd = property_expand_string(mpctx, cmd->args[0].v.s);
++                if (exp_cmd) {
++                    char *cmd = malloc(strlen(exp_cmd) + 11);
++                    sprintf(cmd, "dash -c '%s'", exp_cmd);
++                    free(exp_cmd);
++                    STARTUPINFO si;
++                    PROCESS_INFORMATION pi;
++
++                    ZeroMemory( &si, sizeof(si) );
++                    si.cb = sizeof(si);
++                    ZeroMemory( &pi, sizeof(pi) );
++
++                    if( !CreateProcess( NULL,   // No module name (use command line)
++                                       cmd,            // Command line
++                                       NULL,           // Process handle not inheritable
++                                       NULL,           // Thread handle not inheritable
++                                       FALSE,          // Set handle inheritance to FALSE
++                                       0,              // No creation flags
++                                       NULL,           // Use parent's environment block
++                                       NULL,           // Use parent's starting directory
++                                       &si,            // Pointer to STARTUPINFO structure
++                                       &pi )           // Pointer to PROCESS_INFORMATION structure
++                                       )
++                    {
++                        mp_msg(MSGT_GLOBAL, MSGL_WARN, "CreateProcess failed (%d).\n", GetLastError() );
++                    }
++                    free(cmd);
++                }
++            }
+ #endif
+             break;
+ 

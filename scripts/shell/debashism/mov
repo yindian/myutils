@@ -1,0 +1,69 @@
+#!/bin/dash
+MPLAYERBIN=`which mplayer 2>/dev/null`
+if [ -n "$MPLAYERBIN" ]; then
+	MPLAYERDIR="$HOME/.mplayer"
+else
+	MPLAYERBIN=`which mplayer.exe 2>/dev/null`
+	if [ -z "$MPLAYERBIN" ]; then
+		echo "mplayer command not found"
+		exit 1
+	fi
+	MPLAYERDIR="${MPLAYERBIN%.exe}"
+	unset HOME
+fi
+FIFO="$MPLAYERDIR/fifo"
+INPUTCONF="$MPLAYERDIR/input.conf"
+FNAMEFILE="$MPLAYERDIR/filename"
+STREAMPOS="$MPLAYERDIR/stream_pos"
+TAGFILE="$MPLAYERDIR/.mov"
+
+if [ "$1" = "-do" ]; then
+	echo "pausing_keep_force run \"echo \\\"\${filename}\\\" > $FNAMEFILE\"" >> "$FIFO"
+	while true; do
+		FNAME="$(cat "$FNAMEFILE" 2>/dev/null)"
+		if [ $? -eq 0 ]; then
+			rm "$FNAMEFILE"
+			break
+		fi
+		sleep 0.05
+	done
+	echo "pausing_keep_force run \"echo \${stream_pos} > $STREAMPOS\"" >> "$FIFO"
+	while true; do
+		SPOS="$(cat "$STREAMPOS" 2>/dev/null)"
+		if [ $? -eq 0 ]; then
+			rm "$STREAMPOS"
+			break
+		fi
+		sleep 0.05
+	done
+	TAGS="$(zenity --entry --text="$FNAME" --entry-text="$SPOS")"
+	S=
+	for T in $TAGS; do
+		S="$S	$T"
+	done
+	if [ -n "$S" ]; then
+		echo "$FNAME$S" >> $TAGFILE
+	fi
+	exit
+fi
+rm -f "$FNAMEFILE"
+rm -f "$STREAMPOS"
+
+if mkdir -p "$MPLAYERDIR"; then
+	:
+else
+	echo "Cannot make directory $MPLAYERDIR"
+	exit 1
+fi
+rm -f "$FIFO"
+:> "$FIFO"
+if grep -w mov "$INPUTCONF" > /dev/null 2>&1; then
+	:
+else
+	echo "\\ pausing_keep_force run \"mov -do\"" >> "$INPUTCONF"
+fi
+if [ -n "$1" ]; then
+	tail -f -s 0.1 "$MPLAYERDIR/fifo" | ("$MPLAYERBIN" -slave -quiet "$@"; killall tail)
+else
+	"$MPLAYERBIN"
+fi
