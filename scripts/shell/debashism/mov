@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/usr/bin/dash
 MPLAYERBIN=`which mplayer 2>/dev/null`
 if [ -n "$MPLAYERBIN" ]; then
 	MPLAYERDIR="$HOME/.mplayer"
@@ -63,7 +63,7 @@ else
 	echo "\\ pausing_keep_force run \"mov -do\"" >> "$INPUTCONF"
 fi
 if [ -n "$1" ]; then
-	tail -f -s 0.1 "$MPLAYERDIR/fifo" | ("$MPLAYERBIN" -slave -quiet "$@"; killall tail)
+	tail -f -s 0.1 "$MPLAYERDIR/fifo" | ("$MPLAYERBIN" -slave -quiet "$@"; for c in `pidof tail`; do if grep -F -q "$MPLAYERDIR/fifo" /proc/$c/cmdline; then kill $c; fi; done)
 else
 	"$MPLAYERBIN"
 fi
