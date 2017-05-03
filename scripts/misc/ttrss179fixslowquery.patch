@@ -1,0 +1,109 @@
+diff -ur /tmp/tt-rss/classes/feedparser.php tt-rss/classes/feedparser.php
+--- /tmp/tt-rss/classes/feedparser.php	2013-07-23 12:19:55.000000000 +0800
++++ tt-rss/classes/feedparser.php	2017-02-02 21:40:26.382627084 +0800
+@@ -16,9 +16,10 @@
+ 		libxml_use_internal_errors(true);
+ 		libxml_clear_errors();
+ 		$this->doc = new DOMDocument();
+-		$pattern = '/^(<\?xml[^<>]*encoding=")([^"]*)"/';
+-		if (preg_match($pattern, $data, $matches)) {
+-			$enc = strtolower($matches[2]);
++		$pattern = '/(<\?xml[^<>]*encoding=")([^"]*)"/';
++		if (preg_match($pattern, $data, $matches, PREG_OFFSET_CAPTURE)) {
++			$data = substr($data, $matches[0][1]);
++			$enc = strtolower($matches[2][0]);
+ 			if ($enc != "utf-8") {
+ 				if ($enc == "gb2312" or $enc == "gbk") {
+ 					$enc = "cp936";
+@@ -26,6 +27,10 @@
+ 				$data = preg_replace($pattern, '${1}utf-8"', iconv( $enc, 'utf-8', $data));
+ 			}
+ 		}
++		$pattern = '/xmlns="(http:..purl.org.atom.ns)([^"]*)"/';
++		if (preg_match($pattern, $data, $matches, PREG_OFFSET_CAPTURE)) {
++			$data = preg_replace($pattern, 'xmlns="http://www.w3.org/2005/Atom"', $data);
++		}
+ 		$this->doc->loadXML($data);
+ 		$this->error = $this->format_error(libxml_get_last_error());
+ 		libxml_clear_errors();
+@@ -35,6 +40,9 @@
+ 
+ 	function init() {
+ 		$root = $this->doc->firstChild;
++		if (!$root) {
++			return;
++		}
+ 		$xpath = new DOMXPath($this->doc);
+ 		$xpath->registerNamespace('atom', 'http://www.w3.org/2005/Atom');
+ 		$xpath->registerNamespace('media', 'http://search.yahoo.com/mrss/');
+@@ -59,7 +67,7 @@
+ 				$this->type = $this::FEED_ATOM;
+ 				break;
+ 			default:
+-				$this->error = "Unknown/unsupported feed type";
++				$this->error = "Unknown/unsupported feed type: " . $root->tagName;
+ 				return;
+ 			}
+ 
+@@ -131,7 +139,7 @@
+ 
+ 			}
+ 		} else {
+-			$this->error = "Unknown/unsupported feed type";
++			$this->error = "Unknown/unsupported feed type: no root: " . $this->doc->saveXML();
+ 			return;
+ 		}
+ 	}
+diff -ur /tmp/tt-rss/classes/pref/feeds.php tt-rss/classes/pref/feeds.php
+--- /tmp/tt-rss/classes/pref/feeds.php	2013-05-13 17:34:26.000000000 +0800
++++ tt-rss/classes/pref/feeds.php	2017-05-03 23:42:10.283671268 +0800
+@@ -1713,8 +1713,20 @@
+ 			WHERE feed_id IS NULL AND marked = false AND owner_uid = " . $_SESSION["uid"]);
+ 		}
+ 
++		/*
+ 		$result = $this->dbh->query("DELETE FROM ttrss_entries WHERE
+ 			(SELECT COUNT(int_id) FROM ttrss_user_entries WHERE ref_id = id) = 0");
++		 */
++		$this->dbh->query("create temporary table orphan_ids (primary key pkey(id)) select ttrss_entries.id from ttrss_entries left join ttrss_user_entries
++			on ttrss_entries.id = ttrss_user_entries.ref_id where ttrss_user_entries.ref_id is null");
++		$result = $this->dbh->query("select count(id) as num_ids from orphan_ids");
++		$num_ids = $this->dbh->fetch_result($result, 0, "num_ids");
++		if ($num_ids > 0) {
++			$result = $this->dbh->query("delete from ttrss_entries where id in (select id from orphan_ids);");
++		} else {
++			$result = $this->dbh->query("delete from ttrss_entries where id is null;");
++		}
++		$this->dbh->query("drop temporary table orphan_ids;");
+ 
+ 		ccache_update($id, $_SESSION['uid']);
+ 	} // function clear_feed_articles
+diff -ur /tmp/tt-rss/include/functions.php tt-rss/include/functions.php
+--- /tmp/tt-rss/include/functions.php	2014-11-22 11:23:59.000000000 +0800
++++ tt-rss/include/functions.php	2017-05-03 23:28:22.826810107 +0800
+@@ -276,13 +276,25 @@
+ 	function purge_orphans($do_output = false) {
+ 
+ 		// purge orphaned posts in main content table
++		/*
+ 		$result = db_query("DELETE FROM ttrss_entries WHERE
+ 			(SELECT COUNT(int_id) FROM ttrss_user_entries WHERE ref_id = id) = 0");
++		 */
++		db_query("create temporary table orphan_ids (primary key pkey(id)) select ttrss_entries.id from ttrss_entries left join ttrss_user_entries
++			on ttrss_entries.id = ttrss_user_entries.ref_id where ttrss_user_entries.ref_id is null");
++		$result = db_query("select count(id) as num_ids from orphan_ids");
++		$num_ids = db_fetch_result($result, 0, "num_ids");
++		if ($num_ids > 0) {
++			$result = db_query("delete from ttrss_entries where id in (select id from orphan_ids);");
++		} else {
++			$result = db_query("delete from ttrss_entries where id is null;");
++		}
+ 
+ 		if ($do_output) {
+ 			$rows = db_affected_rows($result);
+ 			_debug("Purged $rows orphaned posts.");
+ 		}
++		db_query("drop temporary table orphan_ids;");
+ 	}
+ 
+ 	function get_feed_update_interval($feed_id) {
