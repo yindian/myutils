@@ -56,8 +56,24 @@ diff -ur /tmp/tt-rss/classes/feedparser.php tt-rss/classes/feedparser.php
  	}
 diff -ur /tmp/tt-rss/classes/pref/feeds.php tt-rss/classes/pref/feeds.php
 --- /tmp/tt-rss/classes/pref/feeds.php	2013-05-13 17:34:26.000000000 +0800
-+++ tt-rss/classes/pref/feeds.php	2017-05-03 23:42:10.283671268 +0800
-@@ -1713,8 +1713,20 @@
++++ tt-rss/classes/pref/feeds.php	2017-05-05 01:12:12.746322929 +0800
+@@ -1270,11 +1270,15 @@
+ 			$interval_qpart = "DATE_SUB(NOW(), INTERVAL 3 MONTH)";
+ 		}
+ 
++		/*
+ 		$result = $this->dbh->query("SELECT COUNT(*) AS num_inactive FROM ttrss_feeds WHERE
+ 					(SELECT MAX(updated) FROM ttrss_entries, ttrss_user_entries WHERE
+ 						ttrss_entries.id = ref_id AND
+ 							ttrss_user_entries.feed_id = ttrss_feeds.id) < $interval_qpart AND
+ 			ttrss_feeds.owner_uid = ".$_SESSION["uid"]);
++		 */
++		$result = $this->dbh->query("select count(*) as num_inactive from ttrss_feeds left join (select distinct feed_id from ttrss_user_entries inner join (select id FROM ttrss_entries
++			where updated >= $interval_qpart) as dd on ref_id = dd.id) as recent_feeds on id = feed_id where feed_id is null and owner_uid = ".$_SESSION["uid"]);
+ 
+ 		$num_inactive = $this->dbh->fetch_result($result, 0, "num_inactive");
+ 
+@@ -1713,8 +1717,20 @@
  			WHERE feed_id IS NULL AND marked = false AND owner_uid = " . $_SESSION["uid"]);
  		}
  
