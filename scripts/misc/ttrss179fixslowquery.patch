@@ -96,7 +96,7 @@ diff -ur /tmp/tt-rss/classes/pref/feeds.php tt-rss/classes/pref/feeds.php
  	} // function clear_feed_articles
 diff -ur /tmp/tt-rss/include/functions.php tt-rss/include/functions.php
 --- /tmp/tt-rss/include/functions.php	2014-11-22 11:23:59.000000000 +0800
-+++ tt-rss/include/functions.php	2017-05-03 23:28:22.826810107 +0800
++++ tt-rss/include/functions.php	2017-05-06 10:09:21.604962529 +0800
 @@ -276,13 +276,25 @@
  	function purge_orphans($do_output = false) {
  
@@ -123,3 +123,27 @@ diff -ur /tmp/tt-rss/include/functions.php tt-rss/include/functions.php
  	}
  
  	function get_feed_update_interval($feed_id) {
+@@ -3739,8 +3751,12 @@
+ 	}
+ 
+ 	function getLastArticleId() {
++		/*
+ 		$result = db_query("SELECT MAX(ref_id) AS id FROM ttrss_user_entries
+ 			WHERE owner_uid = " . $_SESSION["uid"]);
++		 */
++		$result = db_query("SELECT ref_id AS id FROM ttrss_user_entries
++			WHERE owner_uid = " . $_SESSION["uid"] . " order by ref_id desc limit 1");
+ 
+ 		if (db_num_rows($result) == 1) {
+ 			return db_fetch_result($result, 0, "id");
+diff -ur /tmp/tt-rss/schema/ttrss_schema_mysql.sql tt-rss/schema/ttrss_schema_mysql.sql
+--- /tmp/tt-rss/schema/ttrss_schema_mysql.sql	2013-05-13 17:34:26.000000000 +0800
++++ tt-rss/schema/ttrss_schema_mysql.sql	2017-05-06 12:18:56.207502376 +0800
+@@ -199,6 +199,7 @@
+ create index ttrss_user_entries_ref_id_index on ttrss_user_entries(ref_id);
+ create index ttrss_user_entries_feed_id on ttrss_user_entries(feed_id);
+ create index ttrss_user_entries_unread_idx on ttrss_user_entries(unread);
++create index ttrss_user_entries_marked_unread_idx on ttrss_user_entries(marked, unread);
+ 
+ create table ttrss_entry_comments (id integer not null primary key,
+ 	ref_id integer not null,
