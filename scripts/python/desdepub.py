@@ -3,6 +3,8 @@ import sys
 import os, tempfile, shutil, glob
 from Crypto.Cipher import DES
 from zipfile import ZipFile
+import zipfile
+import time
 import traceback
 
 assert __name__ == '__main__'
@@ -44,9 +46,22 @@ for fname in sys.argv[1:]:
                 g.write(buf)
                 g.close()
         f.close()
+        z = ZipFile(book, 'r')
+        for i in z.infolist():
+            t = time.mktime(i.date_time + (0, 0, -1))
+            os.utime(os.path.join(dd, i.filename), (t, t))
+        z.close()
         z = ZipFile(name, 'w')
         for root, dirs, files in os.walk(dd):
             for s in files:
+                name = os.path.join(root, s)
+                f = open(name)
+                buf = f.read()
+                f.close()
+                i = zipfile.ZipInfo()
+                i.filename = os.path.relpath(name, dd)
+                i.date_time= time.localtime(os.path.getmtime(name))[:6]
+                i.compress_type = zipfile.ZIP_DEFLATED
                 z.write(os.path.join(root, s), os.path.relpath(os.path.join(root, s), dd))
         z.close()
     shutil.rmtree(d)
