@@ -55,13 +55,6 @@ for fname in sys.argv[1:]:
         for root, dirs, files in os.walk(dd):
             for s in files:
                 name = os.path.join(root, s)
-                f = open(name)
-                buf = f.read()
-                f.close()
-                i = zipfile.ZipInfo()
-                i.filename = os.path.relpath(name, dd)
-                i.date_time= time.localtime(os.path.getmtime(name))[:6]
-                i.compress_type = zipfile.ZIP_DEFLATED
-                z.write(os.path.join(root, s), os.path.relpath(os.path.join(root, s), dd))
+                z.write(name, os.path.relpath(name, dd), zipfile.ZIP_DEFLATED)
         z.close()
     shutil.rmtree(d)
