@@ -38,11 +38,11 @@ for fname in sys.argv[1:]:
             if line.find('application/xhtml') > 0 and line.find('<opf:item') >= 0:
                 p = line.index('href="')
                 chapter = line[p+6:line.index('"', p+6)]
-                g = open(os.path.join(dd, 'OEBPS', chapter))
+                g = open(os.path.join(dd, 'OEBPS', chapter), 'rb')
                 buf = g.read()
                 g.close()
                 buf = unpad(cipher.decrypt(buf))
-                g = open(os.path.join(dd, 'OEBPS', chapter), 'w')
+                g = open(os.path.join(dd, 'OEBPS', chapter), 'wb')
                 g.write(buf)
                 g.close()
         f.close()
