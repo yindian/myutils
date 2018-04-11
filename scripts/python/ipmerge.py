@@ -18,6 +18,15 @@ try:
     i += 1
 except:
     min_mask = 13
+white_list = set()
+try:
+    while True:
+        ip = socket.inet_aton(sys.argv[i])
+        ip = struct.unpack('!L', ip)[0]
+        white_list.add(ip)
+        i += 1
+except:
+    pass
 try:
     f = open(sys.argv[i])
 except:
@@ -43,6 +52,12 @@ for line in f:
         d[ip] += cnt
     except KeyError:
         d[ip] = cnt
+for ip in white_list:
+    try:
+        assert not d.has_key(ip)
+    except:
+        print >> sys.stderr, ip
+        raise
 l = d.keys()
 l.sort()
 r = set([(0, 0)])
@@ -72,7 +87,7 @@ def shrink_subnet(ips, ip, mask):
                 break
     return ip, mask, len(ips) * 1. / (1 << (32 - mask))
 
-while len(r) < max_ips or rm < min_mask:
+while len(r) < max_ips or rm < min_mask or white_list:
     to_del = []
     s = set([x[0] for x in r if x[1] == rm])
     assert s
@@ -80,6 +95,37 @@ while len(r) < max_ips or rm < min_mask:
     chosen_ip1 = chosen_mask1 = None
     chosen_ip2 = chosen_mask2 = None
     max_score = -1.
+    if white_list:
+        s.clear()
+        rm = 32
+        for w in white_list:
+            found = False
+            for ip, mask in r:
+                unmask = 1 << (32 - mask)
+                unmask = (1 << 32) - unmask
+                if w & unmask == ip:
+                    if mask < rm:
+                        s.clear()
+                        rm = mask
+                        s.add(ip)
+                    elif mask == rm:
+                        s.add(ip)
+                    found = True
+                    break
+            if not found:
+                to_del.append(w)
+        for w in to_del:
+            white_list.remove(w)
+        if not white_list and not s:
+            rm = 32
+            for ip, mask in r:
+                if mask < rm:
+                    s.clear()
+                    rm = mask
+                    s.add(ip)
+                elif mask == rm:
+                    s.add(ip)
+            assert s
     for ip in s:
         mask = rm
         unmask = 1 << (32 - mask)
