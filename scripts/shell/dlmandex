@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+SED=sed
+WGET_X="wget -x -nc -T 20 -t 3"
+HOST=`echo bWFuZ2FkZXgub3JnCg== | base64 -d`
+chap_url_wo_scheme() {
+	echo $HOST/chapter/$1/1
+}
+while [ -n "$1" ]; do
+	CHAP=`echo "$1" | $SED 's=^.*chapter/==;s=/.*=='`
+	while [ $CHAP -gt 0 ]; do
+		URL=`chap_url_wo_scheme $CHAP`
+		$WGET_X https://$URL
+		$SED -n '/^var/,/chapter_url/p' $URL | $SED '/chapter_url/,$d' > $URL.js
+		echo 'for (var i = 1; i <= page_array.length; i++) console.log(img_url(i));' >> $URL.js
+		nodejs $URL.js | $WGET_X -i -
+		DATA="$($SED -n '/data-type/{s/^[^>]*>//;s/<\/.*//;p}' $URL)"
+		NAME="`cat <<< "$DATA" | jq -r '[.manga_title, (.chapter_id as $ch | .other_chapters[] | select(.id == $ch) | .name), .chapter_title, "["+.other_groups[.chapter_id | tostring].group_name+"]" ] | join(" ")' | $SED 's/Volume /Vol/;s/Chapter /ch/;s/ /_/g'`"
+		DIR="`jq -r .server <<< "$DATA" | $SED 's=^https\?://=='`"
+		if [ ! -e "$DIR$NAME" ]; then
+			ln -sfv "`jq -r .dataurl <<< "$DATA"`" "$DIR$NAME"
+		fi
+		CHAP=`$SED -n '/next_chap/{s/.*=\s*//;s/;.*//;p}' $URL.js`
+	done
+	shift
+done
