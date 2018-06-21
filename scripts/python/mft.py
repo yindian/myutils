@@ -502,7 +502,7 @@ if __name__ == '__main__':
                 mf.write(f)
     else:
         if not args:
-            mf = MidiFile(sys.stdin)
+            mf = MidiFile(StringIO.StringIO(sys.stdin.read()))
         else:
             with open(args[0], 'rb') as f:
                 mf = MidiFile(f)
