@@ -153,7 +153,11 @@ class MidiFile:
         self._fmt = self._trk = self._div = None
         self._tracks = []
         self._now = None
+        self._delta = None
         self._sysex_cont = False
+        self._recording = False
+        self._recclock = None
+        self._macros = {}
         if f:
             self._fmt, self._trk, self._div = read_header(f)
             for i in xrange(self._trk):
@@ -305,10 +309,12 @@ class MidiFile:
                     print >> f, line
 
     def Header(self, fmt, trk, div):
+        assert not self._recording
         assert self._fmt == self._trk == self._div == None
         self._fmt, self._trk, self._div = fmt, trk, div
 
     def Track(self):
+        assert not self._recording
         assert self._fmt is not None
         assert self._trk is not None
         assert self._div is not None
@@ -317,12 +323,16 @@ class MidiFile:
         running = []
         self._tracks.append((times, events, running))
         self._now = 0
+        self._delta = None
 
     def Event(self, buf, **kwargs):
         if self._sysex_cont:
             assert buf.startswith('\xF7')
+        for k in kwargs:
+            assert k in ('running',)
         times = self._tracks[-1][0]
         if times and self._now < times[-1]:
+            assert not self._recording
             p = bisect.bisect(times, self._now)
             times.insert(p, self._now)
             self._tracks[-1][1].insert(p, buf)
@@ -330,16 +340,54 @@ class MidiFile:
             return
         self._tracks[-1][0].append(self._now)
         self._tracks[-1][1].append(buf)
-        if kwargs:
-            for k in kwargs:
-                assert k in ('running',)
         self._tracks[-1][2].append(kwargs.get('running', False))
+        if self._recording:
+            self._macros[self._recording].append(('Event', buf, kwargs))
+
+    def record(self):
+        assert not self._recording
+        self._recording = True
+        self._recclock = 0
+        self._macros[self._recording] = []
+
+    def into(self, macro):
+        assert self._recording
+        assert macro and macro != True
+        self._macros[macro] = self._macros[self._recording]
+        if macro != self._recording:
+            del self._macros[self._recording]
+        self._recording = False
+        self._recclock = None
+
+    def run(self, macro):
+        assert not self._recording
+        for ar in self._macros[macro]:
+            if ar[0] == 'Event':
+                self.Event(ar[1], **ar[2])
+            elif ar[0] == 'after':
+                self.after(ar[1])
+            elif ar[0] == 'rewind':
+                self.rewind()
+            else:
+                assert False
 
     def at(self, tick):
+        assert not self._recording
         self._now = tick
+        self._delta = None
 
     def after(self, delta):
         self._now += delta
+        self._delta = delta
+        if self._recording:
+            self._macros[self._recording].append(('after', delta))
+
+    def rewind(self):
+        assert self._delta is not None
+        self._now -= self._delta
+        self._delta = None
+        if self._recording:
+            self._macros[self._recording].append(('rewind',))
 
     def Meta(self, subtype, buf='', **kwargs):
         ar = [chr(0xFF), chr(subtype)]
