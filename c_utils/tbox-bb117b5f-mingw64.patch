@@ -1,0 +1,28 @@
+diff --git a/src/tbox/platform/windows/ifaddrs.c b/src/tbox/platform/windows/ifaddrs.c
+index 76e4447a..8731d4b8 100644
+--- a/src/tbox/platform/windows/ifaddrs.c
++++ b/src/tbox/platform/windows/ifaddrs.c
+@@ -30,6 +30,9 @@
+ #include "../ifaddrs.h"
+ #include "../posix/sockaddr.h"
+ #include "interface/interface.h"
++#ifdef interface
++#undef interface
++#endif
+ 
+ /* //////////////////////////////////////////////////////////////////////////////////////
+  * private implementation
+diff --git a/src/tbox/prefix/type.h b/src/tbox/prefix/type.h
+index a0fdfd23..4c21f4e8 100644
+--- a/src/tbox/prefix/type.h
++++ b/src/tbox/prefix/type.h
+@@ -111,6 +111,9 @@ typedef tb_int32_t                  tb_wchar_t;
+ #if defined(TB_COMPILER_IS_MSVC)
+ typedef __int64                     tb_int64_t;
+ typedef unsigned __int64            tb_uint64_t;
++#elif defined(__MINGW32__)
++typedef signed long long            tb_int64_t;
++typedef unsigned long long          tb_uint64_t;
+ #elif (TB_CPU_BITSIZE == 64)
+ typedef signed long                 tb_int64_t;
+ typedef unsigned long               tb_uint64_t;
