@@ -185,9 +185,12 @@ class MidiFile:
                 pass
             else:
                 delta_lengths.append(len(encode_var_len_int(delta_times[0])))
+                events, running = self._tracks[i][1], self._tracks[i][2]
                 for j in xrange(1, len(times)):
                     delta_times.append(times[j] - times[j - 1])
                     delta_lengths.append(len(encode_var_len_int(delta_times[-1])))
+                    if running[j] and events[j][0] != events[j - 1][0]:
+                        running[j] = False
             write_track(f, delta_times, delta_lengths, self._tracks[i][1], self._tracks[i][2])
 
     def dump(self, f):
