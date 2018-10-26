@@ -19,6 +19,15 @@ def load_samples(fname):
     assert len(ar) == w.getnframes()
     return ar, r
 
+def store_samples(fname, ar, rate=44100):
+    w = wave.open(fname, 'wb')
+    w.setnchannels(1)
+    w.setframerate(rate)
+    w.setsampwidth(2)
+    buf = struct.pack('%dh' % (len(ar),), *ar)
+    w.writeframes(buf)
+    w.close()
+
 def find_phase(ar, period):
     br = [x * x for x in ar]
     k, s = 0, sum(br[0::period])
@@ -34,6 +43,7 @@ def main(fname_wav, freq=80, fname_pic=None):
     period = int(round(rate * 1. / freq))
     phase = find_phase(ar, period)
     br = []
+    mm = max(map(abs, ar))
     func = sum
     #func = max
     #def func(l):
@@ -70,6 +80,13 @@ def main(fname_wav, freq=80, fname_pic=None):
             f.write(sf.getvalue())
     else:
         sys.stdout.write(sf.getvalue())
+    root, ext = os.path.splitext(fname_wav)
+    br = []
+    for x in ar:
+        peak = x * mm / amp
+        for i in xrange(period):
+            br.append(int(round(peak * math.sin(math.pi * i / period))))
+    store_samples(root + '-xform' + ext, br, rate)
 
 if __name__ == '__main__':
     main(*sys.argv[1:])
