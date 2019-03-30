@@ -39,9 +39,9 @@ vmap <silent> <F2> "+y
 nmap <silent> <F2> :up<cr>
 imap <silent> <F2> <c-o>:up<cr>
 nmap <silent> <F5> :up<cr>:mak run<cr>
-vmap ,/ "zy/<C-R>=substitute(escape(@z, '[].*~/\\!'), '\n', '\\n', 'g')<CR><CR>
-vmap ./ "zy/<C-R>/\\|<C-R>=substitute(escape(@z, '[].*~/\\!'), '\n', '\\n', 'g')<CR><CR>
-nmap <silent> & "zyiw/<C-R>/\\|<C-R>=escape(@z, '[].*~/\\!')<CR><CR>
+vmap ,/ "zy/<C-R>=substitute(escape(@z, '[].*~/\\!^$'), '\n', '\\n', 'g')<CR><CR>
+vmap ./ "zy/<C-R>/\\|<C-R>=substitute(escape(@z, '[].*~/\\!^$'), '\n', '\\n', 'g')<CR><CR>
+nmap <silent> & "zyiw/<C-R>/\\|<C-R>=escape(@z, '[].*~/\\!^$')<CR><CR>
 set ambw=double
 set fencs=ucs-bom,utf-8,cp932,gb18030,cp1252
 "set fencs=cp936,utf-8,utf-16le,sjis,euc-jp
@@ -49,7 +49,7 @@ let g:fencview_autodetect = 0
 set cino+=l1,t0,(0,w1,W2s,M1
 compiler! gcc
 set efm-=%f\:%l\:%m
-set efm+=%A\ %#[%*\\w]%.%#%[\ \	]%f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,%f\:%l\:%m:
+set efm+=%A\ %#[%*\\w]%.%#%[\ \	]%f\:%l\:\ %m,%-Z\ %#[%*\\w]\ %p^,%-C%.%#,In\ file\ included\ from\ %f\:%l\:%m:,%f\:%l\:%m:
 set efm+=\
       \%D%*\\a[%*\\d]:\ Entering\ directory\ %[`']%f',
       \%X%*\\a[%*\\d]:\ Leaving\ directory\ %[`']%f',
@@ -107,17 +107,6 @@ endif
 
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
-  filetype off                   " required!
-
-  set rtp+=~/.vim/bundle/vundle/
-  call vundle#rc()
-
-  " let Vundle manage Vundle
-  " required! 
-  Bundle 'gmarik/vundle'
-
-  " My Bundles here:
-  Bundle 'exclipy/clang_complete'
 
   " Enable file type detection.
   " Use the default filetype settings, so that mail gets 'tw' set to 72,
@@ -221,29 +210,6 @@ if has("autocmd")
       endfunction
       command! Upcs call Myadd_csup("")
   endif
-"""""""""""""""""""""""""""""""""""""""""""""
-let g:clang_auto_select=1
-let g:clang_complete_auto=0
-let g:clang_complete_copen=1
-let g:clang_hl_errors=1
-let g:clang_periodic_quickfix=0
-let g:clang_snippets=1
-let g:clang_snippets_engine="clang_complete"
-let g:clang_conceal_snippets=1
-let g:clang_exec="clang"
-let g:clang_user_options=""
-let g:clang_auto_user_options="path, .clang_complete"
-let g:clang_use_library=1
-let g:clang_library_path="/usr/lib"
-let g:clang_sort_algo="priority"
-let g:clang_complete_macros=1
-let g:clang_complete_patterns=0
-nnoremap <Leader>q :call g:ClangUpdateQuickFix()<CR>
-
-let g:clic_filename=$HOME."/.index/index.db"
-nnoremap <Leader>r :call ClangGetReferences()<CR>
-nnoremap <Leader>d :call ClangGetDeclarations()<CR>
-nnoremap <Leader>s :call ClangGetSubclasses()<CR>
 """""""""""""""""""""""""""""""""""""""""""""
 else
 
