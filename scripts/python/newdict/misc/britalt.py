@@ -17,6 +17,9 @@ try:
 	for line in f:
 		lineno += 1
 		word, mean = line.rstrip('\n').split('\t', 1)
+                p = word.find('|')
+                if p > 0:
+                    word = word[:p]
 		try:
 			ar = word.split(', ')
 			p = -1
