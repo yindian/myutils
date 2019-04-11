@@ -38,6 +38,7 @@ else:
 d = {}
 d2 = {}
 t = {}
+b = {}
 for f in flist:
     for line in f:
         ar = line.decode(enc).split('\t')
@@ -47,12 +48,13 @@ for f in flist:
                 d[num] = d.get(num, 0) + tosec(ar[4])
                 d2[num] = d2.get(num, 0) + tomin(tosec(ar[4]))
                 t[num] = t.get(num, 0) + 1
+                b[num] = b.get(num, 0.) + float(ar[7])
     f.close()
 ar = d.items()
 ar.sort(key=lambda x: x[1], reverse=True)
-print 'Phone No.\tMinutes\tDur(s)\tCount\tTotal\tAvg. Dur'
+print 'Phone No.\tMinutes\tDur(s)\tCount\tTotal\tAvg.Dur\tBill'
 for num, dur in ar:
-    print '%s\t%d\t%d\t%d\t%s\t%s' % (num, d2[num], dur, t[num], tostr(dur), tostr(dur / t[num]))
+    print '%s\t%d\t%d\t%d\t%s\t%s\t%.2f' % (num, d2[num], dur, t[num], tostr(dur), tostr(dur / t[num]), b[num])
 dur = sum(d.values())
 tim = sum(t.values())
-print '%s\t%d\t%d\t%d\t%s\t%s' % ('Total No.', sum(d2.values()), dur, tim, tostr(dur), tostr(dur / tim))
+print '%s\t%d\t%d\t%d\t%s\t%s\t%.2f' % ('Total No.', sum(d2.values()), dur, tim, tostr(dur), tostr(dur / tim), sum(b.values()))
