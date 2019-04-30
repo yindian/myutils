@@ -1,0 +1,110 @@
+diff --git a/miscutils/bc.c b/miscutils/bc.c
+index 36e978ed8..6ca67e161 100644
+--- a/miscutils/bc.c
++++ b/miscutils/bc.c
+@@ -7378,7 +7378,7 @@ static int xc_vm_init(const char *env_len)
+ //TODO: in GNU bc, the check is (isatty(0) && isatty(1)),
+ //-i option unconditionally enables this regardless of isatty():
+ 	if (isatty(0)) {
+-#if ENABLE_FEATURE_BC_INTERACTIVE
++#if 0 && ENABLE_FEATURE_BC_INTERACTIVE
+ 		G_ttyin = 1;
+ 		// With SA_RESTART, most system calls will restart
+ 		// (IOW: they won't fail with EINTR).
+diff --git a/win32/termios.c b/win32/termios.c
+index 25f2ea48c..067157d1d 100644
+--- a/win32/termios.c
++++ b/win32/termios.c
+@@ -19,6 +19,15 @@ int64_t FAST_FUNC read_key(int fd, char *buf UNUSED_PARAM, int timeout)
+ 		bb_error_msg_and_die("read_key only works on stdin");
+ 	if (cin == INVALID_HANDLE_VALUE)
+ 		return -1;
++#if ENABLE_FEATURE_EURO
++    if (buf[0]) { // 2-byte char sequence
++        ret = (unsigned char) buf[1];
++        buf[0] = buf[1] = 0;
++        return ret;
++    }
++#else
++    (void) buf;
++#endif
+ 	GetConsoleMode(cin, &mode);
+ 	SetConsoleMode(cin, 0);
+ 
+@@ -61,14 +70,15 @@ int64_t FAST_FUNC read_key(int fd, char *buf UNUSED_PARAM, int timeout)
+ 				case VK_END:
+ 				case VK_DOWN:
+ 				case VK_NEXT:
+-				case VK_LEFT:
+ 				case VK_CLEAR:
+-				case VK_RIGHT:
+ 				case VK_HOME:
+ 				case VK_UP:
+ 				case VK_PRIOR:
+ 				case VK_KANA:
+ 					continue;
++				case VK_LEFT: ret = KEYCODE_ALT_LEFT; goto done;
++				case VK_RIGHT: ret = KEYCODE_ALT_RIGHT; goto done;
++				case VK_DELETE: ret = KEYCODE_ALT_D; goto done;
+ 				}
+ 			}
+ 
+@@ -102,7 +112,20 @@ int64_t FAST_FUNC read_key(int fd, char *buf UNUSED_PARAM, int timeout)
+ 		uchar = record.Event.KeyEvent.uChar.UnicodeChar;
+ 		achar = uchar & 0x7f;
+ 		if (achar != uchar)
++#if 0
+ 			WideCharToMultiByte(CP_ACP, 0, &uchar, 1, &achar, 1, NULL, NULL);
++#else
++        {
++            int n = WideCharToMultiByte(CP_ACP, 0, &uchar, 1, buf, 2, NULL, NULL);;
++            if (n < 2) {
++                ret = buf[0] ? (unsigned char) buf[0] : achar;
++                buf[0] = buf[1] = 0;
++            } else {
++                ret = (unsigned char) buf[0];
++            }
++        }
++        else
++#endif
+ 		ret = achar;
+ #else
+ 		if ( (record.Event.KeyEvent.uChar.AsciiChar & 0x80) == 0x80 ) {
+@@ -111,6 +134,15 @@ int64_t FAST_FUNC read_key(int fd, char *buf UNUSED_PARAM, int timeout)
+ 		}
+ 		ret = record.Event.KeyEvent.uChar.AsciiChar;
+ #endif
++        if (alt_pressed) {
++            switch (ret)
++            {
++				case '\b': ret = KEYCODE_ALT_BACKSPACE; goto done;
++				case 'd': ret = KEYCODE_ALT_D; goto done;
++				case 'f': ret = KEYCODE_ALT_RIGHT; goto done;
++				case 'b': ret = KEYCODE_ALT_LEFT; goto done;
++            }
++        }
+ 		break;
+ 	}
+  done:
+diff --git a/win32/winansi.c b/win32/winansi.c
+index 018b05c76..a24ec9c68 100644
+--- a/win32/winansi.c
++++ b/win32/winansi.c
+@@ -413,6 +413,7 @@ static BOOL winansi_CharToOemBuff(LPCSTR s, LPSTR d, DWORD len)
+ 
+ 	if (!s || !d)
+ 		return FALSE;
++    i = (unsigned char) *s;
+ 
+ 	buf = xmalloc(len*sizeof(WCHAR));
+ 	MultiByteToWideChar(CP_ACP, 0, s, len, buf, len);
+@@ -424,6 +425,9 @@ static BOOL winansi_CharToOemBuff(LPCSTR s, LPSTR d, DWORD len)
+ 			}
+ 		}
+ 	}
++    else if (len == 1 && d[0] == '?' && GetOEMCP() > 874) {
++        d[0] = i;
++    }
+ 	free(buf);
+ 	return TRUE;
+ }
