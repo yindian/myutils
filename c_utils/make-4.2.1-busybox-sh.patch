@@ -1,0 +1,77 @@
+diff --git a/job.c b/job.c
+index f3a9fdb..03cdc7a 100644
+--- a/job.c
++++ b/job.c
+@@ -31,7 +31,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
+ #ifdef WINDOWS32
+ #include <windows.h>
+ 
+-const char *default_shell = "sh.exe";
++const char *default_shell = "busybox.exe sh";
+ int no_default_sh_exe = 1;
+ int batch_mode_shell = 1;
+ HANDLE main_thread;
+@@ -426,6 +426,7 @@ is_bourne_compatible_shell (const char *path)
+     "zsh",
+     "ash",
+     "dash",
++    "busybox",
+     NULL
+   };
+   const char **s;
+@@ -2573,6 +2574,13 @@ construct_command_argv_internal (char *line, char **restp, const char *shell,
+     free (s1);
+     free (s2);
+   }
++  if (!slow_flag && strstr (shell, "busybox"))
++  {
++      unsigned int shell_len = strlen (shell);
++      unsigned int line_len = strlen (line);
++      if (line_len <= shell_len || strncmp(shell, line, shell_len))
++          slow_flag = 1;
++  }
+   if (slow_flag)
+     goto slow;
+ #else  /* not WINDOWS32 */
+diff --git a/main.c b/main.c
+index c84c495..42686c7 100644
+--- a/main.c
++++ b/main.c
+@@ -922,13 +922,19 @@ find_and_set_default_shell (const char *token)
+ {
+   int sh_found = 0;
+   char *atoken = 0;
++  const char *tokargs = 0;
+   const char *search_token;
+   const char *tokend;
+   PATH_VAR(sh_path);
+   extern const char *default_shell;
+ 
+   if (!token)
++  {
+     search_token = default_shell;
++    tokargs = strchr(search_token, ' ');
++    if (tokargs)
++        search_token = atoken = xstrndup (search_token, tokargs - search_token);
++  }
+   else
+     search_token = atoken = xstrdup (token);
+ 
+@@ -989,6 +995,8 @@ find_and_set_default_shell (const char *token)
+               sprintf (sh_path, "%s/%s", p, search_token);
+               if (_access (sh_path, 0) == 0)
+                 {
++                  if (tokargs)
++                      strcat(sh_path, tokargs);
+                   default_shell = xstrdup (w32ify (sh_path, 0));
+                   sh_found = 1;
+                   *ep = PATH_SEPARATOR_CHAR;
+@@ -1011,6 +1019,8 @@ find_and_set_default_shell (const char *token)
+               sprintf (sh_path, "%s/%s", p, search_token);
+               if (_access (sh_path, 0) == 0)
+                 {
++                  if (tokargs)
++                      strcat(sh_path, tokargs);
+                   default_shell = xstrdup (w32ify (sh_path, 0));
+                   sh_found = 1;
+                 }
