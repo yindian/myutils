@@ -1,6 +1,9 @@
+#ifdef USE_HASH
 #include "khash.h"
+#endif
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #ifdef _MSC_VER
 #define PRIu64 "I64"
 #else
@@ -14,7 +17,8 @@
 #else
 #define FALL_THROUGH /* fall through */
 #endif
-#if 1
+#define USE_BJOERN
+#ifdef USE_BJOERN
 // Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
@@ -53,15 +57,40 @@ decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
   *state = utf8d[256 + *state + type];
   return *state;
 }
+#else
+#ifdef USE_ASM
+extern int utf8_decode_asm(const unsigned char **inbufp, size_t inbufsz, unsigned int **outbufp, size_t outbufsz);
+#else
+#include "utf8.h"
 #endif
+#endif
+#ifdef USE_HASH
 KHASH_MAP_INIT_INT(cnt, uint64_t)
+#else
+#define UNICODE_POINTS 0x110000
+static uint64_t cnt[UNICODE_POINTS] = {0};
+#endif
+#define BUFLEN 0x1000000
+#ifdef BUFLEN
+static unsigned char buf[BUFLEN];
+#ifndef USE_BJOERN
+#ifdef USE_ASM
+static uint32_t outbuf[BUFLEN];
+#endif
+#endif
+#endif
 int main()
 {
+#ifdef USE_HASH
     int ret;
     khiter_t k;
     khash_t(cnt) *h = kh_init(cnt);
+#endif
     int ch;
     uint32_t b /* state */, c /* code point */;
+#ifdef BUFLEN
+    size_t l;
+#endif
     uint64_t n;
     setvbuf(stdin, NULL, _IOFBF, 1024 * 4);
 #ifdef _WIN32
@@ -71,14 +100,75 @@ int main()
 #define getchar getchar_unlocked
 #endif
     b = c = 0;
+#ifndef BUFLEN
     while ((ch = getchar()) != EOF)
+#else
+    for (l = fread(buf, 1, BUFLEN, stdin); l;
+         l += fread(buf + l, 1, BUFLEN - l, stdin))
+#endif
     {
-        switch (decode(&b, &c, ch))
+#ifdef BUFLEN
+        unsigned char *p = buf;
+        unsigned char *end = buf + l;
+        while (end > p && (end[-1]>>6) == 2) /* stop at ascii or leading byte */
         {
+            --end;
+        }
+        if (end > p && (end[-1]>>6) == 3) /* leading byte */
+        {
+            --end;
+        }
+        if (end == p) /* unlikely */
+        {
+            ++end;
+        }
+#endif
+#ifdef USE_BJOERN
+#ifdef BUFLEN
+        for (; p < end; ++p)
+        {
+        ch = *p;
+#endif
+#ifdef CARE_REJECT
+        switch (decode(&b, &c, ch))
+#else
+        if (decode(&b, &c, ch) == UTF8_ACCEPT)
+#endif
+#else
+#ifndef BUFLEN
+#error "BUFLEN Missing"
+#endif
+        (void) b;
+#ifdef USE_ASM
+        (void) ch;
+        {
+        uint32_t *outp = outbuf;
+        uint32_t *q;
+        utf8_decode_asm(&p, end - p, &outp, sizeof(outbuf));
+        for (q = outbuf; q < outp; ++q)
+        {
+        c = *q;
+#else
+        for (p = buf + l; ((p - buf) & 3); ++p)
+        {
+            *p = '\0';
+        }
+        for (p = buf; p < end; )
+        {
+        p = utf8_decode(p, &c, &ch); /* ch: E */
+        if (!ch)
+#endif
+#endif
+        {
+#ifdef USE_BJOERN
+#ifdef CARE_REJECT
             case UTF8_REJECT:
                 c = 0xFFFF;
                 FALL_THROUGH;
             case UTF8_ACCEPT:
+#endif
+#endif
+#ifdef USE_HASH
                 k = kh_get(cnt, h, c);
                 if (k != kh_end(h))
                 {
@@ -89,12 +179,39 @@ int main()
                     k = kh_put(cnt, h, c, &ret);
                     kh_value(h, k) = 1;
                 }
+#else
+                ++cnt[c];
+#endif
+#ifdef USE_BJOERN
+#ifdef CARE_REJECT
                 break;
             default:
                 break;
+#endif
+#endif
         }
+#ifdef BUFLEN
+#ifndef USE_BJOERN
+#ifdef USE_ASM
+        }
+#endif
+#endif
+        }
+        l = buf + l - p;
+        memmove(buf, p, l);
+#endif
     }
+#ifdef USE_HASH
     kh_foreach(h, c, n, printf("%04X\t%" PRIu64 "\n", c, n));
     kh_destroy(cnt, h);
+#else
+    for (c = 0; c < UNICODE_POINTS; ++c)
+    {
+        if ((n = cnt[c]))
+        {
+            printf("%04X\t%" PRIu64 "\n", c, n);
+        }
+    }
+#endif
     return 0;
 }
