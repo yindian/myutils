@@ -2,6 +2,7 @@
 #include "khash.h"
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #ifdef _MSC_VER
@@ -70,9 +71,11 @@ KHASH_MAP_INIT_INT(cnt, uint64_t)
 #define UNICODE_POINTS 0x110000
 static uint64_t cnt[UNICODE_POINTS] = {0};
 #endif
-#define BUFLEN 0x1000000
+#define BUFLEN 0x8000
 #ifdef BUFLEN
+#ifdef STATIC_BUF
 static unsigned char buf[BUFLEN];
+#endif
 #ifndef USE_BJOERN
 #ifdef USE_ASM
 static uint32_t outbuf[BUFLEN];
@@ -89,20 +92,33 @@ int main()
     int ch;
     uint32_t b /* state */, c /* code point */;
 #ifdef BUFLEN
+#ifndef STATIC_BUF
+    unsigned char *buf;
+#endif
     size_t l;
 #endif
     uint64_t n;
+#if 0
     setvbuf(stdin, NULL, _IOFBF, 1024 * 4);
+#endif
 #ifdef _WIN32
     _setmode(_fileno( stdin ), _O_BINARY);
 #define getchar _getchar_nolock
 #else
+    if (!freopen(NULL, "rb", stdin))
+    {
+        perror("freopen");
+        return 1;
+    }
 #define getchar getchar_unlocked
 #endif
     b = c = 0;
 #ifndef BUFLEN
     while ((ch = getchar()) != EOF)
 #else
+#ifndef STATIC_BUF
+    buf = (unsigned char *) malloc(BUFLEN);
+#endif
     for (l = fread(buf, 1, BUFLEN, stdin); l;
          l += fread(buf + l, 1, BUFLEN - l, stdin))
 #endif
@@ -196,11 +212,24 @@ int main()
         }
 #endif
 #endif
+#ifdef USE_BJOERN
         }
+#else
+#ifdef USE_ASM
+        }
+#else
+        }
+#endif
+#endif
         l = buf + l - p;
         memmove(buf, p, l);
 #endif
     }
+#ifdef BUFLEN
+#ifndef STATIC_BUF
+    free(buf);
+#endif
+#endif
 #ifdef USE_HASH
     kh_foreach(h, c, n, printf("%04X\t%" PRIu64 "\n", c, n));
     kh_destroy(cnt, h);
