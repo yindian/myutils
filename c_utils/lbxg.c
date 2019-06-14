@@ -37,15 +37,73 @@ int main(int argc, char *argv[])
 {
     uint64_t nLine;
     unsigned nCol;
+    int i;
     int ch;
-    int wrap, match, output;
+    int cbegin;
+    int wrap, output;
+    int help;
     int bufpos, pathpos, docpos;
     int lastpathpos;
     char *buf, *path, *doc;
     const char *errmsg;
-    wrap = match = output = 0;
+    const char *show, *match, *pattern;
+    wrap = output = 0;
     bufpos = pathpos = docpos = 0;
     lastpathpos = 0;
+    help = 0;
+    show = match = pattern = NULL;
+    for (i = 1; i < argc; i++)
+    {
+        if (argv[i][0] == '-')
+        {
+            switch (argv[i][1])
+            {
+                case 's':
+                    show = &argv[i][2];
+                    break;
+                case 'm':
+                    match = &argv[i][2];
+                    break;
+                default:
+                    help = 1;
+                    break;
+            }
+            if ((show && show[0] != '/') || (match && match[0] != '/'))
+            {
+                help = 1;
+            }
+            if (help)
+            {
+                break;
+            }
+        }
+        else
+        {
+            pattern = argv[i];
+        }
+    }
+    if (pattern)
+    {
+        if (!match)
+        {
+            help = 1;
+        }
+    }
+    else if (match)
+    {
+        match = NULL;
+    }
+    if (help)
+    {
+        printf("Line-Based Xml Grep by YIN Dian\n");
+        printf("Usage: %s [-s/path/to/show] [-m/path/to/match] [pattern]\n",
+               argv[0]);
+        printf("Note: XML data is fed through stdin in a streaming manner\n");
+        printf("Pattern is matched in character data under path of -m\n");
+        printf("Without arguments, show element structure of the document\n");
+        printf("Output in PYX notation, enhanced with / - path, # - note\n");
+        return 0;
+    }
     buf = (char *) malloc(BUFLEN);
     assert(buf);
     path = (char *) malloc(BUFLEN);
@@ -53,6 +111,7 @@ int main(int argc, char *argv[])
     path[0] = '\0';
     doc = (char *) malloc(BUFLEN);
     assert(doc);
+    puts("(LBXG");
 #define CHECK_LIMIT(_cond) do \
     { \
         if (!(_cond)) \
@@ -81,11 +140,36 @@ int main(int argc, char *argv[])
 parse_text:
     errmsg = NULL;
     bufpos = 0;
+    cbegin = 1;
+#undef ON_NEW_LINE
+#define ON_NEW_LINE cbegin = 1
     READ_CHAR_ROUTINE(ch);
     while (ch != '<')
     {
+        if (output)
+        {
+            if (cbegin)
+            {
+                if (!iswhite(ch))
+                {
+                    cbegin = 0;
+                    putchar('-');
+                    putchar(ch);
+                }
+            }
+            else
+            {
+                putchar(ch);
+            }
+        }
         READ_CHAR_ROUTINE(ch);
     }
+    if (output && !cbegin)
+    {
+        putchar('\n');
+    }
+#undef ON_NEW_LINE
+#define ON_NEW_LINE
 #if 0
     goto parse_element;
 
@@ -218,19 +302,50 @@ parse_cdata:
     goto parse_end;
 parse_cdata_next:
 	errmsg = "end of data in CDATA section";
+#undef ON_NEW_LINE
+#define ON_NEW_LINE cbegin = 1
     for (;;)
     {
+        char s[4] = {0};
+        int lastcbegin = cbegin;
         do
         {
             READ_CHAR_ROUTINE(ch);
+            s[0] = ch;
             if (ch != ']') break;
             READ_CHAR_ROUTINE(ch);
+            s[1] = ch;
             if (ch != ']') break;
             READ_CHAR_ROUTINE(ch);
+            s[2] = ch;
             if (ch != '>') break;
+            if (output && !cbegin)
+            {
+                putchar('\n');
+            }
             goto parse_text;
         } while (0);
+        if (output)
+        {
+            char *p;
+            cbegin = lastcbegin;
+            for (p = s; (ch = *p); ++p)
+            {
+                if (cbegin)
+                {
+                    cbegin = 0;
+                    putchar('-');
+                }
+                putchar(ch);
+                if (ch == '\n')
+                {
+                    cbegin = 1;
+                }
+            }
+        }
 	}
+#undef ON_NEW_LINE
+#define ON_NEW_LINE
 #if 0
     goto parse_end;
 #endif
@@ -278,6 +393,14 @@ parse_closing_element:
         errmsg = "closing element mismatch";
         goto parse_end;
     }
+    if (output && show)
+    {
+        printf(")%s\n", path + lastpathpos + 1);
+        if (strcmp(show, path) == 0)
+        {
+            output = 0;
+        }
+    }
     pathpos = lastpathpos;
     path[pathpos] = '\0';
 	goto parse_text;
@@ -297,6 +420,11 @@ parse_element_name:
     {
         puts(path);
     }
+    if (show && strcmp(show, path) == 0)
+    {
+        printf("(%s\n", path + lastpathpos + 1);
+        output = 1;
+    }
 #if 0
     goto parse_attributes;
 #endif
@@ -310,6 +438,14 @@ parse_attributes:
     {
         READ_CHAR_ROUTINE(ch);
         if (ch != '>') goto parse_end;
+        if (output && show)
+        {
+            printf(")%s\n", path + lastpathpos + 1);
+            if (strcmp(show, path) == 0)
+            {
+                output = 0;
+            }
+        }
         pathpos = lastpathpos;
         path[pathpos] = '\0';
         goto parse_text;
@@ -318,8 +454,10 @@ parse_attributes:
 
 parse_attribute_name:
 	errmsg = "syntax error in attribute name";
+    if (output) putchar('A');
 	while (isname(ch))
     {
+        if (output) putchar(ch);
         READ_CHAR_ROUTINE(ch);
     }
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
@@ -330,11 +468,17 @@ parse_attribute_value:
 	errmsg = "end of data in attribute value";
     READ_CHAR_ROUTINE(ch);
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
+    if (output)
+    {
+        putchar(' ');
+        putchar(ch);
+    }
     if (ch == '"')
     {
         do
         {
             READ_CHAR_ROUTINE(ch);
+            if (output) putchar(ch);
         } while (ch != '"');
     }
     else if (ch == '\'')
@@ -342,6 +486,7 @@ parse_attribute_value:
         do
         {
             READ_CHAR_ROUTINE(ch);
+            if (output) putchar(ch);
         } while (ch != '\'');
     }
     else
@@ -349,6 +494,7 @@ parse_attribute_value:
 		errmsg = "missing quote character";
         goto parse_end;
     }
+    if (output) putchar('\n');
     READ_CHAR_ROUTINE(ch);
     goto parse_attributes;
 
@@ -366,6 +512,7 @@ parse_end:
     {
         return 1;
     }
-    printf("%" PRIu64 "\n", nLine);
+    printf("#%" PRIu64 " lines processed\n", nLine);
+    puts(")LBXG");
     return 0;
 }
