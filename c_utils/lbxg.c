@@ -144,9 +144,10 @@ parse_text:
 #undef ON_NEW_LINE
 #define ON_NEW_LINE cbegin = 1
     READ_CHAR_ROUTINE(ch);
+    if (output)
+    {
     while (ch != '<')
     {
-        if (output)
         {
             if (cbegin)
             {
@@ -164,9 +165,17 @@ parse_text:
         }
         READ_CHAR_ROUTINE(ch);
     }
-    if (output && !cbegin)
+    if (!cbegin)
     {
         putchar('\n');
+    }
+    }
+    else
+    {
+        while (ch != '<')
+        {
+            READ_CHAR_ROUTINE(ch);
+        }
     }
 #undef ON_NEW_LINE
 #define ON_NEW_LINE
@@ -420,10 +429,13 @@ parse_element_name:
     {
         puts(path);
     }
-    if (show && strcmp(show, path) == 0)
+    if (!output && show && strcmp(show, path) == 0)
+    {
+        output = 1;
+    }
+    if (output)
     {
         printf("(%s\n", path + lastpathpos + 1);
-        output = 1;
     }
 #if 0
     goto parse_attributes;
@@ -454,10 +466,18 @@ parse_attributes:
 
 parse_attribute_name:
 	errmsg = "syntax error in attribute name";
-    if (output) putchar('A');
+    if (output)
+    {
+        putchar('A');
+        while (isname(ch))
+        {
+            putchar(ch);
+            READ_CHAR_ROUTINE(ch);
+        }
+    }
+    else
 	while (isname(ch))
     {
-        if (output) putchar(ch);
         READ_CHAR_ROUTINE(ch);
     }
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
@@ -472,13 +492,28 @@ parse_attribute_value:
     {
         putchar(' ');
         putchar(ch);
+        if (ch == '"' || ch == '\'')
+        {
+            int quote = ch;
+            do
+            {
+                READ_CHAR_ROUTINE(ch);
+                putchar(ch);
+            } while (ch != quote);
+        }
+        else
+        {
+            errmsg = "missing quote character";
+            goto parse_end;
+        }
+        putchar('\n');
     }
+    else
     if (ch == '"')
     {
         do
         {
             READ_CHAR_ROUTINE(ch);
-            if (output) putchar(ch);
         } while (ch != '"');
     }
     else if (ch == '\'')
@@ -486,7 +521,6 @@ parse_attribute_value:
         do
         {
             READ_CHAR_ROUTINE(ch);
-            if (output) putchar(ch);
         } while (ch != '\'');
     }
     else
@@ -494,7 +528,6 @@ parse_attribute_value:
 		errmsg = "missing quote character";
         goto parse_end;
     }
-    if (output) putchar('\n');
     READ_CHAR_ROUTINE(ch);
     goto parse_attributes;
 
