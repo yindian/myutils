@@ -219,7 +219,11 @@ parse_text:
     bufpos = 0;
     cbegin = 1;
 #undef ON_NEW_LINE
+#ifndef NO_SHOW
+#define ON_NEW_LINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
+#else
 #define ON_NEW_LINE cbegin = 1
+#endif
     READ_CHAR_ROUTINE(ch);
 #ifndef NO_SHOW
     if (output)
@@ -227,20 +231,150 @@ parse_text:
     while (ch != '<')
     {
         {
+            int out = 0;
             if (cbegin)
             {
                 if (!iswhite(ch))
                 {
                     cbegin = 0;
                     putchar('-');
-                    putchar(ch);
+                    out = 1;
                 }
             }
             else
             {
-                putchar(ch);
+                out = 1;
+            }
+            if (out)
+            {
+                if (ch == '&')
+                {
+#undef ON_NEW_LINE
+#define ON_NEW_LINE
+                    do
+                    {
+                        int code = -1;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch == '#')
+                        {
+                            char s[16] = {0};
+                            char *p;
+                            int i = 0;
+                            do
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                s[i++] = ch;
+                            } while (ch != ';' && i != sizeof(s));
+                            if (i == sizeof(s) || i < 2) break;
+                            if (s[0] == 'x')
+                            {
+                                code = (int) strtoul(s + 1, &p, 16);
+                            }
+                            else
+                            {
+                                code = (int) strtoul(s, &p, 10);
+                            }
+                            if (*p != ';') break;
+                            if (code < 0) break;
+                        }
+                        else if (ch == 'l')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '<';
+                        }
+                        else if (ch == 'g')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '>';
+                        }
+                        else if (ch == 'a')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch == 'm')
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 'p') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != ';') break;
+                                code = '&';
+                            }
+                            else if (ch == 'p')
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 'o') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 's') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != ';') break;
+                                code = '\'';
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        else if (ch == 'q')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'u') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'o') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '"';
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (code < 0x80)
+                        {
+                            putchar(code);
+                        }
+                        else if (code < 0x800)
+                        {
+                            putchar(0xC0 | (code >> 6));
+                            putchar(0x80 | (code & 0x3F));
+                        }
+                        else if (code < 0x10000)
+                        {
+                            putchar(0xE0 | (code >> 12));
+                            putchar(0x80 | ((code >> 6) & 0x3F));
+                            putchar(0x80 | (code & 0x3F));
+                        }
+                        else if (code < 0x110000)
+                        {
+                            putchar(0xF0 | (code >> 18));
+                            putchar(0x80 | ((code >> 12) & 0x3F));
+                            putchar(0x80 | ((code >> 6) & 0x3F));
+                            putchar(0x80 | (code & 0x3F));
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        goto parse_entity_next;
+                    } while (0);
+                    errmsg = "unrecognized entity";
+                    goto parse_end;
+#undef ON_NEW_LINE
+#define ON_NEW_LINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
+                }
+                else
+                {
+                    putchar(ch);
+                }
             }
         }
+parse_entity_next:
         READ_CHAR_ROUTINE(ch);
     }
     if (!cbegin)
@@ -422,15 +556,20 @@ parse_cdata_next:
             cbegin = lastcbegin;
             for (p = s; (ch = *p); ++p)
             {
-                if (cbegin)
-                {
-                    cbegin = 0;
-                    putchar('-');
-                }
-                putchar(ch);
                 if (ch == '\n')
                 {
+                    if (!cbegin) putchar(ch);
+                    puts("-\\n");
                     cbegin = 1;
+                }
+                else
+                {
+                    if (cbegin)
+                    {
+                        cbegin = 0;
+                        putchar('-');
+                    }
+                    putchar(ch);
                 }
             }
         }
