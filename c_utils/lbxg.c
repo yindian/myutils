@@ -25,6 +25,11 @@ typedef unsigned __int64 uint64_t;
 
 #define BUFLEN 1024
 
+#define NO_HASH
+
+#define DJB2_EMPTY_STR_HASH         (5381UL)
+#define DJB2_HASH_UPDATE(_h, _c)    ((_h) = ((((_h) << 5) + (_h)) + (_c)))
+
 static int isname(int c)
 {
 	return c == '.' || c == '-' || c == '_' || c == ':' ||
@@ -40,6 +45,7 @@ static int iswhite(int c)
 
 int main(int argc, char *argv[])
 {
+    uint64_t nLine2Show;
     uint64_t nLine;
     unsigned nCol;
     int i;
@@ -49,14 +55,29 @@ int main(int argc, char *argv[])
     int help;
     int bufpos, pathpos, docpos;
     int lastpathpos;
+    int top;
+#ifndef NO_HASH
+    unsigned long hash, pathhash;
+    unsigned long *stackpathhash;
+#endif
+    int *stackpathpos;
     char *buf, *path, *doc;
     const char *errmsg;
     const char *show, *match, *pattern;
+#ifndef NO_HASH
+    unsigned long showhash;
+#endif
     wrap = output = 0;
     bufpos = pathpos = docpos = 0;
     lastpathpos = 0;
+    top = 0;
+#ifndef NO_HASH
+    pathhash = DJB2_EMPTY_STR_HASH;
+    showhash = DJB2_EMPTY_STR_HASH;
+#endif
     help = 0;
     show = match = pattern = NULL;
+    nLine2Show = 0;
     for (i = 1; i < argc; i++)
     {
         if (argv[i][0] == '-')
@@ -110,7 +131,14 @@ int main(int argc, char *argv[])
     {
         if (!match)
         {
-            help = 1;
+            char *p;
+            nLine2Show = strtoull(pattern, &p, 0);
+            help = (p && *p != '\0');
+            pattern = NULL;
+        }
+        else if (!show)
+        {
+            show = match;
         }
     }
     else if (match)
@@ -124,14 +152,28 @@ int main(int argc, char *argv[])
         printf("Note: XML data is fed through stdin in a streaming manner\n");
         printf("Pattern is matched in character data under path of -m\n");
         printf("If no path of -m specified, pattern is treated as line num\n");
+        printf("On pattern / line match, element under path of -s is shown\n");
+        printf("If no pattern is specified, show all elements under -s path\n");
         printf("Without arguments, show element structure of the document\n");
         printf("Output in PYX notation, enhanced with / - path, # - note\n");
         return 0;
     }
+#ifndef NO_HASH
+    if (show)
+    {
+        unsigned char *p;
+        for (p = (unsigned char *) show; *p; ++p)
+        {
+            DJB2_HASH_UPDATE(showhash, *p);
+        }
+    }
+#endif
 #ifdef NO_SHOW
-    (void) wrap;
     (void) output;
-    (void) show;
+#endif
+#ifdef NO_MATCH
+    (void) wrap;
+    (void) match;
 #endif
     buf = (char *) malloc(BUFLEN);
     assert(buf);
@@ -140,6 +182,12 @@ int main(int argc, char *argv[])
     path[0] = '\0';
     doc = (char *) malloc(BUFLEN);
     assert(doc);
+    stackpathpos = (int *) malloc(BUFLEN);
+    assert(stackpathpos);
+#ifndef NO_HASH
+    stackpathhash = (unsigned long *) malloc(BUFLEN);
+    assert(stackpathhash);
+#endif
     puts("(LBXG");
 #define CHECK_LIMIT(_cond) do \
     { \
@@ -418,24 +466,33 @@ parse_closing_element:
     errmsg = "syntax error in closing element";
     READ_CHAR_ROUTINE(ch);
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
+#ifndef NO_HASH
+    hash = top ? stackpathhash[top - 1] : DJB2_EMPTY_STR_HASH;
+    DJB2_HASH_UPDATE(hash, '/');
+#endif
     buf[0] = '/';
     bufpos = 1;
 	while (isname(ch))
     {
         buf[bufpos++] = ch;
+#ifndef NO_HASH
+        DJB2_HASH_UPDATE(hash, ch);
+#endif
         READ_CHAR_ROUTINE(ch);
     }
     CHECK_LIMIT(bufpos < BUFLEN);
     buf[bufpos] = '\0';
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
 	if (ch != '>') goto parse_end;
-    if (lastpathpos)
-    {
-        char *p = strrchr(path, '/');
-        assert(p);
-        lastpathpos = p - path;
-    }
+    --top;
+    assert(top >= 0);
+    lastpathpos = stackpathpos[top];
+    assert(path[lastpathpos] == '/');
+#ifndef NO_HASH
+    if (hash != pathhash || strcmp(buf, path + lastpathpos))
+#else
     if (strcmp(buf, path + lastpathpos))
+#endif
     {
         errmsg = "closing element mismatch";
         goto parse_end;
@@ -444,7 +501,11 @@ parse_closing_element:
     if (output && show)
     {
         printf(")%s\n", path + lastpathpos + 1);
+#ifndef NO_HASH
+        if (pathhash == showhash && strcmp(show, path) == 0)
+#else
         if (strcmp(show, path) == 0)
+#endif
         {
             output = 0;
         }
@@ -452,20 +513,35 @@ parse_closing_element:
 #endif
     pathpos = lastpathpos;
     path[pathpos] = '\0';
+#ifndef NO_HASH
+    pathhash = stackpathhash[top];
+#endif
 	goto parse_text;
 
 parse_element_name:
 	errmsg = "syntax error in element name";
     lastpathpos = pathpos;
+    stackpathpos[top] = pathpos;
+#ifndef NO_HASH
+    stackpathhash[top] = pathhash;
+#endif
+    ++top;
+    CHECK_LIMIT(top < BUFLEN / sizeof(unsigned long));
     path[pathpos++] = '/';
+#ifndef NO_HASH
+    DJB2_HASH_UPDATE(pathhash, '/');
+#endif
 	while (isname(ch))
     {
         path[pathpos++] = ch;
+#ifndef NO_HASH
+        DJB2_HASH_UPDATE(pathhash, ch);
+#endif
         READ_CHAR_ROUTINE(ch);
     }
     CHECK_LIMIT(pathpos < BUFLEN);
     path[pathpos] = '\0';
-    if (!match)
+    if (!show)
     {
 #ifndef SHOW_LINE_NUM
         puts(path);
@@ -474,7 +550,11 @@ parse_element_name:
 #endif
     }
 #ifndef NO_SHOW
+#ifndef NO_HASH
+    if (!output && show && pathhash == showhash && strcmp(show, path) == 0)
+#else
     if (!output && show && strcmp(show, path) == 0)
+#endif
     {
         output = 1;
     }
@@ -483,7 +563,7 @@ parse_element_name:
 #ifdef SHOW_LINE_NUM
         printf("(%s\n", path + lastpathpos + 1);
 #else
-        printf("(%s\n#line %" PRIu64 " col %u\n", path + lastpathpos + 1,
+        printf("(%s\n#L%" PRIu64 ".%u\n", path + lastpathpos + 1,
                nLine, nCol);
 #endif
     }
@@ -505,7 +585,11 @@ parse_attributes:
         if (output && show)
         {
             printf(")%s\n", path + lastpathpos + 1);
+#ifndef NO_HASH
+            if (pathhash == showhash && strcmp(show, path) == 0)
+#else
             if (strcmp(show, path) == 0)
+#endif
             {
                 output = 0;
             }
@@ -513,6 +597,12 @@ parse_attributes:
 #endif
         pathpos = lastpathpos;
         path[pathpos] = '\0';
+        --top;
+        assert(top >= 0);
+        lastpathpos = stackpathpos[top];
+#ifndef NO_HASH
+        pathhash = stackpathhash[top];
+#endif
         goto parse_text;
     }
     goto parse_end;
@@ -598,6 +688,10 @@ parse_end:
     free(buf);
     free(path);
     free(doc);
+    free(stackpathpos);
+#ifndef NO_HASH
+    free(stackpathhash);
+#endif
     if (errmsg)
     {
         return 1;
