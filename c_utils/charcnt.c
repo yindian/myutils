@@ -3,10 +3,16 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _MSC_VER
 #include <stdint.h>
+#else
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+typedef unsigned __int64 uint64_t;
+#endif
 #include <string.h>
 #ifdef _MSC_VER
-#define PRIu64 "I64"
+#define PRIu64 "I64u"
 #else
 #include <inttypes.h>
 #endif

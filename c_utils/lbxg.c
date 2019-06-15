@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _MSC_VER
 #include <stdint.h>
+#else
+typedef unsigned __int64 uint64_t;
+#endif
 #include <string.h>
 #include <assert.h>
 #ifdef _MSC_VER
-#define PRIu64 "I64"
+#define PRIu64 "I64u"
+#define strtoull _strtoui64
 #else
 #include <inttypes.h>
 #endif
@@ -59,9 +64,19 @@ int main(int argc, char *argv[])
             switch (argv[i][1])
             {
                 case 's':
+                    if (show)
+                    {
+                        help = 1;
+                        break;
+                    }
                     show = &argv[i][2];
                     break;
                 case 'm':
+                    if (match)
+                    {
+                        help = 1;
+                        break;
+                    }
                     match = &argv[i][2];
                     break;
                 default:
@@ -77,11 +92,20 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        else if (pattern)
+        {
+            help = 1;
+            break;
+        }
         else
         {
             pattern = argv[i];
         }
     }
+    if (help)
+    {
+    }
+    else
     if (pattern)
     {
         if (!match)
@@ -95,15 +119,20 @@ int main(int argc, char *argv[])
     }
     if (help)
     {
-        printf("Line-Based Xml Grep by YIN Dian\n");
         printf("Usage: %s [-s/path/to/show] [-m/path/to/match] [pattern]\n",
                argv[0]);
         printf("Note: XML data is fed through stdin in a streaming manner\n");
         printf("Pattern is matched in character data under path of -m\n");
+        printf("If no path of -m specified, pattern is treated as line num\n");
         printf("Without arguments, show element structure of the document\n");
         printf("Output in PYX notation, enhanced with / - path, # - note\n");
         return 0;
     }
+#ifdef NO_SHOW
+    (void) wrap;
+    (void) output;
+    (void) show;
+#endif
     buf = (char *) malloc(BUFLEN);
     assert(buf);
     path = (char *) malloc(BUFLEN);
@@ -144,6 +173,7 @@ parse_text:
 #undef ON_NEW_LINE
 #define ON_NEW_LINE cbegin = 1
     READ_CHAR_ROUTINE(ch);
+#ifndef NO_SHOW
     if (output)
     {
     while (ch != '<')
@@ -171,6 +201,7 @@ parse_text:
     }
     }
     else
+#endif
     {
         while (ch != '<')
         {
@@ -328,12 +359,15 @@ parse_cdata_next:
             READ_CHAR_ROUTINE(ch);
             s[2] = ch;
             if (ch != '>') break;
+#ifndef NO_SHOW
             if (output && !cbegin)
             {
                 putchar('\n');
             }
+#endif
             goto parse_text;
         } while (0);
+#ifndef NO_SHOW
         if (output)
         {
             char *p;
@@ -352,6 +386,10 @@ parse_cdata_next:
                 }
             }
         }
+#else
+        (void) lastcbegin;
+        (void) s;
+#endif
 	}
 #undef ON_NEW_LINE
 #define ON_NEW_LINE
@@ -402,6 +440,7 @@ parse_closing_element:
         errmsg = "closing element mismatch";
         goto parse_end;
     }
+#ifndef NO_SHOW
     if (output && show)
     {
         printf(")%s\n", path + lastpathpos + 1);
@@ -410,6 +449,7 @@ parse_closing_element:
             output = 0;
         }
     }
+#endif
     pathpos = lastpathpos;
     path[pathpos] = '\0';
 	goto parse_text;
@@ -427,16 +467,27 @@ parse_element_name:
     path[pathpos] = '\0';
     if (!match)
     {
+#ifndef SHOW_LINE_NUM
         puts(path);
+#else
+        printf("%s %" PRIu64 " %u\n", path, nLine, nCol);
+#endif
     }
+#ifndef NO_SHOW
     if (!output && show && strcmp(show, path) == 0)
     {
         output = 1;
     }
     if (output)
     {
+#ifdef SHOW_LINE_NUM
         printf("(%s\n", path + lastpathpos + 1);
+#else
+        printf("(%s\n#line %" PRIu64 " col %u\n", path + lastpathpos + 1,
+               nLine, nCol);
+#endif
     }
+#endif
 #if 0
     goto parse_attributes;
 #endif
@@ -450,6 +501,7 @@ parse_attributes:
     {
         READ_CHAR_ROUTINE(ch);
         if (ch != '>') goto parse_end;
+#ifndef NO_SHOW
         if (output && show)
         {
             printf(")%s\n", path + lastpathpos + 1);
@@ -458,6 +510,7 @@ parse_attributes:
                 output = 0;
             }
         }
+#endif
         pathpos = lastpathpos;
         path[pathpos] = '\0';
         goto parse_text;
@@ -466,6 +519,7 @@ parse_attributes:
 
 parse_attribute_name:
 	errmsg = "syntax error in attribute name";
+#ifndef NO_SHOW
     if (output)
     {
         putchar('A');
@@ -476,6 +530,7 @@ parse_attribute_name:
         }
     }
     else
+#endif
 	while (isname(ch))
     {
         READ_CHAR_ROUTINE(ch);
@@ -488,6 +543,7 @@ parse_attribute_value:
 	errmsg = "end of data in attribute value";
     READ_CHAR_ROUTINE(ch);
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
+#ifndef NO_SHOW
     if (output)
     {
         putchar(' ');
@@ -509,6 +565,7 @@ parse_attribute_value:
         putchar('\n');
     }
     else
+#endif
     if (ch == '"')
     {
         do
