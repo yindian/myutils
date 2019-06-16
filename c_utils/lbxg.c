@@ -24,6 +24,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #define BUFLEN 1024
+#define BIGBUFLEN   1024 * 1024 * 4
 
 #define NO_HASH
 
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
     int cbegin;
     int wrap, output;
     int help;
+    int save, sameshowmatch;
     int bufpos, pathpos, docpos;
     int lastpathpos;
     int top;
@@ -76,6 +78,7 @@ int main(int argc, char *argv[])
     showhash = DJB2_EMPTY_STR_HASH;
 #endif
     help = 0;
+    save = 0;
     show = match = pattern = NULL;
     nLine2Show = 0;
     for (i = 1; i < argc; i++)
@@ -134,17 +137,13 @@ int main(int argc, char *argv[])
             char *p;
             nLine2Show = strtoull(pattern, &p, 0);
             help = (p && *p != '\0');
-            pattern = NULL;
         }
         else if (!show)
         {
             show = match;
         }
     }
-    else if (match)
-    {
-        match = NULL;
-    }
+    sameshowmatch = show && match && strcmp(show, match) == 0;
     if (help)
     {
         printf("Usage: %s [-s/path/to/show] [-m/path/to/match] [pattern]\n",
@@ -154,6 +153,7 @@ int main(int argc, char *argv[])
         printf("If no path of -m specified, pattern is treated as line num\n");
         printf("On pattern / line match, element under path of -s is shown\n");
         printf("If no pattern is specified, show all elements under -s path\n");
+        printf("as well as -m path if specified\n");
         printf("Without arguments, show element structure of the document\n");
         printf("Output in PYX notation, enhanced with / - path, # - note\n");
         return 0;
@@ -174,13 +174,16 @@ int main(int argc, char *argv[])
 #ifdef NO_MATCH
     (void) wrap;
     (void) match;
+    (void) nLine2Show;
+    (void) save;
+    (void) sameshowmatch;
 #endif
     buf = (char *) malloc(BUFLEN);
     assert(buf);
     path = (char *) malloc(BUFLEN);
     assert(path);
     path[0] = '\0';
-    doc = (char *) malloc(BUFLEN);
+    doc = (char *) malloc(BIGBUFLEN);
     assert(doc);
     stackpathpos = (int *) malloc(BUFLEN);
     assert(stackpathpos);
@@ -197,11 +200,15 @@ int main(int argc, char *argv[])
             goto parse_end; \
         } \
     } while (0)
+#define SAVE(_c) doc[docpos++] = (_c)
+#define SAVE2(_c, _d) SAVE(_c); SAVE(_d)
 #ifdef _WIN32
     _setmode(_fileno( stdin ), _O_BINARY);
 #define getchar _getchar_nolock
+#define putchar _putchar_nolock
 #else
 #define getchar getchar_unlocked
+#define putchar putchar_unlocked
 #endif
     nLine = 1;
     nCol = 0;
@@ -220,7 +227,15 @@ parse_text:
     cbegin = 1;
 #undef ON_NEW_LINE
 #ifndef NO_SHOW
-#define ON_NEW_LINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
+#ifndef NO_MATCH
+#define _ON_NEWLINE \
+    if(output){if(!cbegin)putchar('\n');puts("-\\n");} \
+    else if(save){if(!cbegin)SAVE('\n');SAVE2('-', '\\');SAVE2('n', '\n');} \
+    cbegin=1
+#else
+#define _ON_NEWLINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
+#endif
+#define ON_NEW_LINE _ON_NEWLINE
 #else
 #define ON_NEW_LINE cbegin = 1
 #endif
@@ -366,7 +381,7 @@ parse_text:
                     errmsg = "unrecognized entity";
                     goto parse_end;
 #undef ON_NEW_LINE
-#define ON_NEW_LINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
+#define ON_NEW_LINE _ON_NEWLINE
                 }
                 else
                 {
@@ -382,6 +397,171 @@ parse_entity_next:
         putchar('\n');
     }
     }
+#ifndef NO_MATCH
+    else if (save)
+    {
+    while (ch != '<')
+    {
+        {
+            int out = 0;
+            if (cbegin)
+            {
+                if (!iswhite(ch))
+                {
+                    cbegin = 0;
+                    SAVE('-');
+                    out = 1;
+                }
+            }
+            else
+            {
+                out = 1;
+            }
+            if (out)
+            {
+                if (ch == '&')
+                {
+#undef ON_NEW_LINE
+#define ON_NEW_LINE
+                    do
+                    {
+                        int code = -1;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch == '#')
+                        {
+                            char s[16] = {0};
+                            char *p;
+                            int i = 0;
+                            do
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                s[i++] = ch;
+                            } while (ch != ';' && i != sizeof(s));
+                            if (i == sizeof(s) || i < 2) break;
+                            if (s[0] == 'x')
+                            {
+                                code = (int) strtoul(s + 1, &p, 16);
+                            }
+                            else
+                            {
+                                code = (int) strtoul(s, &p, 10);
+                            }
+                            if (*p != ';') break;
+                            if (code < 0) break;
+                        }
+                        else if (ch == 'l')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '<';
+                        }
+                        else if (ch == 'g')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '>';
+                        }
+                        else if (ch == 'a')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch == 'm')
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 'p') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != ';') break;
+                                code = '&';
+                            }
+                            else if (ch == 'p')
+                            {
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 'o') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != 's') break;
+                                READ_CHAR_ROUTINE(ch);
+                                if (ch != ';') break;
+                                code = '\'';
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        else if (ch == 'q')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'u') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'o') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 't') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '"';
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (code < 0x80)
+                        {
+                            SAVE(code);
+                        }
+                        else if (code < 0x800)
+                        {
+                            SAVE(0xC0 | (code >> 6));
+                            SAVE(0x80 | (code & 0x3F));
+                        }
+                        else if (code < 0x10000)
+                        {
+                            SAVE(0xE0 | (code >> 12));
+                            SAVE(0x80 | ((code >> 6) & 0x3F));
+                            SAVE(0x80 | (code & 0x3F));
+                        }
+                        else if (code < 0x110000)
+                        {
+                            SAVE(0xF0 | (code >> 18));
+                            SAVE(0x80 | ((code >> 12) & 0x3F));
+                            SAVE(0x80 | ((code >> 6) & 0x3F));
+                            SAVE(0x80 | (code & 0x3F));
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        goto parse_entity_next_save;
+                    } while (0);
+                    errmsg = "unrecognized entity";
+                    goto parse_end;
+#undef ON_NEW_LINE
+#define ON_NEW_LINE _ON_NEWLINE
+                }
+                else
+                {
+                    SAVE(ch);
+                }
+            }
+        }
+parse_entity_next_save:
+        READ_CHAR_ROUTINE(ch);
+    }
+    if (!cbegin)
+    {
+        SAVE('\n');
+    }
+#if 0 /* disable checking for performance */
+    if (docpos >= BUFLEN)
+    {
+        docpos = BUFLEN;
+        save = 0;
+    }
+#endif
+    }
+#endif
     else
 #endif
     {
@@ -546,6 +726,20 @@ parse_cdata_next:
             {
                 putchar('\n');
             }
+#ifndef NO_MATCH
+            else if (save)
+            {
+                if (!cbegin)
+                {
+                    SAVE('\n');
+                }
+                if (docpos >= BUFLEN)
+                {
+                    docpos = BUFLEN;
+                    save = 0;
+                }
+            }
+#endif
 #endif
             goto parse_text;
         } while (0);
@@ -573,6 +767,31 @@ parse_cdata_next:
                 }
             }
         }
+#ifndef NO_MATCH
+        else if (save)
+        {
+            char *p;
+            cbegin = lastcbegin;
+            for (p = s; (ch = *p); ++p)
+            {
+                if (ch == '\n')
+                {
+                    if (!cbegin) SAVE(ch);
+                    SAVE2('-', '\\');SAVE2('n', '\n');
+                    cbegin = 1;
+                }
+                else
+                {
+                    if (cbegin)
+                    {
+                        cbegin = 0;
+                        SAVE('-');
+                    }
+                    SAVE(ch);
+                }
+            }
+        }
+#endif
 #else
         (void) lastcbegin;
         (void) s;
@@ -637,7 +856,7 @@ parse_closing_element:
         goto parse_end;
     }
 #ifndef NO_SHOW
-    if (output && show)
+    if (output)
     {
         printf(")%s\n", path + lastpathpos + 1);
 #ifndef NO_HASH
@@ -649,6 +868,34 @@ parse_closing_element:
             output = 0;
         }
     }
+#ifndef NO_MATCH
+    else if (save && docpos >= BUFLEN)
+    {
+        docpos = BUFLEN;
+        save = 0;
+    }
+    else if (save)
+    {
+        int ret;
+        ret = snprintf(doc, BUFLEN - docpos, ")%s\n", path + lastpathpos + 1);
+        assert(ret > 0);
+        docpos += ret;
+        if (docpos >= BUFLEN)
+        {
+            docpos = BUFLEN;
+            save = 0;
+        }
+        else
+#ifndef NO_HASH
+        if (pathhash == showhash && strcmp(show, path) == 0)
+#else
+        if (strcmp(show, path) == 0)
+#endif
+        {
+            save = 0;
+        }
+    }
+#endif
 #endif
     pathpos = lastpathpos;
     path[pathpos] = '\0';
@@ -695,6 +942,15 @@ parse_element_name:
     if (!output && show && strcmp(show, path) == 0)
 #endif
     {
+#ifndef NO_MATCH
+        if (pattern)
+        {
+            assert(!save);
+            save = 1;
+            docpos = 0;
+        }
+        else
+#endif
         output = 1;
     }
     if (output)
@@ -706,6 +962,30 @@ parse_element_name:
                nLine, nCol);
 #endif
     }
+#ifndef NO_MATCH
+    else if (save && docpos >= BUFLEN)
+    {
+        docpos = BUFLEN;
+        save = 0;
+    }
+    else if (save)
+    {
+        int ret;
+#ifdef SHOW_LINE_NUM
+        ret = snprintf(doc, BUFLEN - docpos, "(%s\n", path + lastpathpos + 1);
+#else
+        ret = snprintf(doc, BUFLEN - docpos, "(%s\n#L%" PRIu64 ".%u\n",
+                       path + lastpathpos + 1, nLine, nCol);
+#endif
+        assert(ret > 0);
+        docpos += ret;
+        if (docpos >= BUFLEN)
+        {
+            docpos = BUFLEN;
+            save = 0;
+        }
+    }
+#endif
 #endif
 #if 0
     goto parse_attributes;
@@ -721,7 +1001,7 @@ parse_attributes:
         READ_CHAR_ROUTINE(ch);
         if (ch != '>') goto parse_end;
 #ifndef NO_SHOW
-        if (output && show)
+        if (output)
         {
             printf(")%s\n", path + lastpathpos + 1);
 #ifndef NO_HASH
@@ -733,6 +1013,29 @@ parse_attributes:
                 output = 0;
             }
         }
+#ifndef NO_MATCH
+        else if (save)
+        {
+            int ret;
+            ret = snprintf(doc, BUFLEN - docpos, ")%s\n", path + lastpathpos+1);
+            assert(ret > 0);
+            docpos += ret;
+            if (docpos >= BUFLEN)
+            {
+                docpos = BUFLEN;
+                save = 0;
+            }
+            else
+#ifndef NO_HASH
+            if (pathhash == showhash && strcmp(show, path) == 0)
+#else
+            if (strcmp(show, path) == 0)
+#endif
+            {
+                save = 0;
+            }
+        }
+#endif
 #endif
         pathpos = lastpathpos;
         path[pathpos] = '\0';
@@ -758,6 +1061,22 @@ parse_attribute_name:
             READ_CHAR_ROUTINE(ch);
         }
     }
+#ifndef NO_MATCH
+    else if (save)
+    {
+        SAVE('A');
+        while (isname(ch))
+        {
+            SAVE(ch);
+            READ_CHAR_ROUTINE(ch);
+        }
+        if (docpos >= BUFLEN)
+        {
+            docpos = BUFLEN;
+            save = 0;
+        }
+    }
+#endif
     else
 #endif
 	while (isname(ch))
@@ -793,6 +1112,33 @@ parse_attribute_value:
         }
         putchar('\n');
     }
+#ifndef NO_MATCH
+    else if (save)
+    {
+        SAVE(' ');
+        SAVE(ch);
+        if (ch == '"' || ch == '\'')
+        {
+            int quote = ch;
+            do
+            {
+                READ_CHAR_ROUTINE(ch);
+                SAVE(ch);
+            } while (ch != quote);
+        }
+        else
+        {
+            errmsg = "missing quote character";
+            goto parse_end;
+        }
+        SAVE('\n');
+        if (docpos >= BUFLEN)
+        {
+            docpos = BUFLEN;
+            save = 0;
+        }
+    }
+#endif
     else
 #endif
     if (ch == '"')
