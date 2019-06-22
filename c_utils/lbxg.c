@@ -17,6 +17,7 @@ typedef unsigned __int64 uint64_t;
 #include <fcntl.h>
 #include <io.h>
 #endif
+#include <ctype.h>
 #if defined(__GNUC__) && __GNUC__ >= 7
 #define FALL_THROUGH __attribute__((fallthrough))
 #else
@@ -116,10 +117,12 @@ int main(int argc, char *argv[])
     int i;
     int ch;
     int cbegin;
-    int wrap, output;
+    int output;
     int help;
     int save, sameshowmatch;
+    int check;
     int bufpos, pathpos, docpos;
+    int lastbufpos;
     int lastpathpos;
     int top;
 #ifndef NO_HASH
@@ -130,11 +133,13 @@ int main(int argc, char *argv[])
     char *buf, *path, *doc;
     const char *errmsg;
     const char *show, *match, *pattern;
+    int patternlen;
 #ifndef NO_HASH
     unsigned long showhash;
 #endif
-    wrap = output = 0;
+    output = 0;
     bufpos = pathpos = docpos = 0;
+    lastbufpos = 0;
     lastpathpos = 0;
     top = 0;
 #ifndef NO_HASH
@@ -143,7 +148,9 @@ int main(int argc, char *argv[])
 #endif
     help = 0;
     save = 0;
+    check = 0;
     show = match = pattern = NULL;
+    patternlen = 0;
     nLine2Show = 0;
     for (i = 1; i < argc; i++)
     {
@@ -196,6 +203,7 @@ int main(int argc, char *argv[])
     else
     if (pattern)
     {
+        patternlen = strlen(pattern);
         if (!match)
         {
             char *p;
@@ -208,6 +216,18 @@ int main(int argc, char *argv[])
         }
     }
     sameshowmatch = show && match && strcmp(show, match) == 0;
+    if (!help)
+    {
+        if (sameshowmatch)
+        {
+            /* not supported due to complexity */
+            help = 1;
+        }
+        if (patternlen >= BUFLEN)
+        {
+            help = 1;
+        }
+    }
     if (help)
     {
         printf("Usage: %s [-s/path/to/show] [-m/path/to/match] [pattern]\n",
@@ -235,14 +255,25 @@ int main(int argc, char *argv[])
 #ifdef NO_SHOW
     (void) output;
 #endif
-#ifdef NO_MATCH
-    (void) wrap;
+#if defined(NO_SHOW) || defined(NO_MATCH)
     (void) match;
     (void) nLine2Show;
     (void) save;
     (void) sameshowmatch;
 #endif
-    buf = (char *) malloc(BUFLEN);
+#if defined(NO_SHOW) || defined(NO_MATCH) || defined(NO_CHECK)
+    (void) check;
+#else
+    if (pattern)
+    {
+        char *p;
+        for (p = (char *) pattern; *p; ++p)
+        {
+            *p = tolower(*p);
+        }
+    }
+#endif
+    buf = (char *) malloc(BUFLEN * 2);
     assert(buf);
     path = (char *) malloc(BUFLEN);
     assert(path);
@@ -630,10 +661,168 @@ parse_entity_next_save:
     }
 #endif
     }
+#ifndef NO_CHECK
+#undef ON_NEW_LINE
+#define ON_NEW_LINE
+#define CHECK_BUF_PATTERN \
+    buf[bufpos] = '\0'; \
+    if (strstr(buf, pattern)) \
+    { \
+        printf("#M%" PRIu64 ".%u: %s\n", nLine, nCol, buf); \
+        showbuf(doc, docpos); \
+        docpos = 0; \
+        save = 0; \
+        check = 0; \
+        READ_CHAR_ROUTINE(ch); \
+        goto parse_text_normal; \
+    }
+#define STORE(_c) buf[bufpos++] = (_c); if (bufpos == BUFLEN) { \
+    CHECK_BUF_PATTERN; \
+    memmove(buf, buf + BUFLEN - patternlen, patternlen); \
+    bufpos = patternlen; \
+}
+    else if (check)
+    {
+        while (ch != '<')
+        {
+            if (ch == '&')
+            {
+                do
+                {
+                    int code = -1;
+                    READ_CHAR_ROUTINE(ch);
+                    if (ch == '#')
+                    {
+                        char s[16] = {0};
+                        char *p;
+                        int i = 0;
+                        do
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            s[i++] = ch;
+                        } while (ch != ';' && i != sizeof(s));
+                        if (i == sizeof(s) || i < 2) break;
+                        if (s[0] == 'x')
+                        {
+                            code = (int) strtoul(s + 1, &p, 16);
+                        }
+                        else
+                        {
+                            code = (int) strtoul(s, &p, 10);
+                        }
+                        if (*p != ';') break;
+                        if (code < 0) break;
+                    }
+                    else if (ch == 'l')
+                    {
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != 't') break;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != ';') break;
+                        code = '<';
+                    }
+                    else if (ch == 'g')
+                    {
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != 't') break;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != ';') break;
+                        code = '>';
+                    }
+                    else if (ch == 'a')
+                    {
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch == 'm')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'p') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '&';
+                        }
+                        else if (ch == 'p')
+                        {
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 'o') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != 's') break;
+                            READ_CHAR_ROUTINE(ch);
+                            if (ch != ';') break;
+                            code = '\'';
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else if (ch == 'q')
+                    {
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != 'u') break;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != 'o') break;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != 't') break;
+                        READ_CHAR_ROUTINE(ch);
+                        if (ch != ';') break;
+                        code = '"';
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    if (code < 0x80)
+                    {
+                        STORE(tolower(code));
+                    }
+                    else if (code < 0x800)
+                    {
+                        STORE(0xC0 | (code >> 6));
+                        STORE(0x80 | (code & 0x3F));
+                    }
+                    else if (code < 0x10000)
+                    {
+                        STORE(0xE0 | (code >> 12));
+                        STORE(0x80 | ((code >> 6) & 0x3F));
+                        STORE(0x80 | (code & 0x3F));
+                    }
+                    else if (code < 0x110000)
+                    {
+                        STORE(0xF0 | (code >> 18));
+                        STORE(0x80 | ((code >> 12) & 0x3F));
+                        STORE(0x80 | ((code >> 6) & 0x3F));
+                        STORE(0x80 | (code & 0x3F));
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    goto parse_entity_next_store;
+                } while (0);
+                errmsg = "unrecognized entity";
+                goto parse_end;
+            }
+            else if (ch == '\n')
+            {
+                CHECK_BUF_PATTERN;
+                bufpos = 0;
+            }
+            else
+            {
+                STORE(tolower(ch));
+            }
+parse_entity_next_store:
+            READ_CHAR_ROUTINE(ch);
+        }
+    }
+#endif
 #endif
     else
 #endif
     {
+#if !defined(NO_SHOW) && !defined(NO_MATCH) && !defined(NO_CHECK)
+parse_text_normal:
+#endif
         while (ch != '<')
         {
             READ_CHAR_ROUTINE(ch);
@@ -897,8 +1086,8 @@ parse_closing_element:
     hash = top ? stackpathhash[top - 1] : DJB2_EMPTY_STR_HASH;
     DJB2_HASH_UPDATE(hash, '/');
 #endif
-    buf[0] = '/';
-    bufpos = 1;
+    lastbufpos = bufpos;
+    buf[bufpos++] = '/';
 	while (isname(ch))
     {
         buf[bufpos++] = ch;
@@ -907,7 +1096,7 @@ parse_closing_element:
 #endif
         READ_CHAR_ROUTINE(ch);
     }
-    CHECK_LIMIT(bufpos < BUFLEN);
+    CHECK_LIMIT(bufpos < BUFLEN * 2);
     buf[bufpos] = '\0';
 	while (iswhite(ch)) READ_CHAR_ROUTINE(ch);
 	if (ch != '>') goto parse_end;
@@ -916,14 +1105,15 @@ parse_closing_element:
     lastpathpos = stackpathpos[top];
     assert(path[lastpathpos] == '/');
 #ifndef NO_HASH
-    if (hash != pathhash || strcmp(buf, path + lastpathpos))
+    if (hash != pathhash || strcmp(buf + lastbufpos, path + lastpathpos))
 #else
-    if (strcmp(buf, path + lastpathpos))
+    if (strcmp(buf + lastbufpos, path + lastpathpos))
 #endif
     {
         errmsg = "closing element mismatch";
         goto parse_end;
     }
+    bufpos = lastbufpos;
 #ifndef NO_SHOW
     if (output)
     {
@@ -933,6 +1123,10 @@ parse_closing_element:
 #else
         if (strcmp(show, path) == 0)
 #endif
+        {
+            output = 0;
+        }
+        else if (!pattern && match && strcmp(match, path) == 0)
         {
             output = 0;
         }
@@ -969,6 +1163,12 @@ parse_closing_element:
             save = 0;
         }
     }
+#ifndef NO_CHECK
+    if (check)
+    {
+        check = 0;
+    }
+#endif
 #endif
 #endif
     pathpos = lastpathpos;
@@ -1027,6 +1227,10 @@ parse_element_name:
 #endif
         output = 1;
     }
+    else if (!output && !pattern && match && strcmp(match, path) == 0)
+    {
+        output = 1;
+    }
     if (output)
     {
 #ifdef SHOW_LINE_NUM
@@ -1064,6 +1268,13 @@ parse_element_name:
             save = 0;
         }
     }
+#ifndef NO_CHECK
+    if (!check && pattern && match && strcmp(match, path) == 0)
+    {
+        check = 1;
+        bufpos = 0;
+    }
+#endif
 #endif
 #endif
 #if 0
@@ -1088,6 +1299,10 @@ parse_attributes:
 #else
             if (strcmp(show, path) == 0)
 #endif
+            {
+                output = 0;
+            }
+            else if (!pattern && match && strcmp(match, path) == 0)
             {
                 output = 0;
             }
@@ -1119,6 +1334,12 @@ parse_attributes:
                 save = 0;
             }
         }
+#ifndef NO_CHECK
+        if (check)
+        {
+            check = 0;
+        }
+#endif
 #endif
 #endif
         pathpos = lastpathpos;
