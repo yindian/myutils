@@ -22,6 +22,19 @@ typedef unsigned __int64 uint64_t;
 #else
 #define FALL_THROUGH /* fall through */
 #endif
+#ifdef __GNUC__
+#define UNLIKELY(_x) __builtin_expect((_x), 0)
+#else
+#define UNLIKELY(_x) _x
+#endif
+#ifdef _WIN32
+#define getchar _getchar_nolock
+#define putchar _putchar_nolock
+#define snprintf _snprintf
+#else
+#define getchar getchar_unlocked
+#define putchar putchar_unlocked
+#endif
 
 #define BUFLEN 1024
 #define BIGBUFLEN   1024 * 1024 * 4
@@ -42,6 +55,57 @@ static int isname(int c)
 static int iswhite(int c)
 {
 	return c == ' ' || c == '\r' || c == '\n' || c == '\t';
+}
+
+static void showbuf(const char *buf, int buflen)
+{
+#if 1 /* CAVEAT: reporting the saved buf will badly penalize performance */
+    const char *p, *end;
+    const char **stacktagpos;
+    int tagtop = 0;
+    int cbegin = 1;
+    stacktagpos = (const char **) malloc(BUFLEN);
+    assert(stacktagpos);
+    for (p = buf, end = buf + buflen; p < end; ++p)
+    {
+        int ch = *p;
+        putchar(ch);
+        if (ch == '\n')
+        {
+            cbegin = 1;
+        }
+        else if (cbegin)
+        {
+            if (ch == '(')
+            {
+                stacktagpos[tagtop++] = p + 1;
+            }
+            else if (ch == ')')
+            {
+                --tagtop;
+            }
+            cbegin = 0;
+        }
+    }
+    if (p > buf && p[-1] != '\n')
+    {
+        putchar('\n');
+    }
+    if (tagtop > 0)
+    {
+        puts("#...");
+        while (tagtop-- > 0)
+        {
+            putchar(')');
+            for (p = stacktagpos[tagtop]; p < end && *p != '\n'; ++p)
+            {
+                putchar(*p);
+            }
+            putchar('\n');
+        }
+    }
+    free(stacktagpos);
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -204,20 +268,23 @@ int main(int argc, char *argv[])
 #define SAVE2(_c, _d) SAVE(_c); SAVE(_d)
 #ifdef _WIN32
     _setmode(_fileno( stdin ), _O_BINARY);
-#define getchar _getchar_nolock
-#define putchar _putchar_nolock
-#else
-#define getchar getchar_unlocked
-#define putchar putchar_unlocked
 #endif
     nLine = 1;
     nCol = 0;
 #define ON_NEW_LINE
+#if !defined(NO_SHOW) && !defined(NO_MATCH)
+#define ON_NEW_LINE_2 if (UNLIKELY(--nLine2Show == 0)) { \
+    showbuf(doc, docpos); docpos = 0; save = 0; \
+}
+#else
+    (void) showbuf;
+#define ON_NEW_LINE_2
+#endif
 #define READ_CHAR_ROUTINE(_c) do \
     { \
         (_c) = getchar(); \
         if ((_c) == EOF) goto parse_end; \
-        if ((_c) == '\n') {++nLine; nCol = 0; ON_NEW_LINE;} \
+        if ((_c) == '\n') {ON_NEW_LINE_2; ++nLine; nCol = 0; ON_NEW_LINE; } \
         else ++nCol; \
     } while (0)
 
@@ -230,7 +297,9 @@ parse_text:
 #ifndef NO_MATCH
 #define _ON_NEWLINE \
     if(output){if(!cbegin)putchar('\n');puts("-\\n");} \
-    else if(save){if(!cbegin)SAVE('\n');SAVE2('-', '\\');SAVE2('n', '\n');} \
+    else if(save){if(!cbegin)SAVE('\n');SAVE2('-', '\\');SAVE2('n', '\n'); \
+        if (docpos >= BUFLEN) { docpos = BUFLEN; save = 0; } \
+    } \
     cbegin=1
 #else
 #define _ON_NEWLINE if(output){if(!cbegin)putchar('\n');puts("-\\n");} cbegin=1
@@ -877,8 +946,8 @@ parse_closing_element:
     else if (save)
     {
         int ret;
-        ret = snprintf(doc, BUFLEN - docpos, ")%s\n", path + lastpathpos + 1);
-        assert(ret > 0);
+        ret = snprintf(doc+docpos,BUFLEN-docpos, ")%s\n", path+lastpathpos+1);
+        if (ret > 0) {
         docpos += ret;
         if (docpos >= BUFLEN)
         {
@@ -891,6 +960,11 @@ parse_closing_element:
 #else
         if (strcmp(show, path) == 0)
 #endif
+        {
+            save = 0;
+        }
+        }
+        else
         {
             save = 0;
         }
@@ -972,16 +1046,21 @@ parse_element_name:
     {
         int ret;
 #ifdef SHOW_LINE_NUM
-        ret = snprintf(doc, BUFLEN - docpos, "(%s\n", path + lastpathpos + 1);
+        ret = snprintf(doc+docpos,BUFLEN-docpos, "(%s\n", path+lastpathpos+1);
 #else
-        ret = snprintf(doc, BUFLEN - docpos, "(%s\n#L%" PRIu64 ".%u\n",
+        ret = snprintf(doc+docpos,BUFLEN-docpos, "(%s\n#L%" PRIu64 ".%u\n",
                        path + lastpathpos + 1, nLine, nCol);
 #endif
-        assert(ret > 0);
+        if (ret > 0) {
         docpos += ret;
         if (docpos >= BUFLEN)
         {
             docpos = BUFLEN;
+            save = 0;
+        }
+        }
+        else
+        {
             save = 0;
         }
     }
@@ -1017,8 +1096,8 @@ parse_attributes:
         else if (save)
         {
             int ret;
-            ret = snprintf(doc, BUFLEN - docpos, ")%s\n", path + lastpathpos+1);
-            assert(ret > 0);
+            ret = snprintf(doc+docpos,BUFLEN-docpos,")%s\n",path+lastpathpos+1);
+            if (ret > 0) {
             docpos += ret;
             if (docpos >= BUFLEN)
             {
@@ -1031,6 +1110,11 @@ parse_attributes:
 #else
             if (strcmp(show, path) == 0)
 #endif
+            {
+                save = 0;
+            }
+            }
+            else
             {
                 save = 0;
             }
