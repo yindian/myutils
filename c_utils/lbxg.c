@@ -58,7 +58,7 @@ static int iswhite(int c)
 	return c == ' ' || c == '\r' || c == '\n' || c == '\t';
 }
 
-static void showbuf(const char *buf, int buflen)
+static void showbuf(const char *buf, int buflen, const char *path)
 {
 #if 1 /* CAVEAT: reporting the saved buf will badly penalize performance */
     const char *p, *end;
@@ -97,8 +97,31 @@ static void showbuf(const char *buf, int buflen)
         puts("#...");
         while (tagtop-- > 0)
         {
+            if (tagtop == 0 && path)
+            {
+                break;
+            }
             putchar(')');
             for (p = stacktagpos[tagtop]; p < end && *p != '\n'; ++p)
+            {
+                putchar(*p);
+            }
+            putchar('\n');
+        }
+    }
+    if (path)
+    {
+        for (p = path; *p != '\0'; )
+        {
+            assert(*p == '/');
+            ++p;
+            putchar('(');
+            end = strchr(p, '/');
+            if (end == NULL)
+            {
+                end = strchr(p, '\0');
+            }
+            for (; p < end; ++p)
             {
                 putchar(*p);
             }
@@ -133,6 +156,7 @@ int main(int argc, char *argv[])
     char *buf, *path, *doc;
     const char *errmsg;
     const char *show, *match, *pattern;
+    int showlen;
     int patternlen;
 #ifndef NO_HASH
     unsigned long showhash;
@@ -150,6 +174,7 @@ int main(int argc, char *argv[])
     save = 0;
     check = 0;
     show = match = pattern = NULL;
+    showlen = 0;
     patternlen = 0;
     nLine2Show = 0;
     for (i = 1; i < argc; i++)
@@ -208,12 +233,16 @@ int main(int argc, char *argv[])
         {
             char *p;
             nLine2Show = strtoull(pattern, &p, 0);
-            help = (p && *p != '\0');
+            help = (p && *p != '\0' && *p != ',');
         }
         else if (!show)
         {
             show = match;
         }
+    }
+    if (show)
+    {
+        showlen = strlen(show);
     }
     sameshowmatch = show && match && strcmp(show, match) == 0;
     if (!help)
@@ -305,7 +334,25 @@ int main(int argc, char *argv[])
 #define ON_NEW_LINE
 #if !defined(NO_SHOW) && !defined(NO_MATCH)
 #define ON_NEW_LINE_2 if (UNLIKELY(--nLine2Show == 0)) { \
-    showbuf(doc, docpos); docpos = 0; save = 0; \
+    if (strncmp(show, path, showlen) == 0 && (path[showlen] == '/' || \
+                                              path[showlen] == '\0')) \
+    { \
+        output = 1; \
+    } \
+    showbuf(doc, docpos, output ? path + showlen : 0); docpos = 0; save = 0; \
+    { \
+        char *p; \
+        unsigned long long n; \
+        n = strtoull(pattern, &p, 0); \
+        if (*p != '\0') \
+        { \
+            pattern = (const char *) p + 1; \
+            nLine2Show = strtoull(pattern, &p, 0); \
+            nLine2Show -= n; \
+        } \
+    } \
+    ++nLine; nCol = 0; \
+    goto parse_text; \
 }
 #else
     (void) showbuf;
@@ -329,7 +376,7 @@ parse_text:
 #define _ON_NEWLINE \
     if(output){if(!cbegin)putchar('\n');puts("-\\n");} \
     else if(save){if(!cbegin)SAVE('\n');SAVE2('-', '\\');SAVE2('n', '\n'); \
-        if (docpos >= BUFLEN) { docpos = BUFLEN; save = 0; } \
+        if (docpos >= BUFLEN) { docpos = BUFLEN; save = 0; goto parse_text; } \
     } \
     cbegin=1
 #else
@@ -669,7 +716,7 @@ parse_entity_next_save:
     if (strstr(buf, pattern)) \
     { \
         printf("#M%" PRIu64 ".%u: %s\n", nLine, nCol, buf); \
-        showbuf(doc, docpos); \
+        showbuf(doc, docpos, NULL); \
         docpos = 0; \
         save = 0; \
         check = 0; \
