@@ -38,8 +38,7 @@ for line in sys.stdin:
                         q = t.index('}}')
                         t = t[q+2:]
                     else:
-                        q = s.index('}}', p + 2)
-                        t = s[q+2:]
+                        t = s[p:]
                         s = s[:p]
                 else:
                     t = ''
@@ -47,7 +46,7 @@ for line in sys.stdin:
                     assert t.startswith('{{fn|')
                     assert t.endswith('}}')
                     assert t[5:-2].isalnum()
-                d[n] = [s, t]
+                d[n] = [s, t, []]
                 dd[s] = n
         elif state == 1:
             if line.startswith('|') and line[1] not in '-}':
@@ -61,16 +60,99 @@ for line in sys.stdin:
                     ar[1] = '〃'
                 if ar[2] == '～':
                     ar[2] = '(～)'
+                elif ar[2]:
+                    st = d[last][2]
+                    t = ar[2].decode('utf-8')
+                    assert t.startswith(u'(') and t.endswith(u')')
+                    t = t[1:-1]
+                    p = 0
+                    while p < len(t):
+                        c = t[p]
+                        if 0xD800 <= ord(c) < 0xDC00:
+                            assert 0xDC00 <= ord(t[p+1]) < 0xE000
+                            st.append(t[p:p+2].encode('utf-8'))
+                            p += 2
+                        elif c == u'<':
+                            p = t.index(u'>', p + 1) + 1
+                        elif c == u'{':
+                            if t.startswith(u'{{fn', p):
+                                p = t.index(u'}}', p + 4) + 2
+                                continue
+                            assert t.startswith(u'{{!|', p)
+                            p += 4
+                            q = t.index(u'|', p)
+                            st.append(t[p:q].encode('utf-8'))
+                            p = q + 1
+                            q = t.index(u'}}', p)
+                            st.append(t[p:q].encode('utf-8'))
+                            p = q + 2
+                        else:
+                            assert not c.isspace()
+                            st.append(c.encode('utf-8'))
+                            p += 1
+                    assert p == len(t)
                 t = ar[3]
+                st = []
                 p = t.find('[[')
                 while p >= 0:
                     assert t[p:p+7] == '[[File:'
                     q = t.index(']]', p + 7)
-                    t = t[:p] + t[t.rindex('|', p + 7, q)+1:q] + t[q+2:]
+                    st.append(t[t.rindex('|', p + 7, q)+1:q])
+                    t = t[:p] + st[-1] + t[q+2:]
                     p = t.find('[[')
                 ar[3] = t
+                if t:
+                    p = t.find('<')
+                    while p >= 0:
+                        t = t[:p] + t[t.index('>', p + 1) + 1:]
+                        p = t.find('<')
+                    tp = tuple([s.decode('utf-8') for s in st])
+                    st = d[last][2]
+                    t = t.decode('utf-8')
+                    assert t.startswith(u'[') and t.endswith(u']')
+                    t = t[1:-1]
+                    p = 0
+                    while p < len(t):
+                        c = t[p]
+                        if t.startswith(tp, p):
+                            for s in tp:
+                                if t.startswith(s, p):
+                                    s = s.strip()
+                                    if s[0] in (u'(', u'（'):
+                                        s = s[1:]
+                                    if s[-1] in (u')', u'）'):
+                                        s = s[:-1]
+                                    assert s
+                                    st.append(s.encode('utf-8'))
+                                    p += len(s)
+                                    break
+                        elif 0xD800 <= ord(c) < 0xDC00:
+                            assert 0xDC00 <= ord(t[p+1]) < 0xE000
+                            st.append(t[p:p+2].encode('utf-8'))
+                            p += 2
+                        elif c == u'{':
+                            if t.startswith(u'{{fn', p):
+                                p = t.index(u'}}', p + 4) + 2
+                                continue
+                            assert t.startswith(u'{{!|', p)
+                            p += 4
+                            q = t.index(u'|', p)
+                            st.append(t[p:q].encode('utf-8'))
+                            p = q + 1
+                            q = t.index(u'}}', p)
+                            st.append(t[p:q].encode('utf-8'))
+                            p = q + 2
+                        elif c.isspace():
+                            p += 1
+                        else:
+                            st.append(c.encode('utf-8'))
+                            p += 1
+                    assert p == len(t)
                 t = d[last]
                 t[1] += ''.join(['\n'] + ar[1:])
+                if t[0] in st:
+                    print >> sys.stderr, last, t[0], st
+                    t[2] = [s for s in st if s != t[0]]
         elif state == 2:
             if line.startswith(':'):
                 p = line.index(' ')
@@ -94,7 +176,11 @@ for line in sys.stdin:
             elif line.startswith('{{'):
                 break
             else:
-                s = line.decode('utf-8')[0].encode('utf-8')
+                s = line
+                if s.startswith('-{'):
+                    p = s.index('}-', 2)
+                    s = unalt(s[2:p])
+                s = s.decode('utf-8')[0].encode('utf-8')
                 if s in dd:
                     last = dd[s]
                 elif s in '挼 㖞'.split():
@@ -133,6 +219,10 @@ for line in sys.stdin:
         sys.stderr.write(line)
         raise
 level = '一级 二级 三级'.split()
+dl = {}
+kl = []
+ds = {}
+ks = []
 for n in sorted(d.keys()):
     t = d[n]
     s = t[1]
@@ -163,10 +253,24 @@ for n in sorted(d.keys()):
         q = s.index('>', p + 1)
         s = s[:p] + s[q+1:]
         p = s.find('<')
+    l = level[n > '6500' and 2 or (n > '3500' and 1 or 0)]
     s = '%s %s %s %s%s' % (
-            level[n > '6500' and 2 or (n > '3500' and 1 or 0)],
+            l,
             t[-1],
             n,
             t[0],
             s)
-    print '%s|%s\t%s' % (t[0], n, s.replace('\n', '\\n'))
+    print '%s|%s\t%s' % (t[0], '|'.join([n] + t[2]), s.replace('\n', '\\n'))
+    if l not in dl:
+        dl[l] = []
+        kl.append(l)
+    dl[l].append(n)
+    l = t[-1]
+    if l not in ds:
+        ds[l] = []
+        ks.append(l)
+    ds[l].append(n)
+for l in kl:
+    print '%s\t%s' % (l, ' '.join([d[n][0] for n in dl[l]]))
+for l in ks:
+    print '%s\t%s' % (l, ' '.join([d[n][0] for n in ds[l]]))
