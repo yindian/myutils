@@ -10,6 +10,14 @@ def unalt(s):
     assert s
     return s
 
+def utf8enc(o):
+    if o < 0x10000:
+        s = unichr(o)
+    else:
+        o -= 0x10000
+        s = unichr(0xD800 | (o >> 10)) + unichr(0xDC00 | (o & 0x3FF))
+    return s.encode('utf-8')
+
 assert __name__ == '__main__'
 
 d = {}
@@ -27,6 +35,7 @@ for line in sys.stdin:
                 p = line.index(' ')
                 n = line[1:p]
                 assert len(n) == 4
+                st = []
                 s = line[p+1:].strip()
                 p = s.find('{{')
                 if p >= 0:
@@ -36,6 +45,7 @@ for line in sys.stdin:
                         t = s[q:]
                         s = s[p+4:q]
                         q = t.index('}}')
+                        st.append(t[1:q])
                         t = t[q+2:]
                     else:
                         t = s[p:]
@@ -46,7 +56,7 @@ for line in sys.stdin:
                     assert t.startswith('{{fn|')
                     assert t.endswith('}}')
                     assert t[5:-2].isalnum()
-                d[n] = [s, t, []]
+                d[n] = [s, t, st]
                 dd[s] = n
         elif state == 1:
             if line.startswith('|') and line[1] not in '-}':
@@ -100,6 +110,13 @@ for line in sys.stdin:
                     st.append(t[t.rindex('|', p + 7, q)+1:q])
                     t = t[:p] + st[-1] + t[q+2:]
                     p = t.find('[[')
+                p = t.find('&');
+                while p >= 0:
+                    assert t[p:p+3] == '&#x'
+                    q = t.index(';', p + 3)
+                    st.append(utf8enc(int(t[p+3:q], 16)))
+                    t = t[:p] + st[-1] + t[q+1:]
+                    p = t.find('&');
                 ar[3] = t
                 if t:
                     p = t.find('<')
@@ -117,6 +134,7 @@ for line in sys.stdin:
                         if t.startswith(tp, p):
                             for s in tp:
                                 if t.startswith(s, p):
+                                    p += len(s)
                                     s = s.strip()
                                     if s[0] in (u'(', u'（'):
                                         s = s[1:]
@@ -124,7 +142,6 @@ for line in sys.stdin:
                                         s = s[:-1]
                                     assert s
                                     st.append(s.encode('utf-8'))
-                                    p += len(s)
                                     break
                         elif 0xD800 <= ord(c) < 0xDC00:
                             assert 0xDC00 <= ord(t[p+1]) < 0xE000
@@ -144,6 +161,10 @@ for line in sys.stdin:
                             p = q + 2
                         elif c.isspace():
                             p += 1
+                        elif c == u'(':
+                            q = t.index(u')', p + 1)
+                            print >> sys.stderr, last, ar[1], t[p:q+1].encode('utf-8')
+                            p = q + 1
                         else:
                             st.append(c.encode('utf-8'))
                             p += 1
@@ -258,7 +279,9 @@ for n in sorted(d.keys()):
             l,
             t[-1],
             n,
-            t[0],
+            t[0] + (
+                not t[0].decode('utf-8').encode('gbk', 'ignore') and t[2]
+                and len(t[2][0]) > 8 and ('（%s）' % (t[2][0],)) or ''),
             s)
     print '%s|%s\t%s' % (t[0], '|'.join([n] + t[2]), s.replace('\n', '\\n'))
     if l not in dl:
