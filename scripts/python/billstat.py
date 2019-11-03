@@ -43,8 +43,11 @@ for f in flist:
     for line in f:
         ar = line.decode(enc).split('\t')
         if len(ar) > 4 and ar[0][0].isdigit():
-            if ar[2] == u'\u4e3b\u53eb':
+            ar = [s.rstrip() for s in ar]
+            if ar[2].endswith(u'\u4e3b\u53eb'):
                 num = ar[3]
+                if len(num) < 8:
+                    num = num.ljust(8)
                 d[num] = d.get(num, 0) + tosec(ar[4])
                 d2[num] = d2.get(num, 0) + tomin(tosec(ar[4]))
                 t[num] = t.get(num, 0) + 1
@@ -57,4 +60,5 @@ for num, dur in ar:
     print '%s\t%d\t%d\t%d\t%s\t%s\t%.2f' % (num, d2[num], dur, t[num], tostr(dur), tostr(dur / t[num]), b[num])
 dur = sum(d.values())
 tim = sum(t.values())
-print '%s\t%d\t%d\t%d\t%s\t%s\t%.2f' % ('Total No.', sum(d2.values()), dur, tim, tostr(dur), tostr(dur / tim), sum(b.values()))
+if t:
+    print '%s\t%d\t%d\t%d\t%s\t%s\t%.2f' % ('Total No.', sum(d2.values()), dur, tim, tostr(dur), tostr(dur / tim), sum(b.values()))
