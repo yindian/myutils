@@ -18,10 +18,8 @@ def win32_utf8_argv():
 		argv = CommandLineToArgvW(cmd, byref(argc))
 		if argc.value > 0:
 			# Remove Python executable if present
-			if argc.value - len(sys.argv) == 1:
-				start = 1
-			else:
-				start = 0
+			assert argc.value >= len(sys.argv)
+			start = argc.value - len(sys.argv)
 			return [argv[i].encode('utf-8') for i in
 					xrange(start, argc.value)]
 	except Exception:
@@ -218,7 +216,8 @@ if __name__ == '__main__':
 		else:
 			files = glob.glob(file)
 			for file in files:
-				file = unicode(file, fnenc)
+				if not isinstance(file, unicode):
+					file = unicode(file, fnenc)
 				convren((fromenc, toenc), zstr, [file])
 				os.path.walk(file, convren, (fromenc, toenc))
 			if not files:
