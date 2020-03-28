@@ -4,6 +4,7 @@ import sys
 import struct
 import io
 import operator
+from checkpy import gy2py
 
 gbkpua2unimap = dict([[int(x, 16) for x in s.split()] for s in '''\
 E7C7 1E3F
@@ -325,6 +326,28 @@ miuk2bs = dict(reduce(operator.add, [reduce(operator.add,
 assert len(set(miuk2bs.values())) == 106
 assert set(miuk2bs.keys()) == set(miuklst)
 
+box2sjep = dict(reduce(operator.add, [reduce(operator.add,
+    [[(a[i], a[0])] for i in range(1, len(a))]) for a in [
+    s.split() for s in u'''\
+\u901A\t\u6771 \u51AC \u937E 
+\u6C5F\t\u6C5F 
+\u6B62\t\u652F \u8102 \u4E4B \u5FAE 
+\u9047\t\u9B5A \u865E \u6A21 
+\u87F9\t\u9F4A \u4F73 \u7686 \u7070 \u548D \u796D \u6CF0 \u592C \u5EE2 
+\u81FB\t\u771E \u8AC4 \u81FB \u6587 \u6B23 \u9B42 \u75D5 
+\u5C71\t\u5143 \u5BD2 \u6853 \u522A \u5C71 \u5148 \u4ED9 
+\u6548\t\u856D \u5BB5 \u80B4 \u8C6A 
+\u679C\t\u6B4C \u6208 
+\u5047\t\u9EBB 
+\u5B95\t\u967D \u5510 
+\u6897\t\u5E9A \u8015 \u6E05 \u9752 
+\u66FE\t\u84B8 \u767B 
+\u6D41\t\u5C24 \u4FAF \u5E7D 
+\u6DF1\t\u4FB5 
+\u54B8\t\u8983 \u8AC7 \u9E7D \u6DFB \u54B8 \u929C \u56B4 \u51E1 
+'''.splitlines()]]))
+assert len(box2sjep) == 61
+
 rom2py = {}
 
 miuknotes = u'0123456789AB*.'
@@ -382,10 +405,11 @@ with open(sys.argv[1], 'rb') as f:
                     assert miuk in miuklst
                     sjep = miuk2sjep[miuk]
                     assert ar[8] == sjep
+                    assert box2sjep[ar[5][0]] == sjep
                     if ar[22]:
                         assert miuk2bs[miuk] == ar[22]
                 except:
-                    print(sjep, file=sys.stderr)
+                    print(sjep, miuk, file=sys.stderr)
                     raise
                 assert ar[2] in sjenglst
                 if ar[13]:
@@ -393,6 +417,7 @@ with open(sys.argv[1], 'rb') as f:
                     assert len(ckey) >= 6
                     if not ckey in rom2py:
                         rom2py[ckey] = ar[13]
+                        assert gy2py(ckey) == ar[13] or ar[13] in ('hung4', 'shung4')
                     else:
                         assert rom2py[ckey] == ar[13]
                 else:
