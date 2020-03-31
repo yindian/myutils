@@ -3,7 +3,9 @@ from __future__ import print_function
 import sys
 import struct
 import io
+import os
 import operator
+import string
 from checkpy import gy2py
 
 gbkpua2unimap = dict([[int(x, 16) for x in s.split()] for s in '''\
@@ -211,6 +213,7 @@ miukaliases = dict([s.split() for s in u'''\
 \U0002354A\t\u3B87
 '''.splitlines()])
 miuk2sjep.update([(alias, miuk2sjep[k]) for alias,k in miukaliases.items()])
+miukaliases = dict([(alias, k) for alias, k in miukaliases.items()])
 assert len(set(miuk2sjep.values())) == 16
 
 miuk2bs = dict(reduce(operator.add, [reduce(operator.add,
@@ -352,6 +355,22 @@ rom2py = {}
 
 miuknotes = u'0123456789AB*.'
 
+deuh2name = {
+        u'1': u'\u4E0A\u5E73',
+        u'2': u'\u4E0B\u5E73',
+        u'3': u'\u4E0A\u8072',
+        u'4': u'\u53BB\u8072',
+        u'5': u'\u5165\u8072',
+        }
+
+def formatmiuk(s):
+    p = s.index(u'.')
+    deuh = deuh2name[s[:p]]
+    p += 1
+    while s[p].isdigit():
+        p += 1
+    return u'%s%d%s' % (deuh, int(s[2:p]), s[p:])
+
 assert __name__ == '__main__'
 
 with open(sys.argv[1], 'rb') as f:
@@ -363,8 +382,7 @@ with open(sys.argv[1], 'rb') as f:
     d = {}
     dd = {}
     dl = []
-    if lines[0].find(sep) >= 0:
-        assert lines[0].count(sep) == 22
+    if True:
         specials = {
                 179:    'chryi', # was 'chjyi',
                 4001:   'nrungx',
@@ -377,6 +395,8 @@ with open(sys.argv[1], 'rb') as f:
                 4008:   'chrah',
                 4009:   'thauh',
                 }
+    if lines[0].find(sep) >= 0:
+        assert lines[0].count(sep) == 22
         for line in lines:
             try:
                 line = line.rstrip().decode('utf-8')
@@ -499,7 +519,202 @@ with open(sys.argv[1], 'rb') as f:
             out.write(line.encode('utf-8'))
             out.write(b'\n')
     else:
-        assert False
+        assert lines[0].startswith(b'#')
+        usep = u'|'
+        sep = usep.encode('utf-8')
+        miuk2yonh = {}
+        miuk2text = {}
+        stat = 0
+        for line in lines:
+            try:
+                line = line.rstrip().decode('utf-8')
+                line = line.encode('utf-16le').decode('utf-16le', 'ignore')
+                ar = line.split(usep)
+            except UnicodeDecodeError: # broken surrogate pair in Python 3 
+                line = line.rstrip().decode('utf-8', 'ignore')
+                ar = line.split(usep)
+                print('Invalid UTF-8 bytes ignored for %s %s' % (
+                    ar[1],
+                    ar[13],
+                    ), file=sys.stderr)
+            try:
+                if stat == 0:
+                    if not line.startswith('#'):
+                        stat = 1
+                    continue
+                elif stat == 1:
+                    if line.startswith('#'):
+                        stat = 2
+                    continue
+                else:
+                    if not line:
+                        continue
+                assert len(ar) >= 20
+                if len(ar) > 20:
+                    if ar[7].isdigit():
+                        assert set(ar[14]) <= set(string.ascii_lowercase)
+                        s = usep.join(ar[15:])
+                        del ar[15:]
+                        i = j = 0
+                        l = len(s)
+                        while j < l:
+                            c = s[j]
+                            if c == usep:
+                                ar.append(s[i:j])
+                                i = j = j + 1
+                            else:
+                                if c == u'(':
+                                    try:
+                                        j = s.index(u')', j) + 1
+                                    except ValueError:
+                                        j = s.index(u'\uff09', j) + 1
+                                elif c == u'[':
+                                    j = s.index(u']', j) + 1
+                                elif c == u'{':
+                                    j = s.index(u'}', j) + 1
+                                else:
+                                    j += 1
+                        ar.append(s[i:])
+                        if len(ar) > 20:
+                            ar[18:-1] = [usep.join(ar[18:-1])]
+                            try:
+                                print('Guessed', ar[18],
+                                        usep.join(ar),
+                                        file=sys.stderr)
+                            except UnicodeEncodeError:
+                                print('Guessed', ar[18].encode('gb18030'),
+                                        usep.join(ar).encode('gb18030'),
+                                        file=sys.stderr)
+                    else:
+                        i = 5
+                        while i < len(ar):
+                            s = ar[i]
+                            if len(s) >= 5 and s[0].isdigit() and s[1] == u'.':
+                                assert not ar[i-2] or ar[i-2].isdigit()
+                                ar[3:i-2] = [usep.join(ar[3:i-2])]
+                                try:
+                                    print('Guessed', ar[3],
+                                            usep.join(ar),
+                                            file=sys.stderr)
+                                except UnicodeEncodeError:
+                                    print('Guessed', ar[3].encode('gb18030'),
+                                            usep.join(ar).encode('gb18030'),
+                                            file=sys.stderr)
+                                break
+                            i += 1
+                assert len(ar) == 20
+                try:
+                    sjep = None
+                    miuk = ar[6][2:].strip(miuknotes)
+                    assert miuk in miuklst
+                    sjep = box2sjep[ar[11][0]]
+                    assert miuk2sjep[miuk] == sjep or ar[2] in (
+                            u'\U000296e0\u74e6',
+                            )
+                    bsyonh = miuk2sjep[miuk] == sjep and miuk2bs[miuk] or {
+                            u'\U000296e0\u74e6': u'\u54FF',
+                            }[ar[2]]
+                    if miuk not in miuk2text:
+                        miuk2text[miuk] = u'%s %s\u651D \u5e73\u6c34\u97f5:%s'%(
+                                formatmiuk(ar[6]),
+                                sjep,
+                                bsyonh,
+                                )
+                except:
+                    print(sjep, file=sys.stderr)
+                    raise
+                ar[8] = ar[8].rstrip()
+                assert ar[8] in sjenglst
+                ckey = u''.join([sjep]+map(ar.__getitem__, [9, 10, 12, 11, 8]))
+                assert len(ckey) >= 6
+                pinyin = gy2py(ckey)
+                key = ar[13] or specials[int(ar[0])]
+                line = u'%s\t%s %s%s %s %s%s %s%s%s\n%s\n%s\n%s\n%s\n%s'%(
+                        key,
+                        formatmiuk(ar[6]),
+                        ar[2],
+                        ar[2] and chet,
+                        ckey,
+                        u'\u62fc\u97f3:',
+                        pinyin,
+                        u'\u5e73\u6c34\u97f5:',
+                        bsyonh,
+                        u' GY%04d' % (int(ar[1]),),
+                        ar[3],
+                        ar[16] or (ar[1] > u'4000' and ar[15] or u''),
+                        ar[17],
+                        ar[18],
+                        ar[19],
+                        )
+                line = line.rstrip().replace(u'\n', u'\\n')
+                if key in d:
+                    print('Duplicated key %s' % (
+                        key,
+                        ), file=sys.stderr)
+                    d[key] = u'%s\t%s\\n\\n%s' % (
+                            key,
+                            d[key][len(key)+1:],
+                            line[len(key)+1:],
+                            )
+                else:
+                    d[key] = line
+                    dl.append(key)
+                s = ar[3] + ar[18]
+                first = True
+                for i in range(len(s)):
+                    c = s[i]
+                    o = ord(c)
+                    if 0xD800 <= o < 0xDC00:
+                        o = ord(s[i+1])
+                        assert 0xDC00 <= o < 0xE000
+                        c += s[i+1]
+                    elif 0xDC00 <= o < 0xE000:
+                        # handled in above case
+                        continue
+                    elif o < 0x80 or 0xFF00 <= o < 0x10000:
+                        continue
+                    else:
+                        assert o < 0x110000
+                        assert o >= 0x2E80
+                    dd.setdefault(c, set()).add(key)
+                    if len(c) == 1 and 0xE000 <= o < 0xF900:
+                        try:
+                            o = gbkpua2unimap[o]
+                            if o < 0x10000:
+                                c = struct.pack('<H', o).decode('utf-16le')
+                            else:
+                                o -= 0x10000
+                                c = struct.pack('<2H',
+                                        0xD800 | (o >> 10),
+                                        0xDC00 | (o & 0x3FF),
+                                        ).decode('utf-16le')
+                            dd.setdefault(c, set()).add(key)
+                        except KeyError:
+                            print('Found PUA U+%04X for %s' % (
+                                o,
+                                key,
+                                ), file=sys.stderr)
+                    if first:
+                        first = False
+                        miuk2yonh.setdefault(miuk, []).append((c, key))
+            except:
+                print('Error processing %s %s' % (
+                    ar[1],
+                    ar[13],
+                    ), file=sys.stderr)
+                print(usep.join(ar), file=sys.stderr)
+                raise
+        for key in dl:
+            line = d[key]
+            syn = []
+            p = line.find(u' GY')
+            while p > 0:
+                syn.append(line[p+1:p+7])
+                p = line.find(u' GY', p+7)
+            if syn:
+                line = u'|'.join([key] + syn) + line[len(key):]
+            out.write(line.encode('utf-8'))
+            out.write(b'\n')
 #    py2rom = {}
 #    for k, v in rom2py.items():
 #        py2rom.setdefault(v, set()).add(k)
@@ -519,6 +734,14 @@ with open(sys.argv[1], 'rb') as f:
             c,
             u', '.join(sorted(dd[c], key=no_apos)),
             )).encode('utf-8'))
+        if c in miuklst or c in miukaliases:
+            if c not in miuklst:
+                c = miukaliases[c]
+            out.seek(-1, os.SEEK_CUR)
+            out.write((u'\\n\\n%s\\n%s\n' % (
+                miuk2text[c],
+                u' '.join([u'%s(%s)' % a for a in miuk2yonh[c]]),
+                )).encode('utf-8'))
     try:
         sys.stdout.write(out.getvalue())
     except TypeError: # Python 3
