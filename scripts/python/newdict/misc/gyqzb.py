@@ -213,7 +213,7 @@ miukaliases = dict([s.split() for s in u'''\
 \U0002354A\t\u3B87
 '''.splitlines()])
 miuk2sjep.update([(alias, miuk2sjep[k]) for alias,k in miukaliases.items()])
-miukaliases = dict([(alias, k) for alias, k in miukaliases.items()])
+miukaliases = dict([(v, k) for k, v in miukaliases.items()])
 assert len(set(miuk2sjep.values())) == 16
 
 miuk2bs = dict(reduce(operator.add, [reduce(operator.add,
@@ -363,13 +363,17 @@ deuh2name = {
         u'5': u'\u5165\u8072',
         }
 
+deuh2cnt = {}
+
 def formatmiuk(s):
     p = s.index(u'.')
     deuh = deuh2name[s[:p]]
     p += 1
     while s[p].isdigit():
         p += 1
-    return u'%s%d%s' % (deuh, int(s[2:p]), s[p:])
+    n = int(s[2:p])
+    deuh2cnt[s[0]] = max(n, deuh2cnt.get(s[0], 0))
+    return u'%s%d%s' % (deuh, n, s[p:])
 
 assert __name__ == '__main__'
 
@@ -742,6 +746,16 @@ with open(sys.argv[1], 'rb') as f:
                 miuk2text[c],
                 u' '.join([u'%s(%s)' % a for a in miuk2yonh[c]]),
                 )).encode('utf-8'))
+    miukaliases = dict([(v, k) for k, v in miukaliases.items()])
+    ar = [c in dd and c or miukaliases[c] for c in miuklst]
+    assert set(ar) < set(dd.keys())
+    br = [0]
+    for c in sorted(deuh2cnt.keys()):
+        br.append(br[-1] + deuh2cnt[c])
+    out.write((u'%s\t%s\n' % (
+        u'GY0000',
+        u'\\n'.join([u' '.join(ar[br[i]:br[i+1]]) for i in range(len(br) - 1)]),
+        )).encode('utf-8'))
     try:
         sys.stdout.write(out.getvalue())
     except TypeError: # Python 3
