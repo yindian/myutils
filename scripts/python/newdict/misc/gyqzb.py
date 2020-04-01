@@ -629,7 +629,7 @@ with open(sys.argv[1], 'rb') as f:
                     raise
                 ar[8] = ar[8].rstrip()
                 assert ar[8] in sjenglst
-                ckey = u''.join([sjep]+map(ar.__getitem__, [9, 10, 12, 11, 8]))
+                ckey = u''.join([sjep]+list(map(ar.__getitem__, [9, 10, 12, 11, 8])))
                 assert len(ckey) >= 6
                 pinyin = gy2py(ckey)
                 key = ar[13] or specials[int(ar[0])]
