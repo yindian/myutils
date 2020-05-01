@@ -68,6 +68,8 @@ except:
 		else:
 			file.write(ustr.encode(fnenc, 'replace'))
 
+import unicodedata
+
 def renameit(path, fromenc, toenc):
 	dest = path
 	try:
@@ -78,9 +80,20 @@ def renameit(path, fromenc, toenc):
 	except UnicodeDecodeError:
 		ansi = path
 	except UnicodeEncodeError:
+		okay = False
 		if fromenc == toenc:
 			ansi = path.encode(toenc, 'replace').replace('?', '_')
+			okay = True
 		else:
+			try:
+				upath = path.decode(fnenc)
+				cpath = unicodedata.normalize('NFC', upath)
+				if upath != cpath:
+					ansi = cpath.encode(fromenc)
+					okay = True
+			except:
+				pass
+		if not okay:
 			print >> sys.stderr, 'Not of encoding %s: ' % (fromenc), 
 			writeunicode(path, sys.stderr)
 			raise
