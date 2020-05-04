@@ -75,7 +75,7 @@ def convmd2st(fname):
 						v = lnkpat.sub(lnkconvmd2st, v)
 						v = imgpat.sub(imgconvmd2st, v)
 						v = v.replace(b'\\n', b'\\\n').replace(b'\n', b'\\n')
-					ar.append((k, v))
+						ar.append((k, v))
 					k = v = None
 				else:
 					v.append(line.rstrip(b'\r\n'))
