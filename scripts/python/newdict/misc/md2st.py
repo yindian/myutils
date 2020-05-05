@@ -108,13 +108,13 @@ def convst2md(fname):
 				v = lnkpat.sub(lnkconvst2md, v)
 				v = imgpat.sub(imgconvst2md, v)
 				if k.find(b'|') < 0:
+					out.write(b'%s\n%s\n</>\n' % (k, v))
+				else:
 					ar = k.split(b'|')
 					k = ar[0]
 					out.write(b'%s\n%s\n</>\n' % (k, v))
 					for s in ar[1:]:
 						out.write(b'%s\n@@@LINK=%s\n</>\n' % (s, k))
-				else:
-					out.write(b'%s\n%s\n</>\n' % (k, v))
 			except:
 				print('Error on line %d' % (no,))
 				raise
