@@ -9,7 +9,7 @@ except AttributeError:
 	out = sys.stdout
 
 lnkpat = re.compile(br'''(<a +[^>]*\bhref=['"])([^'">]*)(?=['"][^>]*>)''', re.I)
-imgpat = re.compile(br'''(<img +[^>]\bsrc=['"])([^'">]*)(?=['"][^>]*>)''', re.I)
+imgpat = re.compile(br'''(<img +[^>]*\bsrc=['"])([^'">]*)(?=['"][^>]*>)''', re.I)
 
 def lnkconvmd2st(m):
 	s = m.group(2)
@@ -106,7 +106,7 @@ def convst2md(fname):
 				k, v = line.rstrip(b'\r\n').split(b'\t', 1)
 				v = v.replace(b'\\n', b'\n').replace(b'\\\n', b'\\n')
 				v = lnkpat.sub(lnkconvst2md, v)
-				v = imgpat.sub(imgconvst2md, v)
+				#v = imgpat.sub(imgconvst2md, v)
 				if k.find(b'|') < 0:
 					out.write(b'%s\n%s\n</>\n' % (k, v))
 				else:
