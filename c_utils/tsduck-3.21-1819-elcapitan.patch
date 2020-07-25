@@ -1,0 +1,93 @@
+diff -ur tsduck-3.21-1819.orig/Makefile.common tsduck-3.21-1819/Makefile.common
+--- tsduck-3.21-1819.orig/Makefile.common	2020-05-30 20:30:42.000000000 +0800
++++ tsduck-3.21-1819/Makefile.common	2020-07-26 00:54:36.000000000 +0800
+@@ -834,6 +834,7 @@
+ 
+ # Compilation flags for posix threads.
+ CFLAGS_PTHREAD = -pthread
++CFLAGS_PTHREAD += $(if $(MACOS),-Wno-unused-command-line-argument,)
+ LDFLAGS_PTHREAD = $(if $(MACOS),,-pthread)
+ 
+ # External libraries
+diff -ur tsduck-3.21-1819.orig/src/libtsduck/base/json/tsjsonNull.h tsduck-3.21-1819/src/libtsduck/base/json/tsjsonNull.h
+--- tsduck-3.21-1819.orig/src/libtsduck/base/json/tsjsonNull.h	2020-05-30 20:30:42.000000000 +0800
++++ tsduck-3.21-1819/src/libtsduck/base/json/tsjsonNull.h	2020-07-26 00:46:12.000000000 +0800
+@@ -47,7 +47,11 @@
+             //!
+             //! Default constructor.
+             //!
++#if 0
+             Null() = default;
++#else
++            Null() {}
++#endif
+ 
+             // Implementation of ts::json::Value.
+             virtual Type type() const override;
+diff -ur tsduck-3.21-1819.orig/src/libtsduck/base/tsPlatform.h tsduck-3.21-1819/src/libtsduck/base/tsPlatform.h
+--- tsduck-3.21-1819.orig/src/libtsduck/base/tsPlatform.h	2020-05-30 20:30:42.000000000 +0800
++++ tsduck-3.21-1819/src/libtsduck/base/tsPlatform.h	2020-07-26 00:59:55.000000000 +0800
+@@ -737,13 +737,19 @@
+ TS_LLVM_NOWARNING(unused-parameter)               // Unused parameters are frequent with overrides.
+ TS_LLVM_NOWARNING(global-constructors)            // Do not warn about static/global objects being constructed.
+ TS_LLVM_NOWARNING(exit-time-destructors)          // Do not warn about static/global objects being destructed.
++#if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 101200) || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
++#else
+ TS_LLVM_NOWARNING(inconsistent-missing-destructor-override) // Requesting "override" for destructors is idiotic, simply.
++#endif
+ TS_LLVM_NOWARNING(covered-switch-default)         // Allow "default" in "switch" after all enum values to catch invalid binary values.
+ TS_LLVM_NOWARNING(sign-conversion)                // Too many occurences since pointer arithmetics is signed, opposite from size_t.
+ TS_LLVM_NOWARNING(padded)                         // Do not care if padding is required between class fields.
+ TS_LLVM_NOWARNING(reserved-id-macro)              // We sometimes use underscores at the beginning of identifiers.
+ TS_LLVM_NOWARNING(c++98-compat-pedantic)          // Require C++11, no need for C++98 compatibility.
++#if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 101200) || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
++#else
+ TS_LLVM_NOWARNING(c++2a-compat)                   // Compatibility with C++2a is not yet a concern.
++#endif
+ TS_LLVM_NOWARNING(documentation-unknown-command)  // Some valid doxygen directives are unknown to clang.
+ 
+ TS_MSC_NOWARNING(4100)  // unreferenced formal parameter
+@@ -865,6 +871,34 @@
+ #if defined(TS_MAC)
+ #include <sys/mman.h>
+ #include <libproc.h>
++#if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 101200) || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
++typedef int clockid_t;
++#define CLOCK_REALTIME 0
++#define CLOCK_MONOTONIC 6
++#include <mach/clock.h>
++#include <mach/mach.h>
++static int clock_gettime (int clock_id, timespec *ts)
++{
++    // The clock_id specified is not supported on this system.
++    if (clock_id != CLOCK_REALTIME) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    clock_serv_t cclock;
++    mach_timespec_t mts;
++    host_get_clock_service (mach_host_self (), CALENDAR_CLOCK, &cclock);
++    clock_get_time (cclock, &mts);
++    mach_port_deallocate (mach_task_self (), cclock);
++    ts->tv_sec = mts.tv_sec;
++    ts->tv_nsec = mts.tv_nsec;
++    return 0;
++}
++static void *_p_clock_gettime = reinterpret_cast<void *>(clock_gettime);
++#ifdef TID_NULL
++#undef TID_NULL
++#endif
++#endif
+ #endif
+ 
+ #if !defined(TS_NO_PCSC) // PC/SC support not inhibited by user.
+diff -ur tsduck-3.21-1819.orig/src/libtsduck/tsduck.cpp tsduck-3.21-1819/src/libtsduck/tsduck.cpp
+--- tsduck-3.21-1819.orig/src/libtsduck/tsduck.cpp	2020-05-30 20:30:42.000000000 +0800
++++ tsduck-3.21-1819/src/libtsduck/tsduck.cpp	2020-07-26 00:37:16.000000000 +0800
+@@ -33,4 +33,5 @@
+ // referenced code.
+ 
+ #include "tsduck.h"
++#include "tsPlatform.h"
+ TSDUCK_SOURCE;
