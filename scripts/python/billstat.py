@@ -3,7 +3,8 @@ import sys
 import glob
 import operator
 
-enc = 'mbcs'
+enc = None
+enclist = 'mbcs utf-8 cp936'.split()
 
 def tosec(s):
     assert s.endswith(u'\u79d2')
@@ -41,6 +42,13 @@ t = {}
 b = {}
 for f in flist:
     for line in f:
+        if enc is None:
+            for enc in enclist:
+                try:
+                    line.decode(enc)
+                    break
+                except:
+                    pass
         ar = line.decode(enc).split('\t')
         if len(ar) > 4 and ar[0][0].isdigit():
             ar = [s.rstrip() for s in ar]
