@@ -6,4 +6,5 @@
 *.bak
 *.tmp
 
+.DS_Store
 .svn

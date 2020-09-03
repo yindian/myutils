@@ -64,7 +64,13 @@ mb.sort(key=lambda x: x[0])
 dd = {}
 for k, c in mb:
 	dd.setdefault(k, []).append(c)
-buf = u'\n'.join(map(u'\t'.join, [(k, u','.join(c)) for k, c in sorted(dd.items())]))
+#buf = u'\n'.join(map(u'\t'.join, [(k, u','.join(c)) for k, c in sorted(dd.items())]))
+try:
+	reduce
+except NameError:
+	from functools import reduce
+import operator
+buf = u'\n'.join([u'\n'.join([u'%s %s' % (k, s) for s in c]) for k, c in sorted(dd.items())])
 try:
 	print(buf)
 except UnicodeEncodeError:
