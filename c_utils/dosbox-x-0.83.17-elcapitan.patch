@@ -1,0 +1,133 @@
+diff --git a/build-macosx b/build-macosx
+index 1db216a..e596434 100755
+--- a/build-macosx
++++ b/build-macosx
+@@ -53,9 +53,9 @@ export CPPFLAGS="$new$CPPFLAGS"
+ export CXXFLAGS="$new$CXXFLAGS"
+ export INTERNAL_FREETYPE=1
+ 
+-brew list fluid-synth &>/dev/null || brew install fluid-synth
+-brew list libslirp &>/dev/null || brew install libslirp
+-brew list pkg-config &>/dev/null || brew install pkg-config
++#brew list fluid-synth &>/dev/null || brew install fluid-synth
++#brew list libslirp &>/dev/null || brew install libslirp
++#brew list pkg-config &>/dev/null || brew install pkg-config
+ 
+ opts=
+ 
+diff --git a/src/dos/dos_files.cpp b/src/dos/dos_files.cpp
+index 6c7c71a..96598e8 100644
+--- a/src/dos/dos_files.cpp
++++ b/src/dos/dos_files.cpp
+@@ -20,6 +20,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <time.h>
++#include <sys/time.h>
+ #include <ctype.h>
+ #if defined(WIN32) && defined(__MINGW32__)
+ # include <malloc.h>
+@@ -1283,11 +1284,19 @@ void initRand() {
+ #ifdef WIN32
+     srand(GetTickCount());
+ #else
++#if 0
+     struct timespec ts;
+     unsigned theTick = 0U;
+-    clock_gettime( CLOCK_REALTIME, &ts );
++    clock_gettime( CLOCK_MONOTONIC, &ts );
+     theTick  = ts.tv_nsec / 1000000;
+     theTick += ts.tv_sec * 1000;
++#else
++	struct timeval tv;
++    unsigned theTick = 0U;
++	gettimeofday(&tv, NULL);
++    theTick  = tv.tv_usec / 1000;
++    theTick += tv.tv_sec * 1000;
++#endif
+     srand(theTick);
+ #endif
+ }
+diff --git a/src/dos/drive_local.cpp b/src/dos/drive_local.cpp
+index 833192c..93e10f1 100644
+--- a/src/dos/drive_local.cpp
++++ b/src/dos/drive_local.cpp
+@@ -24,6 +24,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
++#include <sys/time.h>
+ #include <errno.h>
+ #include <limits.h>
+ #if defined(MACOSX)
+@@ -2408,11 +2409,23 @@ bool localFile::Close() {
+         // NTS: Do not attempt futime, Linux doesn't have it.
+         //      Do not attempt futimes, Linux man pages LIE about having it. It's even there in the freaking header, but not recognized!
+         //      Use futimens. Modern stuff should have it. [https://pubs.opengroup.org/onlinepubs/9699919799/functions/futimens.html]
++#if 0
+         struct timespec ftsp[2];
++#else
++        struct timeval  ftsp[2];
++#endif
+         ftsp[0].tv_sec =  ftsp[1].tv_sec =  mktime(&tim);
++#if 0
+         ftsp[0].tv_nsec = ftsp[1].tv_nsec = 0;
++#else
++        ftsp[0].tv_usec = ftsp[1].tv_usec = 0;
++#endif
+ 
++#if 0
+         if (futimens(fileno(fhandle), ftsp)) {
++#else
++        if (futimes(fileno(fhandle), ftsp)) {
++#endif
+             extern int errno; 
+             LOG_MSG("Set time failed (%s)", strerror(errno));
+         }
+diff --git a/src/dosbox.cpp b/src/dosbox.cpp
+index 916fb1a..e9cf540 100644
+--- a/src/dosbox.cpp
++++ b/src/dosbox.cpp
+@@ -108,8 +108,12 @@ bool avx2_available = false;
+ static void CheckX86ExtensionsSupport()
+ {
+ #if defined(__GNUC__) && !defined(EMSCRIPTEN)
++#if defined(__APPLE__) // && (__clang_major__ == 7) && (__clang_minor__ == 3)
++    sse2_available = true;
++#else
+     sse2_available = __builtin_cpu_supports("sse2");
+     avx2_available = __builtin_cpu_supports("avx2");
++#endif
+ #elif (_MSC_VER) && !defined(EMSCRIPTEN)
+     Bitu a, b, c, d;
+     cpuid(1, a, b, c, d);
+diff --git a/src/misc/savestates.cpp b/src/misc/savestates.cpp
+index 0729a2a..eb77847 100644
+--- a/src/misc/savestates.cpp
++++ b/src/misc/savestates.cpp
+@@ -26,9 +26,9 @@
+ #endif
+ 
+ #define MAXU32 0xffffffff
+-#include "zip.h"
+-#include "unzip.h"
+-#include "ioapi.h"
++#include "vs2015/zlib/contrib/minizip/zip.h"
++#include "vs2015/zlib/contrib/minizip/unzip.h"
++#include "vs2015/zlib/contrib/minizip/ioapi.h"
+ #include "vs2015/zlib/contrib/minizip/zip.c"
+ #include "vs2015/zlib/contrib/minizip/unzip.c"
+ #include "vs2015/zlib/contrib/minizip/ioapi.c"
+diff --git a/vs2015/zlib/contrib/minizip/zip.h b/vs2015/zlib/contrib/minizip/zip.h
+index ff0ae56..c323da9 100644
+--- a/vs2015/zlib/contrib/minizip/zip.h
++++ b/vs2015/zlib/contrib/minizip/zip.h
+@@ -46,7 +46,7 @@ extern "C" {
+ 
+ //#define HAVE_BZIP2
+ 
+-#include "zlib.h"
++#include "../../zlib.h"
+ #include "ioapi.h"
+ 
+ #ifdef HAVE_BZIP2
