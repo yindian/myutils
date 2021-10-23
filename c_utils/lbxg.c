@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
     const char *show, *match, *pattern;
     int showlen;
     int patternlen;
+    int bstart;
 #ifndef NO_HASH
     unsigned long showhash;
 #endif
@@ -176,6 +177,7 @@ int main(int argc, char *argv[])
     show = match = pattern = NULL;
     showlen = 0;
     patternlen = 0;
+    bstart = 0;
     nLine2Show = 0;
     for (i = 1; i < argc; i++)
     {
@@ -228,6 +230,11 @@ int main(int argc, char *argv[])
     else
     if (pattern)
     {
+        if (*pattern == '\t')
+        {
+            bstart = 1;
+            ++pattern;
+        }
         patternlen = strlen(pattern);
         if (!match)
         {
@@ -712,8 +719,10 @@ parse_entity_next_save:
 #undef ON_NEW_LINE
 #define ON_NEW_LINE
 #define CHECK_BUF_PATTERN \
+    char *m; \
     buf[bufpos] = '\0'; \
-    if (strstr(buf, pattern)) \
+    m = strstr(buf, pattern); \
+    if (m && (!bstart || (m == buf || !isalnum(m[-1])))) \
     { \
         printf("#M%" PRIu64 ".%u: %s\n", nLine, nCol, buf); \
         showbuf(doc, docpos, NULL); \
