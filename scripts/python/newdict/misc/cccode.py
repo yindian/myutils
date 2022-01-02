@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 import base64
+import os
+import sys
 import zlib
 
 _csv_hk_ccc = zlib.decompress(base64.b64decode(b'''
@@ -1173,5 +1175,60 @@ ckWYfCDilX84xM/3PxauXKXVdWFuVeRU1kSx8m8LV2MvQGFsWxjbE8auiRh0BNdmtSlS0BIZuBQ5
 KWac2b7IQUUUYFWUYPHX/wIQoJ1l
 ''')).decode('utf-8')
 
-code2hanzi = dict([(int(x[0]), x[1:]) for x in _csv_hk_ccc.splitlines()[1:]])
+code2hanzi = dict([(int(_x[0]), _x[1:]) for _x in [_l.split(',') for _l in _csv_hk_ccc.splitlines()[1:]]])
 
+def prn(*args, **kwargs):
+    args = list(args)
+    for i in range(len(args)):
+        s = args[i]
+        if type(s) != str:
+            try:
+                args[i] = s.encode('utf-8')
+            except:
+                pass
+    print(*args, **kwargs)
+
+def _check_cn_ccc():
+    visited = set()
+    for line in _tab_cn_ccc.splitlines():
+        ar = line.split('\t')
+        try:
+            assert len(ar) == 2
+            n = int(ar[0])
+            if ar[1] not in code2hanzi[n]:
+                #prn(line, ','.join(code2hanzi.get(n)))
+                code2hanzi[n].append(ar[1])
+            else:
+                code2hanzi[n].append('')
+            visited.add(n)
+        except:
+            prn(line, file=sys.stderr)
+            raise
+    for n in range(1, 10000):
+        if not n in visited:
+            code2hanzi[n].append('')
+
+_check_cn_ccc()
+
+cols = _csv_hk_ccc[:_csv_hk_ccc.index('\n')].split(',')[1:] + ['china3']
+hanzi2code = {}
+
+def _build_hanzi2code():
+    for n in range(1, 10000):
+        ar = code2hanzi[n]
+        assert len(ar) == len(cols)
+        for s, cls in zip(ar, cols):
+            if not s:
+                continue
+            if s not in hanzi2code:
+                hanzi2code[s] = {n: [cls]}
+            else:
+                hanzi2code[s].setdefault(n, []).append(cls)
+    if __name__ != '__main__':
+        return
+    for s, d in hanzi2code.items():
+        assert d
+        if len(d) > 1:
+            prn('%s\t%s' % (s, ', '.join(['%04d (%s)' % (n, ','.join(a)) for n, a in d.items()])))
+
+_build_hanzi2code()
