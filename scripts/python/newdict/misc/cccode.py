@@ -1199,7 +1199,7 @@ def _check_cn_ccc():
                 #prn(line, ','.join(code2hanzi.get(n)))
                 code2hanzi[n].append(ar[1])
             else:
-                code2hanzi[n].append('')
+                code2hanzi[n].append(ar[1])
             visited.add(n)
         except:
             prn(line, file=sys.stderr)
