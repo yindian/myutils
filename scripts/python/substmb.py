@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-from collections import OrderedDict
 import pdb
 
 assert __name__ == '__main__'
@@ -13,9 +12,10 @@ try:
 	mb = map(unicode.split, buf.splitlines())
 except NameError:
 	mb = list(map(str.split, buf.splitlines()))
-d = OrderedDict(mb)
+d = {}
+for c, k in mb:
+	d.setdefault(c, []).append(k)
 mb = [(b, a) for a, b in mb]
-dd = OrderedDict(mb)
 
 nsame = ndiff = nnew = 0
 cs = set()
@@ -34,9 +34,9 @@ for line in lines:
 			#if len(br) != 1:
 			#	print(c, br)
 			#	pdb.set_trace()
-			if d[c] != k:
+			if k not in d[c]:
 				#print((u'Key for %s differ: %s => %s' % (
-				#	c, d[c], k)))
+				#	c, u'|'.join(d[c]), k)))
 				cs.add(c)
 				ndiff += 1
 			else:
@@ -55,7 +55,7 @@ for line in lines:
 		c = ar[1]
 		k = ar[2]
 		if c in d:
-			if d[c] != k:
+			if k not in d[c]:
 				mb.append((k, c))
 		else:
 			mb.append((k, c))
