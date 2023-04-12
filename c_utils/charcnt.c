@@ -104,6 +104,10 @@ int main()
     size_t l;
 #endif
     uint64_t n;
+#ifdef DEBUG_TOTAL
+    uint64_t total, totalU;
+    total = totalU = 0;
+#endif
 #if 0
     setvbuf(stdin, NULL, _IOFBF, 1024 * 4);
 #endif
@@ -144,6 +148,13 @@ int main()
         {
             ++end;
         }
+#ifdef DEBUG_TOTAL
+        total += l;
+#endif
+#else
+#ifdef DEBUG_TOTAL
+        ++total;
+#endif
 #endif
 #ifdef USE_BJOERN
 #ifdef BUFLEN
@@ -186,6 +197,7 @@ int main()
 #ifdef CARE_REJECT
             case UTF8_REJECT:
                 c = 0xFFFF;
+                b = 0;
                 FALL_THROUGH;
             case UTF8_ACCEPT:
 #endif
@@ -219,6 +231,12 @@ int main()
 #endif
 #endif
 #ifdef USE_BJOERN
+#ifndef CARE_REJECT
+        else if (b == UTF8_REJECT)
+        {
+            b = 0;
+        }
+#endif
         }
 #else
 #ifdef USE_ASM
@@ -229,6 +247,9 @@ int main()
 #endif
         l = buf + l - p;
         memmove(buf, p, l);
+#ifdef DEBUG_TOTAL
+        total -= l;
+#endif
 #endif
     }
 #ifdef BUFLEN
@@ -238,6 +259,9 @@ int main()
 #endif
 #ifdef USE_HASH
     kh_foreach(h, c, n, printf("%04X\t%" PRIu64 "\n", c, n));
+#ifdef DEBUG_TOTAL
+    kh_foreach(h, c, n, totalU += n);
+#endif
     kh_destroy(cnt, h);
 #else
     for (c = 0; c < UNICODE_POINTS; ++c)
@@ -245,8 +269,14 @@ int main()
         if ((n = cnt[c]))
         {
             printf("%04X\t%" PRIu64 "\n", c, n);
+#ifdef DEBUG_TOTAL
+            totalU += n;
+#endif
         }
     }
+#endif
+#ifdef DEBUG_TOTAL
+    fprintf(stderr, "Total %" PRIu64 " bytes, %" PRIu64 " characters\n", total, totalU);
 #endif
     return 0;
 }
