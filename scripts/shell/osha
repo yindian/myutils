@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ -z "$1" ]; then
+SHAVER=1
+else
+SHAVER="$1"
+shift
+fi
+exec openssl dgst -r -sha$SHAVER "$@"
