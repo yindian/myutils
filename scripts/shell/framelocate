@@ -13,9 +13,9 @@ echo "tmp dir: $DIR"
 MIN_TIME=${MIN_TIME:-0}
 MAX_DUR=${MAX_DUR:-20}
 while [ -n "$1" ]; do
-	CSV="$(ffprobe -loglevel 24 -read_intervals $MIN_TIME%+$MAX_DUR -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1")"
+	CSV="$(ffprobe -loglevel 24 -read_intervals $MIN_TIME%+$MAX_DUR -select_streams v -show_entries frame=pts_time,duration_time,pict_type -of csv "$1")"
 	ffmpeg -loglevel 24 -ss $MIN_TIME -i "$1" -t $MAX_DUR -vf select='eq(pict_type\,I)' -vsync 2 -f image2 $DIR/%d.jpg
-	START_TIME=`ffprobe -loglevel 24 -read_intervals %+1 -select_streams v -show_entries frame=pkt_pts_time,pkt_duration_time,pict_type -of csv "$1" | head -1 | cut -f 2 -d ,`
+	START_TIME=`ffprobe -loglevel 24 -read_intervals %+1 -select_streams v -show_entries frame=pts_time,duration_time,pict_type -of csv "$1" | head -1 | cut -f 2 -d ,`
 	echo "time start at $START_TIME"
 	KCSV="$(grep -nw I <<< "$CSV")"
 	echo "$(wc -l <<< "$KCSV") key frames extracted to $DIR"
